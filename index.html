@@ -327,7 +327,8 @@ var APURA_HORAS=KATANA_HORAS.map(function(h){var m=+h.slice(0,2)*60+ +h.slice(3)
 function $(id){return document.getElementById(id);}
 function pad(n){return (n<10?"0":"")+n;}
 function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
-function hoyISO(){var d=new Date();return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());}
+function mx(){var u=new Date(Date.now()-6*3600000);return {h:u.getUTCHours(),m:u.getUTCMinutes(),d:u.getUTCDate(),mes:u.getUTCMonth(),a:u.getUTCFullYear(),dia:u.getUTCDay()};}
+function hoyISO(){var d=mx();return d.a+"-"+pad(d.mes+1)+"-"+pad(d.d);}
 function clave(r){return String(r.id!=null?r.id:r.mo);}
 function tipoDe(r){
   var s=r.ops.map(function(o){return o[0];}).sort().join("|");
@@ -461,8 +462,8 @@ function fitTitle(){var f=36;h1.style.fontSize=f+"px";
   while(h1.scrollWidth>h1.clientWidth+1&&f>24){f--;h1.style.fontSize=f+"px";}}
 if(window.ResizeObserver)new ResizeObserver(fitTitle).observe(h1.parentNode);
 fitTitle();
-function reloj(){var d=new Date();$("clock").textContent=pad(d.getHours())+":"+pad(d.getMinutes());
-  $("cdate").textContent=d.getDate()+" de "+["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"][d.getMonth()]+", "+d.getFullYear();}
+function reloj(){var d=mx();$("clock").textContent=pad(d.h)+":"+pad(d.m);
+  $("cdate").textContent=d.d+" de "+["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"][d.mes]+", "+d.a;}
 reloj();setInterval(reloj,10000);
 setInterval(function(){$("pb").style.width=Math.min(100,(Date.now()-t0)/DUR*100)+"%";},200);
 setInterval(function(){
@@ -497,6 +498,10 @@ function pantallaCompleta(){
   var d=document.documentElement,f=d.requestFullscreen||d.webkitRequestFullscreen||d.mozRequestFullScreen||d.msRequestFullscreen;
   if(f&&!(document.fullscreenElement||document.webkitFullscreenElement)){try{var p=f.call(d);if(p&&p.catch)p.catch(function(){});}catch(e){}}
 }
+function tocar(){pantallaCompleta();var c=ac();if(!c)return;
+  c.resume().then(function(){estadoSonido();try{SON.aviso();}catch(e){}},function(){});}
+document.addEventListener("click",function(e){if(e.target&&e.target.id==="sndBtn")return;tocar();},true);
+document.addEventListener("keydown",function(e){var k=e.keyCode||e.which;if(k===13||e.key==="Enter")tocar();},true);
 $("sndBtn").addEventListener("click",function(){
   pantallaCompleta();
   var c=ac();if(!c)return;
@@ -519,7 +524,7 @@ function sig(){
 
 /* ---------- eventos por reloj ---------- */
 function checarReloj(){
-  var d=new Date(),dia=d.getDay(),hm=pad(d.getHours())+":"+pad(d.getMinutes()),hoy=hoyISO();
+  var d=mx(),dia=d.dia,hm=pad(d.h)+":"+pad(d.m),hoy=hoyISO();
   if(dia<1||dia>5)return;
   var k=hoy+" "+hm;
   if(hm===CAMPANA&&LS.get("ev-campana")!==k){LS.set("ev-campana",k);
@@ -579,7 +584,7 @@ render(window.__DATOS__);
   }
   cargar();setInterval(cargar,120000);                       // revisa datos nuevos cada 2 min
   var t0carga=Date.now();                                    // recarga completa diaria a las 6:00 (toma cambios de diseño)
-  setInterval(function(){var d=new Date();if(d.getHours()===6&&d.getMinutes()<5&&Date.now()-t0carga>3600000)location.reload();},60000);
+  setInterval(function(){var d=mx();if(d.h===6&&d.m<5&&Date.now()-t0carga>3600000)location.reload();},60000);
 })();
 })();
 </script>
