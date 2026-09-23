@@ -219,25 +219,38 @@ header img{height:82px;padding:2px 10px}
 .chip i{font-size:27px}
 /* --- 23-sep: pagina de entregas por mes --- */
 .pmes{flex-direction:row!important;gap:22px;padding-top:4px}
-.pmes .mcard{flex:0 0 560px;background:var(--panel);border:2px solid var(--line);border-radius:16px;padding:18px 26px;display:flex;flex-direction:column;gap:10px}
+.pmes .mcard{flex:0 0 560px;background:var(--panel);border:2px solid var(--line);border-radius:16px;padding:9px 20px;display:flex;flex-direction:column;gap:4px}
 .pmes .mcard.verde{border-color:#25C083} .pmes .mcard.ambar{border-color:#F2A93B} .pmes .mcard.rojo{border-color:#E5484D}
-.pmes .ml1{font-size:22px;letter-spacing:3px;color:var(--tx2)}
-.pmes .mbig{font-size:120px;font-weight:700;line-height:1;letter-spacing:-2px}
-.pmes .mmeta{font-size:30px;color:var(--tx2)} .pmes .mmeta b{color:var(--tx)}
-.pmes .mpct{font-size:64px;font-weight:700;line-height:1}
+.pmes .ml1{font-size:20px;letter-spacing:3px;color:var(--tx2)}
+.pmes .mbig{font-size:68px;font-weight:700;line-height:1;letter-spacing:-2px}
+.pmes .mmeta{font-size:23px;color:var(--tx2)} .pmes .mmeta b{color:var(--tx)}
+.pmes .mpct{font-size:34px;font-weight:700;line-height:1}
 .pmes .verde .mpct{color:#4FE0A6} .pmes .ambar .mpct{color:#FFC45C} .pmes .rojo .mpct{color:#FF6369}
-.pmes .mbar{position:relative;height:26px;background:#0E1723;border-radius:13px;overflow:hidden;border:1px solid var(--line)}
+.pmes .mbar{position:relative;height:17px;background:#0E1723;border-radius:13px;overflow:hidden;border:1px solid var(--line)}
 .pmes .mbar i{position:absolute;left:0;top:0;bottom:0;border-radius:13px}
 .pmes .verde .mbar i{background:#25C083} .pmes .ambar .mbar i{background:#F2A93B} .pmes .rojo .mbar i{background:#E5484D}
 .pmes .mbar s{position:absolute;top:-2px;bottom:-2px;width:4px;background:#EAF1F9}
-.pmes .mnote{font-size:21px;color:var(--tx2)}
+.pmes .mnote{font-size:17px;color:var(--tx2);line-height:1.2}
 .pmes .msplit{display:flex;gap:14px;margin-top:auto}
-.pmes .msplit div{flex:1;background:#0E1723;border-radius:12px;padding:10px 16px;border-left:8px solid}
-.pmes .msplit span{display:block;font-size:18px;letter-spacing:2px;color:var(--tx2)} .pmes .msplit b{font-size:44px}
+.pmes .msplit div{flex:1;background:#0E1723;border-radius:12px;padding:6px 14px;border-left:8px solid}
+.pmes .msplit span{display:block;font-size:14px;letter-spacing:2px;color:var(--tx2)} .pmes .msplit b{font-size:24px}
 .pmes .mchart{flex:1;min-width:0;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:12px 18px;display:flex;flex-direction:column}
 .pmes .mchart svg{flex:1;width:100%;min-height:0}
 .pmes .mley{display:flex;gap:26px;font-size:19px;color:var(--tx2);align-items:center}
 .pmes .mley i{display:inline-block;width:22px;height:16px;border-radius:3px;margin-right:8px;vertical-align:-2px}
+/* --- 23-sep: entregas por semana (mismos tamanos que la copia de Claude) --- */
+.pmes .mcol{flex:0 0 600px;display:flex;flex-direction:column;gap:12px;min-height:0;overflow:hidden}
+.pmes .mcol .mcard{flex:1 1 auto}
+.pmes .scard{flex:none;background:var(--panel);border:2px solid var(--line);border-radius:16px;padding:10px 18px 12px}
+.pmes .scard .ml1{margin-bottom:8px}
+.pmes .sgrid{display:flex;gap:14px}
+.pmes .sbox{flex:1;background:#0E1723;border-radius:12px;padding:7px 13px;border:2px solid transparent}
+.pmes .sbox.act{border-color:#EAF1F9}
+.pmes .sttl{font-size:16px;letter-spacing:1px;color:var(--tx2);white-space:nowrap}
+.pmes .sbig{font-size:40px;font-weight:700;line-height:1.1}
+.pmes .sbig i{font-style:normal;font-size:19px;color:var(--tx2);font-weight:400;margin-left:3px}
+.pmes .smix{display:flex;gap:18px;margin-top:1px;font-size:18px;font-weight:700}
+.pmes .smix span{flex:none;line-height:1.15}
 </style></head><body>
 <div id="stage">
  <header>
@@ -411,6 +424,14 @@ var LEYT='<span class="leyt">'+TIPOS.map(function(t){return '<span><b class="tpi
 var MESL=["ENERO","FEBRERO","MARZO","ABRIL","MAYO","JUNIO","JULIO","AGOSTO","SEPTIEMBRE","OCTUBRE","NOVIEMBRE","DICIEMBRE"];
 var CU="#D9773F",AL="#8FA6BA";
 function nf(n){return Math.round(n).toLocaleString("en-US");}
+function cajaSem(s,t,act){
+  s=s||{cu:0,al:0};
+  return '<div class="sbox'+(act?' act':'')+'">'+
+   '<div class="sttl">'+t+(s.rango?' \u00b7 '+esc(s.rango):'')+'</div>'+
+   '<div class="sbig">'+nf((s.cu||0)+(s.al||0))+'<i>pz</i></div>'+
+   '<div class="smix"><span style="color:'+CU+'">Cobre '+nf(s.cu||0)+'</span>'+
+   '<span style="color:'+AL+'">Aluminio '+nf(s.al||0)+'</span></div></div>';
+}
 function renderMes(E){
   var ms=E.meses||[],c=ms[ms.length-1],pz=c.cu+c.al,meta=c.meta||1,pct=Math.round(pz/meta*100);
   var esp=meta*(E.diasPasados||0)/(E.diasHab||1),sem=pz>=meta?"verde":(pz>=esp?"ambar":"rojo");
@@ -432,7 +453,10 @@ function renderMes(E){
     g+='<text x="'+(bx+w/2)+'" y="'+(H-B+32)+'" text-anchor="middle" font-size="22" fill="'+(cur?"#EAF1F9":"#8FA3BA")+'" font-weight="'+(cur?700:400)+'">'+MESL[+x.m.slice(5)-1].slice(0,3)+'</text>';});
   var chart='<div class="mchart"><div class="mley"><span><i style="background:'+CU+'"></i>Cobre</span><span><i style="background:'+AL+'"></i>Aluminio</span><span><i style="background:none;border-top:4px dashed #EAF1F9;height:0;width:28px"></i>Meta del mes</span><span style="margin-left:auto">Número en verde = mes que cumplió su meta</span></div>'+
    '<svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="xMidYMid meet">'+g+'</svg></div>';
-  return card+chart;
+  var S=E.semanas||null;
+  var sem_html=S?('<div class="scard"><div class="ml1">ENTREGAS POR SEMANA</div><div class="sgrid">'+
+    cajaSem(S.actual,"ESTA SEMANA",true)+cajaSem(S.pasada,"SEMANA PASADA",false)+'</div></div>'):'';
+  return '<div class="mcol">'+card+sem_html+'</div>'+chart;
 }
 function renderMat(D){var m=$('mat');var mt=(D&&D.material)||[];if(!D||D.modo!=='entregas'){m.hidden=true;return;}m.hidden=false;m.className=mt.length?'falta':'ok';
   m.innerHTML=mt.length?'<div class="ml">FALTA MATERIAL · PRÓXIMOS 5 DÍAS</div><div class="chips">'+mt.map(function(x){return '<span class="chip"><b class="mono">'+esc(x.sku)+'</b><i>'+x.barras+'</i><em>barras</em></span>';}).join('')+'</div><div class="ks">'+esc(D.materialNota||'')+'</div>':'<div class="ml">MATERIAL · PRÓXIMOS 5 DÍAS</div><div class="kv" style="color:#4FE0A6">Completo</div>';}
