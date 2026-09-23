@@ -217,6 +217,27 @@ header img{height:82px;padding:2px 10px}
 .chips{margin:3px 0 2px}
 .chip{padding:1px 12px}
 .chip i{font-size:27px}
+/* --- 23-sep: pagina de entregas por mes --- */
+.pmes{flex-direction:row!important;gap:22px;padding-top:4px}
+.pmes .mcard{flex:0 0 560px;background:var(--panel);border:2px solid var(--line);border-radius:16px;padding:18px 26px;display:flex;flex-direction:column;gap:10px}
+.pmes .mcard.verde{border-color:#25C083} .pmes .mcard.ambar{border-color:#F2A93B} .pmes .mcard.rojo{border-color:#E5484D}
+.pmes .ml1{font-size:22px;letter-spacing:3px;color:var(--tx2)}
+.pmes .mbig{font-size:120px;font-weight:700;line-height:1;letter-spacing:-2px}
+.pmes .mmeta{font-size:30px;color:var(--tx2)} .pmes .mmeta b{color:var(--tx)}
+.pmes .mpct{font-size:64px;font-weight:700;line-height:1}
+.pmes .verde .mpct{color:#4FE0A6} .pmes .ambar .mpct{color:#FFC45C} .pmes .rojo .mpct{color:#FF6369}
+.pmes .mbar{position:relative;height:26px;background:#0E1723;border-radius:13px;overflow:hidden;border:1px solid var(--line)}
+.pmes .mbar i{position:absolute;left:0;top:0;bottom:0;border-radius:13px}
+.pmes .verde .mbar i{background:#25C083} .pmes .ambar .mbar i{background:#F2A93B} .pmes .rojo .mbar i{background:#E5484D}
+.pmes .mbar s{position:absolute;top:-2px;bottom:-2px;width:4px;background:#EAF1F9}
+.pmes .mnote{font-size:21px;color:var(--tx2)}
+.pmes .msplit{display:flex;gap:14px;margin-top:auto}
+.pmes .msplit div{flex:1;background:#0E1723;border-radius:12px;padding:10px 16px;border-left:8px solid}
+.pmes .msplit span{display:block;font-size:18px;letter-spacing:2px;color:var(--tx2)} .pmes .msplit b{font-size:44px}
+.pmes .mchart{flex:1;min-width:0;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:12px 18px;display:flex;flex-direction:column}
+.pmes .mchart svg{flex:1;width:100%;min-height:0}
+.pmes .mley{display:flex;gap:26px;font-size:19px;color:var(--tx2);align-items:center}
+.pmes .mley i{display:inline-block;width:22px;height:16px;border-radius:3px;margin-right:8px;vertical-align:-2px}
 </style></head><body>
 <div id="stage">
  <header>
@@ -387,6 +408,32 @@ var HEAD='<div class="row head"><div class="stripe"></div><div class="mo">ORDEN<
 
 var datos=null, pagina=0, t0=Date.now();
 var LEYT='<span class="leyt">'+TIPOS.map(function(t){return '<span><b class="tpill" style="background:'+t[2]+'">'+t[0].toUpperCase()+'</b> '+t[1].map(function(o){return {"Corte":"Corte","Taladro":"Taladro","CNC":"CUA","Doblez":"Doblez","Limpieza & SQA":"Limp."}[o];}).join(" + ")+'</span>';}).join("")+'</span>';
+var MESL=["ENERO","FEBRERO","MARZO","ABRIL","MAYO","JUNIO","JULIO","AGOSTO","SEPTIEMBRE","OCTUBRE","NOVIEMBRE","DICIEMBRE"];
+var CU="#D9773F",AL="#8FA6BA";
+function nf(n){return Math.round(n).toLocaleString("en-US");}
+function renderMes(E){
+  var ms=E.meses||[],c=ms[ms.length-1],pz=c.cu+c.al,meta=c.meta||1,pct=Math.round(pz/meta*100);
+  var esp=meta*(E.diasPasados||0)/(E.diasHab||1),sem=pz>=meta?"verde":(pz>=esp?"ambar":"rojo");
+  var nota=pz>=meta?"Meta cumplida · "+nf(pz-meta)+" pz arriba":(pz>=esp?"Vamos a tiempo · faltan "+nf(meta-pz)+" pz":"Vamos atrás · faltan "+nf(meta-pz)+" pz");
+  var card='<div class="mcard '+sem+'"><div class="ml1">'+MESL[+c.m.slice(5)-1]+' · DÍA HÁBIL '+(E.diasPasados||0)+' DE '+(E.diasHab||0)+'</div>'+
+   '<div class="mbig">'+nf(pz)+'</div><div class="mmeta">piezas entregadas · meta <b>'+nf(meta)+'</b></div>'+
+   '<div class="mpct">'+pct+'%</div><div class="mbar"><i style="width:'+Math.min(100,pct)+'%"></i><s style="left:calc('+Math.min(100,esp/meta*100)+'% - 2px)"></s></div>'+
+   '<div class="mnote">'+nota+'. La raya blanca es donde deberíamos ir hoy.</div>'+
+   '<div class="msplit"><div style="border-color:'+CU+'"><span>COBRE</span><b>'+nf(c.cu)+'</b></div><div style="border-color:'+AL+'"><span>ALUMINIO</span><b>'+nf(c.al)+'</b></div></div></div>';
+  var W=1240,H=640,L=80,T=46,B=50,R=20,n=ms.length,mx=0;ms.forEach(function(x){mx=Math.max(mx,x.cu+x.al,x.meta||0);});
+  var p=Math.pow(10,Math.floor(Math.log10(mx))),st=[1,1.5,2,2.5,3,4,5,6,8,10];for(var i=0;i<st.length;i++){if(st[i]*p>=mx){mx=st[i]*p;break;}}
+  var bw=(W-L-R)/n,y=function(v){return T+(H-T-B)*(1-v/mx);},h=function(v){return (H-T-B)*v/mx;},g="";
+  for(var k=0;k<=4;k++){var v=mx*k/4;g+='<line x1="'+L+'" x2="'+(W-R)+'" y1="'+y(v)+'" y2="'+y(v)+'" stroke="#22344A"/><text x="'+(L-10)+'" y="'+(y(v)+7)+'" text-anchor="end" fill="#8FA3BA" font-size="20">'+nf(v)+'</text>';}
+  ms.forEach(function(x,i){var t=x.cu+x.al,bx=L+i*bw+bw*.17,w=bw*.66,ok=t>=(x.meta||0),cur=i===n-1;
+    g+='<rect x="'+bx+'" y="'+y(x.al)+'" width="'+w+'" height="'+h(x.al)+'" fill="'+AL+'"/>';
+    g+='<rect x="'+bx+'" y="'+y(t)+'" width="'+w+'" height="'+h(x.cu)+'" fill="'+CU+'"/>';
+    if(x.meta)g+='<line x1="'+(bx-8)+'" x2="'+(bx+w+8)+'" y1="'+y(x.meta)+'" y2="'+y(x.meta)+'" stroke="#EAF1F9" stroke-width="4" stroke-dasharray="10 6"/>';
+    g+='<text x="'+(bx+w/2)+'" y="'+(Math.min(y(t),x.meta?y(x.meta):9e9)-12)+'" text-anchor="middle" font-size="26" font-weight="700" fill="'+(ok?"#4FE0A6":"#EAF1F9")+'">'+nf(t)+'</text>';
+    g+='<text x="'+(bx+w/2)+'" y="'+(H-B+32)+'" text-anchor="middle" font-size="22" fill="'+(cur?"#EAF1F9":"#8FA3BA")+'" font-weight="'+(cur?700:400)+'">'+MESL[+x.m.slice(5)-1].slice(0,3)+'</text>';});
+  var chart='<div class="mchart"><div class="mley"><span><i style="background:'+CU+'"></i>Cobre</span><span><i style="background:'+AL+'"></i>Aluminio</span><span><i style="background:none;border-top:4px dashed #EAF1F9;height:0;width:28px"></i>Meta del mes</span><span style="margin-left:auto">Número en verde = mes que cumplió su meta</span></div>'+
+   '<svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="xMidYMid meet">'+g+'</svg></div>';
+  return card+chart;
+}
 function renderMat(D){var m=$('mat');var mt=(D&&D.material)||[];if(!D||D.modo!=='entregas'){m.hidden=true;return;}m.hidden=false;m.className=mt.length?'falta':'ok';
   m.innerHTML=mt.length?'<div class="ml">FALTA MATERIAL · PRÓXIMOS 5 DÍAS</div><div class="chips">'+mt.map(function(x){return '<span class="chip"><b class="mono">'+esc(x.sku)+'</b><i>'+x.barras+'</i><em>barras</em></span>';}).join('')+'</div><div class="ks">'+esc(D.materialNota||'')+'</div>':'<div class="ml">MATERIAL · PRÓXIMOS 5 DÍAS</div><div class="kv" style="color:#4FE0A6">Completo</div>';}
 function render(D){try{renderMat(D);}catch(e){}try{render0(D);}catch(e){}}
@@ -439,8 +486,10 @@ function render0(D){
   c2.forEach(function(c,i){bloques.push(["POR ARRANCAR"+(c2.length>1?" · "+(i+1)+"/"+c2.length:""),c]);});
   $("pages").className="";
   }
+  if(D.entregasMes&&D.entregasMes.meses&&D.entregasMes.meses.length)bloques.push(["ENTREGAS POR MES",null,"mes"]);
   if(pagina>=bloques.length)pagina=0;
   $("pages").innerHTML=bloques.map(function(b,i){
+    if(b[2]==="mes"){var hm="";try{hm=renderMes(D.entregasMes);}catch(e){}return '<div class="page pmes'+(i===pagina?" on":"")+'">'+hm+'</div>';}
     return '<div class="page'+(i===pagina?" on":"")+'"><div class="ptitle">'+b[0]+(datos&&datos.modo==="entregas"?LEYT:"")+'</div>'+(datos&&datos.modo==="entregas"?HEAD.replace("LÍMITE","ENTREGA"):HEAD)+b[1].map(function(x){return x.sep?'<div class="sep">'+esc(x.sep)+'</div>':fila(x);}).join("")+'</div>';}).join("");
   var sp=$("stamp");sp.setAttribute("data-ts",D.stamp||"");
   sp.setAttribute("data-base","Datos de Katana: "+String(D.stamp||"").slice(11,16));
