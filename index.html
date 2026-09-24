@@ -633,6 +633,7 @@ render(window.__DATOS__);
 /* ---------- en vivo: datos.json (GitHub Pages) ---------- */
 (function(){
   var primera=true,box=$("aviso"),txt=$("avisoTxt"),cur=null,primeraAviso=true,repetir=null;
+  var avisoPropio=false,intentoA=0;
   function aviso(d){
     var t=(d&&typeof d.texto==="string")?d.texto.trim():"";
     var cambio=!primeraAviso&&(!cur||cur.actualizado!==(d&&d.actualizado));
@@ -659,11 +660,24 @@ render(window.__DATOS__);
         }
         primera=false;render(D);checarVencidas();
       }
-      aviso(j&&j.aviso);
+      if(!avisoPropio)aviso(j&&j.aviso);                      // respaldo: solo mientras aviso.json no responda
     };
     x.send();
   }
-  cargar();setInterval(cargar,120000);                       // revisa datos nuevos cada 2 min
+  /* --- el aviso va en su propio archivo (~100 bytes): se relee cada 15 s --- */
+  function cargarAviso(){
+    var x=new XMLHttpRequest();
+    x.open("GET",(intentoA%2?"aviso.json":"https://raw.githubusercontent.com/moisespena-web/tablero-dimaco-k7q3/main/aviso.json")+"?t="+Date.now(),true);
+    x.onerror=function(){intentoA++;};
+    x.onload=function(){
+      if(x.status!==200){intentoA++;return;}
+      var a;try{a=JSON.parse(x.responseText);}catch(e){return;}
+      avisoPropio=true;aviso(a);
+    };
+    x.send();
+  }
+  cargarAviso();setInterval(cargarAviso,15000);              // el aviso, cada 15 s
+  cargar();setInterval(cargar,60000);                        // los datos, cada minuto
   var t0carga=Date.now();                                    // recarga completa diaria a las 6:00 (toma cambios de diseño)
   setInterval(function(){var d=mx();if(d.h===6&&d.m<5&&Date.now()-t0carga>3600000)location.reload();},60000);
 })();
