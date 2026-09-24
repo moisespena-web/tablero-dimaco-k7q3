@@ -1,31 +1,98 @@
 name: Actualizar datos del tablero
 on:
   schedule:
-    - cron: "*/10 * * * *"
+    - cron: "*/5 * * * *"
   workflow_dispatch:
 permissions:
   contents: write
+
+# Cada corrida nueva releva a la anterior, para que siempre haya
+# exactamente un vigilante vivo y no se acumule cola.
+concurrency:
+  group: sync-tablero
+  cancel-in-progress: true
+
 jobs:
   sync:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
-      - name: Traer datos de Dropbox
+
+      - name: Vigilar Dropbox cada 20 s y publicar cambios
         env:
           DROPBOX_URL: ${{ secrets.DROPBOX_URL }}
         run: |
+          set -u
           URL=$(echo "$DROPBOX_URL" | sed -e 's/dl=0/dl=1/')
           case "$URL" in *dl=1*) ;; *) URL="$URL&dl=1";; esac
-          curl -sSL "$URL" -o d.zip
-          mkdir -p d && unzip -o -q d.zip -d d || true
-          F=$(find d -name 'datos-*.json' | sort | tail -1)
-          [ -n "$F" ] || { echo "sin archivos"; exit 0; }
-          python3 -c "import json,sys;j=json.load(open(sys.argv[1]));assert j['datos']['rows']" "$F"
-          cp "$F" datos.json
-          rm -rf d d.zip
-          git diff --quiet -- datos.json && { echo "sin cambios"; exit 0; }
+
           git config user.name "Tablero DIMACO"
           git config user.email "actions@users.noreply.github.com"
-          git add datos.json
-          git commit -m "Datos $(basename "$F")"
-          git push
+
+          # El loop dura 15 min aunque el cron sea cada 5: así, si GitHub
+          # retrasa el cron, el vigilante anterior sigue cubriendo el hueco.
+          FIN=$(( $(date +%s) + 15 * 60 ))
+
+          while [ "$(date +%s)" -lt "$FIN" ]; do
+            rm -rf d d.zip aviso.new
+            if curl -sSL --max-time 45 "$URL" -o d.zip; then
+              mkdir -p d
+              unzip -o -q d.zip -d d 2>/dev/null || true
+
+              HAY_AV=$(find d -name 'aviso-*.json' 2>/dev/null | head -1)
+              D=$(find d -name 'datos-*.json' 2>/dev/null | sort | tail -1)
+
+              # --- aviso.json ---
+              # Si el artifact ya deja su propio aviso-*.json, ese gana (llega
+              # en segundos). Se recorren del mas nuevo al mas viejo y se toma
+              # el primero que sea JSON valido: un archivo cortado a medias NO
+              # debe tumbar el aviso bueno que ya esta publicado.
+              AV=""
+              for f in $(find d -name 'aviso-*.json' 2>/dev/null | sort -r); do
+                if python3 -c "import json,sys; json.load(open(sys.argv[1]))" "$f" 2>/dev/null; then
+                  AV="$f"; break
+                fi
+              done
+              if [ -n "$AV" ]; then
+                cp "$AV" aviso.new
+              elif [ -z "$HAY_AV" ] && [ -n "$D" ]; then
+                # No existe ningun aviso-*: se usa el que viene dentro de datos-*.
+                python3 -c "import json,sys; j=json.load(open(sys.argv[1])); print(json.dumps(j.get('aviso') or {}, ensure_ascii=False))" "$D" > aviso.new 2>/dev/null || rm -f aviso.new
+              fi
+              # Si habia aviso-* pero todos corruptos, aviso.json se queda como esta.
+
+              CAMBIO=0
+              if [ -f aviso.new ]; then
+                if cmp -s aviso.new aviso.json; then
+                  rm -f aviso.new
+                else
+                  mv aviso.new aviso.json
+                  CAMBIO=1
+                fi
+              fi
+
+              # --- datos.json (se valida que traiga renglones) ---
+              if [ -n "$D" ] && python3 -c "import json,sys; j=json.load(open(sys.argv[1])); assert j['datos']['rows']" "$D" 2>/dev/null; then
+                if ! cmp -s "$D" datos.json; then
+                  cp "$D" datos.json
+                  CAMBIO=1
+                fi
+              fi
+
+              rm -rf d d.zip aviso.new
+
+              if [ "$CAMBIO" = "1" ]; then
+                [ -f datos.json ] && git add datos.json
+                [ -f aviso.json ] && git add aviso.json
+                if ! git diff --cached --quiet; then
+                  git commit -q -m "Tablero $(date -u '+%Y-%m-%d %H:%M') UTC"
+                  git pull --rebase --autostash -q || true
+                  git push -q || echo "push falló, se reintenta en la siguiente vuelta"
+                  echo "publicado $(date -u '+%H:%M:%S')"
+                fi
+              fi
+            fi
+            rm -rf d d.zip aviso.new
+            sleep 20
+          done
