@@ -648,7 +648,7 @@ render(window.__DATOS__);
   var intento=0;
   function cargar(){
     var x=new XMLHttpRequest();
-    x.open("GET",(intento%2?"datos.json":"https://raw.githubusercontent.com/moisespena-web/tablero-dimaco-k7q3/main/datos.json")+"?t="+Date.now(),true);
+    x.open("GET",(intento%2?"https://raw.githubusercontent.com/moisespena-web/tablero-dimaco-k7q3/main/datos.json":"datos.json")+"?t="+Date.now(),true);
     x.onerror=function(){intento++;};
     x.onload=function(){if(x.status!==200){intento++;return;}var j;try{j=JSON.parse(x.responseText);}catch(e){return;}
       var D=j&&j.datos;
@@ -667,7 +667,7 @@ render(window.__DATOS__);
   /* --- el aviso va en su propio archivo (~100 bytes): se relee cada 15 s --- */
   function cargarAviso(){
     var x=new XMLHttpRequest();
-    x.open("GET",(intentoA%2?"aviso.json":"https://raw.githubusercontent.com/moisespena-web/tablero-dimaco-k7q3/main/aviso.json")+"?t="+Date.now(),true);
+    x.open("GET",(intentoA%2?"https://raw.githubusercontent.com/moisespena-web/tablero-dimaco-k7q3/main/aviso.json":"aviso.json")+"?t="+Date.now(),true);
     x.onerror=function(){intentoA++;};
     x.onload=function(){
       if(x.status!==200){intentoA++;return;}
