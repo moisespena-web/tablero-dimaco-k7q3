@@ -93,6 +93,8 @@ justify-content:flex-end;gap:10px}
 footer{display:flex;align-items:center;gap:20px;font-size:18px;color:var(--tx2)}
 footer .msg{flex:1}
 #stamp.viejo{color:#fff;background:var(--alarm);padding:4px 12px;border-radius:8px;font-weight:700}
+ #stamp.ok{color:#7FE3BC;background:#0C3024;border:1px solid #1B7A56;padding:4px 12px;border-radius:8px;font-weight:700}
+#stamp.fuera{color:#8FA3BA;background:#121C29;border:1px solid #22344A;padding:4px 12px;border-radius:8px}
 .bar{height:6px;background:#1B2A3D;border-radius:3px;width:320px;overflow:hidden}
 .bar i{display:block;height:100%;background:var(--tx2);width:0}
 .legend{display:flex;gap:18px;align-items:center}
@@ -517,13 +519,47 @@ function render0(D){
     return '<div class="page'+(i===pagina?" on":"")+'"><div class="ptitle">'+b[0]+(datos&&datos.modo==="entregas"?LEYT:"")+'</div>'+(datos&&datos.modo==="entregas"?HEAD.replace("LÍMITE","ENTREGA"):HEAD)+b[1].map(function(x){return x.sep?'<div class="sep">'+esc(x.sep)+'</div>':fila(x);}).join("")+'</div>';}).join("");
   var sp=$("stamp");sp.setAttribute("data-ts",D.stamp||"");
   sp.setAttribute("data-base","Datos de Katana: "+String(D.stamp||"").slice(11,16));
-  edad();
-}
-function edad(){
-  var sp=$("stamp"),ts=Date.parse(sp.getAttribute("data-ts")),base=sp.getAttribute("data-base")||"";
-  var h=(Date.now()-ts)/3600000;
-  if(isFinite(h)&&h>2){sp.className="viejo";sp.textContent=base+" · hace "+Math.floor(h)+" h";}
-  else{sp.className="";sp.textContent=base;}
+  function edad(){
+  /* Semaforo de frescura, alineado a los 3 cortes de Cynthia (10:05 / 14:05 / 18:05, L-V).
+     Mide si LLEGO el corte que tocaba, no la edad de los datos.
+       verde = el ultimo corte esperado si llego
+       gris  = fuera de turno (antes de 7:30, despues de 19:00, fin de semana)
+       rojo  = paso un corte + 20 min de gracia y el dato no avanzo
+     Usa el mismo truco de mx(): corre el reloj -6 h y lee con getUTC*. */
+  var sp=$("stamp"),ts=Date.parse(sp.getAttribute("data-ts"));
+  if(!isFinite(ts)){sp.className="";sp.textContent=sp.getAttribute("data-base")||"";return;}
+  var CORTES=[[10,5],[14,5],[18,5]],GRACIA=20*60000,INI=7.5,FIN=19;
+  function mxD(t){return new Date(t-6*3600000);}
+  var now=mxD(Date.now()),DS=mxD(ts);
+  function hm(d){return pad(d.getUTCHours())+":"+pad(d.getUTCMinutes());}
+  function hab(d){var w=d.getUTCDay();return w>=1&&w<=5;}
+  function corte(d,i){return new Date(Date.UTC(d.getUTCFullYear(),d.getUTCMonth(),d.getUTCDate(),CORTES[i][0],CORTES[i][1],0,0));}
+  function dia(d,n){return new Date(Date.UTC(d.getUTCFullYear(),d.getUTCMonth(),d.getUTCDate()+n,12,0,0,0));}
+  function cuando(d){
+    var a=Date.UTC(now.getUTCFullYear(),now.getUTCMonth(),now.getUTCDate()),
+        b=Date.UTC(d.getUTCFullYear(),d.getUTCMonth(),d.getUTCDate()),
+        n=Math.round((b-a)/86400000);
+    return (n===0?"":n===-1?"ayer ":n===1?"mañana ":(d.getUTCDate()+"/"+(d.getUTCMonth()+1)+" "))+hm(d);
+  }
+  var ult=null,d=now;
+  for(var k=0;k<8&&!ult;k++){
+    if(hab(d))for(var i=CORTES.length-1;i>=0;i--){var c=corte(d,i);if(now-c>=GRACIA){ult=c;break;}}
+    if(!ult)d=dia(d,-1);
+  }
+  var prox=null,e=now;
+  for(var k2=0;k2<8&&!prox;k2++){
+    if(hab(e))for(var j=0;j<CORTES.length;j++){var c2=corte(e,j);if(c2.getTime()+GRACIA>now){prox=c2;break;}}
+    if(!prox)e=dia(e,1);
+  }
+  var pt=prox?cuando(prox):"—";
+  var hnow=now.getUTCHours()+now.getUTCMinutes()/60;
+  if(!hab(now)||hnow>=FIN||hnow<INI){
+    sp.className="fuera";sp.textContent="Fuera de turno · últimos datos "+cuando(DS)+" · próximo corte "+pt;
+  }else if(!ult||ts>=ult.getTime()+6*3600000-60000){
+    sp.className="ok";sp.textContent="Corte "+cuando(DS)+" ✓ · próximo "+pt;
+  }else{
+    sp.className="viejo";sp.textContent="No llegó el corte de las "+hm(ult)+" · datos de "+cuando(DS);
+  }
 }
 
 /* ---------- escala, reloj, rotación ---------- */
