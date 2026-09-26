@@ -93,6 +93,8 @@ justify-content:flex-end;gap:10px}
 footer{display:flex;align-items:center;gap:20px;font-size:18px;color:var(--tx2)}
 footer .msg{flex:1}
 #stamp.viejo{color:#fff;background:var(--alarm);padding:4px 12px;border-radius:8px;font-weight:700}
+#stamp.ok{color:#7FE3BC;background:#0C3024;border:1px solid #1B7A56;padding:4px 12px;border-radius:8px;font-weight:700}
+#stamp.fuera{color:#8FA3BA;background:#121C29;border:1px solid #22344A;padding:4px 12px;border-radius:8px}
 .bar{height:6px;background:#1B2A3D;border-radius:3px;width:320px;overflow:hidden}
 .bar i{display:block;height:100%;background:var(--tx2);width:0}
 .legend{display:flex;gap:18px;align-items:center}
@@ -251,6 +253,31 @@ header img{height:82px;padding:2px 10px}
 .pmes .sbig i{font-style:normal;font-size:19px;color:var(--tx2);font-weight:400;margin-left:3px}
 .pmes .smix{display:flex;gap:18px;margin-top:1px;font-size:18px;font-weight:700}
 .pmes .smix span{flex:none;line-height:1.15}
+
+/* --- 24-sep: recuadro FALTA MATERIAL · top 4 + contador (aprobado por Moises) ---
+   El recuadro ya no se desborda: ancho segun lo que haya (min 600, max 860) y los
+   chips en dos renglones internos (SKU arriba, cantidad abajo) para que quepan 4
+   a buen tamano. La altura queda igual que las tarjetas de indicadores, asi que
+   la tabla de MOs de abajo NO cambia de tamano. */
+#mat{flex:0 1 auto;min-width:600px;max-width:860px}
+#mat .ml{display:flex;align-items:baseline;gap:14px}
+#mat .mn{margin-left:auto;font-size:13px;font-weight:400;letter-spacing:0;color:#FFB3B6;white-space:nowrap}
+.chips{gap:10px;margin:4px 0 0}
+.chip{flex-direction:column;align-items:flex-start;gap:0;padding:1px 10px}
+.chip b{font-size:19px;line-height:1.1}
+.chip i{font-size:24px;line-height:1.1}
+.chip em{font-size:13px;margin-left:5px}
+.chip.mas{justify-content:center;background:none;border-style:dashed;padding:1px 12px}
+.chip.mas i{font-size:26px;line-height:1.1;color:#FFB3B6}
+.chip.mas em{margin:0;font-size:13px;line-height:1.1}
+
+/* --- 25-sep: recuadro de AVISO mas ancho y letra mas chica (pedido de Moises).
+   La ALTURA no cambia (84 px, igual que antes), asi que el resto del tablero
+   queda identico. Solo crece a lo ancho y baja el tamano de letra, para que
+   quepa casi todo el aviso (unos 130 de los 140 caracteres) sin cortarse con "...".
+   El titulo del encabezado no se corta: fitTitle() ya lo encoge solo. */
+.aviso{flex:0 1 880px;max-width:880px}
+.aviso .at{font-size:23px;line-height:1.25}
 </style></head><body>
 <div id="stage">
  <header>
@@ -458,8 +485,15 @@ function renderMes(E){
     cajaSem(S.actual,"ESTA SEMANA",true)+cajaSem(S.pasada,"SEMANA PASADA",false)+'</div></div>'):'';
   return '<div class="mcol">'+card+sem_html+'</div>'+chart;
 }
-function renderMat(D){var m=$('mat');var mt=(D&&D.material)||[];if(!D||D.modo!=='entregas'){m.hidden=true;return;}m.hidden=false;m.className=mt.length?'falta':'ok';
-  m.innerHTML=mt.length?'<div class="ml">FALTA MATERIAL · PRÓXIMOS 5 DÍAS</div><div class="chips">'+mt.map(function(x){return '<span class="chip"><b class="mono">'+esc(x.sku)+'</b><i>'+x.barras+'</i><em>barras</em></span>';}).join('')+'</div><div class="ks">'+esc(D.materialNota||'')+'</div>':'<div class="ml">MATERIAL · PRÓXIMOS 5 DÍAS</div><div class="kv" style="color:#4FE0A6">Completo</div>';}
+function renderMat(D){var m=$('mat');var mt=(D&&D.material)||[];if(!D||D.modo!=='entregas'){m.hidden=true;return;}
+  m.hidden=false;m.className=mt.length?'falta':'ok';
+  if(!mt.length){m.innerHTML='<div class="ml">MATERIAL · PRÓXIMOS 5 DÍAS</div><div class="kv" style="color:#4FE0A6">Completo</div>';return;}
+  /* mt viene congelado de la base: se copia antes de ordenar */
+  var MAX=4,xs=mt.slice().sort(function(a,b){return (b.barras||0)-(a.barras||0);});
+  var top=xs.slice(0,MAX),resto=xs.length-top.length;
+  var chips=top.map(function(x){return '<span class="chip"><b class="mono">'+esc(x.sku)+'</b><i>'+x.barras+'</i></span>';}).join('');
+  if(resto>0)chips+='<span class="chip mas"><i>+'+resto+'</i><em>'+(resto===1?'material más':'materiales más')+'</em></span>';
+  m.innerHTML='<div class="ml">FALTA MATERIAL · PRÓXIMOS 5 DÍAS<span class="mn">'+esc(D.materialNota||'')+'</span></div><div class="chips">'+chips+'</div>';}
 function render(D){try{renderMat(D);}catch(e){}try{render0(D);}catch(e){}}
 function render0(D){
   var D0=D;D={};for(var kk in D0)D[kk]=D0[kk];
@@ -520,10 +554,44 @@ function render0(D){
   edad();
 }
 function edad(){
-  var sp=$("stamp"),ts=Date.parse(sp.getAttribute("data-ts")),base=sp.getAttribute("data-base")||"";
-  var h=(Date.now()-ts)/3600000;
-  if(isFinite(h)&&h>2){sp.className="viejo";sp.textContent=base+" · hace "+Math.floor(h)+" h";}
-  else{sp.className="";sp.textContent=base;}
+  /* Semaforo de frescura, alineado a los 3 cortes de Cynthia (10:05 / 14:05 / 18:05, L-V).
+     Mide si LLEGO el corte que tocaba, no la edad de los datos.
+       verde = el ultimo corte esperado si llego
+       gris  = fuera de turno (antes de 7:30, despues de 19:00, fin de semana)
+       rojo  = paso un corte + 20 min de gracia y el dato no avanzo
+     Copia GitHub: todo en hora fija de CDMX (UTC-6), igual que mx(), sin depender del reloj de la TV.
+     Se trabaja con "fechas virtuales" (epoch - 6 h) y getters UTC. */
+  var sp=$("stamp"),ts=Date.parse(sp.getAttribute("data-ts"));
+  if(!isFinite(ts)){sp.className="";sp.textContent=sp.getAttribute("data-base")||"";return;}
+  var OFF=6*3600000,CORTES=[[10,5],[14,5],[18,5]],GRACIA=20*60000,INI=7.5,FIN=19;
+  var now=new Date(Date.now()-OFF),DS=new Date(ts-OFF);
+  function hm(d){return pad(d.getUTCHours())+":"+pad(d.getUTCMinutes());}
+  function hab(d){var w=d.getUTCDay();return w>=1&&w<=5;}
+  function dia(d,dd,h,mi){return new Date(Date.UTC(d.getUTCFullYear(),d.getUTCMonth(),d.getUTCDate()+(dd||0),h||0,mi||0,0,0));}
+  function corte(d,i){return dia(d,0,CORTES[i][0],CORTES[i][1]);}
+  function cuando(d){
+    var n=Math.round((dia(d)-dia(now))/86400000);
+    return (n===0?"":n===-1?"ayer ":n===1?"mañana ":(d.getUTCDate()+"/"+(d.getUTCMonth()+1)+" "))+hm(d);
+  }
+  var ult=null,d=new Date(now.getTime());
+  for(var k=0;k<8&&!ult;k++){
+    if(hab(d))for(var i=CORTES.length-1;i>=0;i--){var c=corte(d,i);if(now-c>=GRACIA){ult=c;break;}}
+    if(!ult)d=dia(d,-1,23,59);
+  }
+  var prox=null,e=new Date(now.getTime());
+  for(var k2=0;k2<8&&!prox;k2++){
+    if(hab(e))for(var j=0;j<CORTES.length;j++){var c2=corte(e,j);if(c2.getTime()+GRACIA>now.getTime()){prox=c2;break;}}
+    if(!prox)e=dia(e,1,0,1);
+  }
+  var pt=prox?cuando(prox):"—";
+  var hnow=now.getUTCHours()+now.getUTCMinutes()/60;
+  if(!hab(now)||hnow>=FIN||hnow<INI){
+    sp.className="fuera";sp.textContent="Fuera de turno · últimos datos "+cuando(DS)+" · próximo corte "+pt;
+  }else if(!ult||DS.getTime()>=ult.getTime()-60000){
+    sp.className="ok";sp.textContent="Corte "+cuando(DS)+" ✓ · próximo "+pt;
+  }else{
+    sp.className="viejo";sp.textContent="No llegó el corte de las "+hm(ult)+" · datos de "+cuando(DS);
+  }
 }
 
 /* ---------- escala, reloj, rotación ---------- */
