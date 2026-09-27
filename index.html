@@ -381,7 +381,7 @@ function crearSonidos(getCtx){
 (function(){
 "use strict";
 var OPS=["Corte","Taladro","CNC","Doblez","Limpieza & SQA"];
-var LBL={"Corte":"CORTE","Taladro":"TALADRO","CNC":"CUA","Doblez":"DOBLEZ","Limpieza & SQA":"LIMPIEZA"};
+var LBL={"Corte":"CORTE","Taladro":"TALADRO","CNC":"TM-2P","Doblez":"DOBLEZ","Limpieza & SQA":"LIMPIEZA"};
 var ORD={"Corte":0,"Taladro":1,"CNC":2,"Doblez":3,"Limpieza & SQA":4};
 var TIPOS=[["Tipo 1",["Corte","Limpieza & SQA"],"#17A67F"],
  ["Tipo 2",["Corte","Taladro","Limpieza & SQA"],"#3E8FD8"],
@@ -447,7 +447,7 @@ var HEAD='<div class="row head"><div class="stripe"></div><div class="mo">ORDEN<
  '</div><div class="dl">LÍMITE</div></div>';
 
 var datos=null, pagina=0, t0=Date.now();
-var LEYT='<span class="leyt">'+TIPOS.map(function(t){return '<span><b class="tpill" style="background:'+t[2]+'">'+t[0].toUpperCase()+'</b> '+t[1].map(function(o){return {"Corte":"Corte","Taladro":"Taladro","CNC":"CUA","Doblez":"Doblez","Limpieza & SQA":"Limp."}[o];}).join(" + ")+'</span>';}).join("")+'</span>';
+var LEYT='<span class="leyt">'+TIPOS.map(function(t){return '<span><b class="tpill" style="background:'+t[2]+'">'+t[0].toUpperCase()+'</b> '+t[1].map(function(o){return {"Corte":"Corte","Taladro":"Taladro","CNC":"TM-2P","Doblez":"Doblez","Limpieza & SQA":"Limp."}[o];}).join(" + ")+'</span>';}).join("")+'</span>';
 var MESL=["ENERO","FEBRERO","MARZO","ABRIL","MAYO","JUNIO","JULIO","AGOSTO","SEPTIEMBRE","OCTUBRE","NOVIEMBRE","DICIEMBRE"];
 var CU="#D9773F",AL="#8FA6BA";
 function nf(n){return Math.round(n).toLocaleString("en-US");}
