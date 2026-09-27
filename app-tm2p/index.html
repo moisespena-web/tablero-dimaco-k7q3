@@ -53,7 +53,7 @@ button:disabled{cursor:not-allowed}
 var now0=Date.now(), JORNADA=[8,16];   /* supuesto del prototipo: turno 8:00-16:00, L-V; entregas antes de 14:00 */
 var PZ=window.PIEZAS||{}, LOGO=null;
 function nuevo(){return {status:'none',done:0,worked:0,runStart:null,pauseStart:null,paused:0,motivos:[],op:null,tramoStart:null,log:[]};}
-var S={pantalla:'lista',sel:0,modal:null,opSel:null,pin:'',fin:'',finErr:'',pendiente:null,zoom:1,maqHoy:0,
+var S={pantalla:'lista',sel:0,modal:null,opSel:null,pin:'',fin:'',finErr:'',pendiente:null,zoom:1,maqHoy:0,tramos:[],resDia:null,
 mos:[
 {mo:'MO-348',sec:1,tipo:'TIPO 5',color:'#D19A2E',nombre:'TERM. 1/4 x 1-1/2 x 3.625',sku:'36B4467-0029',piezas:48,entrega:'28-sep',ent:'2026-09-28',badge:'URGE',prio:true,paso:'CNC Ø + SLT',planeado:195,
  ruta:[['Corte','done'],['Taladro',null],['TM-2P','none'],['Doblez','none'],['Limpieza','none']],ingSku:'ALSL 1/4x1 1/2',ingNombre:'Solera Aluminio 1/4" x 1 1/2"',ingIn:174,notas:'Prioridad del cliente.',st:nuevo()},
@@ -61,7 +61,7 @@ mos:[
  ruta:[['Corte','done'],['Taladro',null],['TM-2P','none'],['Doblez',null],['Limpieza','none']],ingSku:'ALSL 1/4x1 1/2',ingNombre:'Solera Aluminio 1/4" x 1 1/2"',ingIn:810,notas:'Prioridad del cliente.',st:nuevo()},
 {mo:'MO-327',sec:19,tipo:'TIPO 4',color:'#D1663C',nombre:'TERM AL. 1/4 x 3/4 x 2.875',sku:'37A10786-0003',piezas:15,entrega:'30-sep',ent:'2026-09-30',badge:'VENCIDA 25-sep',venc:true,prio:false,paso:'CNC Ø + RECT',planeado:315,
  ruta:[['Corte','done'],['Taladro',null],['TM-2P','none'],['Doblez',null],['Limpieza','none']],ingSku:'ALSL 1/4x3/4',ingNombre:'Solera Aluminio 1/4" x 3/4"',ingIn:43.125,notas:'Sin notas.',
- st:Object.assign(nuevo(),{status:'prog',op:'Emiliano',runStart:now0-25*60000,tramoStart:now0-25*60000})},
+ st:nuevo()},
 {mo:'MO-350',sec:20,tipo:'TIPO 5',color:'#D19A2E',nombre:'TERM AL. 1/4 x 1-1/2 x 3.625',sku:'36B3480-0011',piezas:142,entrega:'30-sep',ent:'2026-09-30',badge:'',prio:false,paso:'CNC Ø + SLT',planeado:189,
  ruta:[['Corte','done'],['Taladro',null],['TM-2P','none'],['Doblez','none'],['Limpieza','none']],ingSku:'ALSL 1/4x1 1/2',ingNombre:'Solera Aluminio 1/4" x 1 1/2"',ingIn:514.75,notas:'Sin notas.',st:nuevo()}
 ]};
@@ -76,7 +76,14 @@ function durTxt(ms){var neg=ms<0;ms=Math.abs(ms);var m=Math.round(ms/60000);retu
 function cur(){return S.mos[S.sel];}
 function trab(st){return st.worked+(st.runStart?Date.now()-st.runStart:0);}
 /* tiempo efectivo de la máquina hoy = tramos cerrados + tramo en curso (sin pausas) */
-function maquinaHoy(){var t=S.maqHoy;S.mos.forEach(function(m){t+=trab(m.st);});return t;}
+function diaKey(ms){var d=new Date(ms);return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());}
+function diaTxt(k){var p=k.split('-'),d=new Date(+p[0],+p[1]-1,+p[2]);return DIAS[d.getDay()]+' '+d.getDate()+' de '+MESES[d.getMonth()];}
+function maquinaHoy(){var hoy=diaKey(Date.now()),t=0;S.tramos.forEach(function(r){if(r.d===hoy)t+=r.trab;});S.mos.forEach(function(m){t+=trab(m.st);});return t;}
+/* guardar en esta tablet: sobrevive a cerrar la app o recargar */
+var KEY='dimaco_tm2p_v1';
+function guardar(){try{localStorage.setItem(KEY,JSON.stringify({t:Date.now(),tramos:S.tramos,st:S.mos.map(function(m){return [m.mo,m.st];})}));}catch(e){}}
+function cargar(){try{var j=JSON.parse(localStorage.getItem(KEY)||'null');if(!j)return;
+ S.tramos=j.tramos||[];(j.st||[]).forEach(function(p){S.mos.forEach(function(m){if(m.mo===p[0])m.st=Object.assign(nuevo(),p[1]);});});}catch(e){}}
 /* horas de jornada disponibles desde ahora hasta el día de entrega a las 14:00 */
 function disponible(iso){var fin=new Date(iso+'T14:00:00'),t=new Date(),ms=0;
  for(var d=new Date(t.getFullYear(),t.getMonth(),t.getDate());d<=fin;d.setDate(d.getDate()+1)){
@@ -96,6 +103,8 @@ function cerrarTramo(st,pz,motivo){var n=Date.now();
  var porPz=pz>0?Math.round(st.worked/1000/pz)+' s/pz':(motivo||'sin piezas');
  var pt=st.paused?' · pausa '+durTxt(st.paused)+' ('+st.motivos.join(', ')+')':'';
  st.log.unshift((st.op||'')+' · '+hm(st.tramoStart)+'–'+hm(n)+' · trabajo '+durTxt(st.worked)+pt+' · '+pz+' pz · '+porPz);
+ var mm=S.mos.filter(function(q){return q.st===st;})[0]||{};
+ S.tramos.push({d:diaKey(st.tramoStart||n),mo:mm.mo,paso:mm.paso,sku:mm.sku,op:st.op||'',ini:st.tramoStart||n,fin:n,trab:st.worked,pausa:st.paused,motivos:st.motivos.slice(),pz:pz,motivo:pz>0?'':(motivo||''),termino:false});
  S.maqHoy+=st.worked;st.done+=pz;st.worked=0;st.paused=0;st.motivos=[];st.tramoStart=null;}
 var A={};
 function act(name,arg){return 'data-a="'+name+'"'+(arg!=null?' data-v="'+E(arg)+'"':'');}
@@ -125,7 +134,7 @@ function vKpis(){var pend=S.mos.filter(function(m){return m.st.status!=='done';}
 
 function vLista(){
  return '<div style="flex-grow:1;display:flex;flex-direction:column;gap:8px;padding:0 24px 12px;min-height:0">'+
- '<div style="display:flex;align-items:baseline;justify-content:space-between"><div style="font-size:17px;letter-spacing:3px;color:var(--tx2)">COLA DE LA TM-2P · MISMO ORDEN QUE LA TV</div><div style="font-size:15px;color:var(--tx2)">Toca una orden para abrirla</div></div>'+
+ '<div style="display:flex;align-items:baseline;justify-content:space-between"><div style="font-size:17px;letter-spacing:3px;color:var(--tx2)">COLA DE LA TM-2P · MISMO ORDEN QUE LA TV</div><div style="display:flex;align-items:center;gap:16px"><span style="font-size:15px;color:var(--tx2)">Toca una orden para abrirla</span><button type="button" class="sec" style="min-height:48px;font-size:19px;font-weight:700;border-color:#3E8FD8;color:#9CCBF5" '+act('resumen')+'>📋 Resumen del turno</button></div></div>'+
  S.mos.map(function(m,i){var st=m.st;
   return '<button type="button" class="fila" '+act('abrir',i)+' style="background:'+(m.prio?'#2A2F3A':'#121C29')+';border:'+(m.prio?'2px solid #EAF1F9':'1px solid #22344A')+'">'+
   '<div style="width:8px;height:60px;border-radius:4px;flex:none;background:'+m.color+'"></div>'+
@@ -134,7 +143,7 @@ function vLista(){
   '<div style="width:240px;flex:none;display:flex;flex-direction:column;align-items:flex-start;gap:6px"><span style="font-size:20px">'+E(m.paso)+'</span><span style="'+estSty(st)+'">'+E(estTxt(st))+'</span></div>'+
   '<div style="width:120px;flex:none;text-align:right"><b style="font-size:28px">'+st.done+'/'+m.piezas+'</b><div style="font-size:14px;color:var(--tx2)">piezas</div></div>'+
   '<div style="width:170px;flex:none;display:flex;flex-direction:column;align-items:flex-end;gap:6px"><span style="font-size:24px;font-weight:700">'+m.entrega+'</span>'+badge(m)+'</div></button>';}).join('')+
- '<div style="margin-top:auto;font-size:14px;color:var(--tx2)">MODO PRUEBA · MOs reales de Katana (26-sep). No escribe en Katana: los botones solo simulan. Recargar la página reinicia la prueba.</div></div>';}
+ '<div style="margin-top:auto;font-size:14px;color:var(--tx2)">PILOTO · MOs de Katana al 26-sep. Lo capturado se guarda en esta tablet; todavía no escribe en Katana: Cynthia lo registra con el Resumen del turno.</div></div>';}
 
 function bigBtn(bg,fg,on){return 'background:'+bg+';color:'+fg+';opacity:'+(on?1:.25);}
 function vDetalle(){var m=cur(),st=m.st,falt=m.piezas-st.done,tramo=st.tramoStart?trab(st):0,img=PZ[m.sku];
@@ -179,6 +188,7 @@ function vDetalle(){var m=cur(),st=m.st,falt=m.piezas-st.done,tramo=st.tramoStar
    '</div></div></div></div>';}
 
 function vModal(){if(!S.modal)return '';var m=cur(),st=m.st,falt=m.piezas-st.done,h='';
+ if(S.modal==='resumen')return vResumen();
  if(S.modal==='pieza'){var img=PZ[m.sku],z=S.zoom;
   return '<div class="modal" style="flex-direction:column;gap:14px;padding:20px">'+
    '<div style="display:flex;align-items:center;gap:14px;width:100%"><span class="mono" style="font-size:30px;font-weight:700">'+m.mo+'</span><span class="mono sku" style="font-size:20px">'+m.sku+'</span><span style="flex-grow:1;font-size:22px">'+E(m.nombre)+'</span>'+
@@ -197,15 +207,45 @@ function vModal(){if(!S.modal)return '';var m=cur(),st=m.st,falt=m.piezas-st.don
   '<div style="min-height:26px;font-size:20px;font-weight:700;color:#FF6369">'+E(S.finErr)+'</div><div class="g6">'+teclado('fin')+'</div>'+
   '<div style="display:flex;gap:12px"><button type="button" '+act('finOk')+' style="flex-grow:1;min-height:64px;border-radius:12px;border:0;background:#3E8FD8;color:#fff;font-size:26px;font-weight:700">Guardar</button><button type="button" class="sec" '+act('cerrar')+'>Cancelar</button></div>';}
  else if(S.modal==='cero'){h='<div class="ttl">No terminaste piezas en este tramo. ¿Por qué?</div><div class="g2">'+['Se acabó el turno','Problema con la pieza','Ajuste de máquina','Otro'].map(function(t){return '<button type="button" '+act('motCero',t)+' style="min-height:84px;border-radius:12px;border:2px solid #22344A;background:#18263A;color:#EAF1F9;font-size:24px;font-weight:700">'+t+'</button>';}).join('')+'</div>';}
- else if(S.modal==='confirma'){h='<div class="ttl">¿Terminaste las '+m.piezas+' piezas?</div><div style="font-size:21px;line-height:1.4;color:#C9D6E6">La operación <b>'+E(m.paso)+'</b> de <b>'+m.mo+'</b> se marca <b style="color:#7FE3BC">TERMINADA</b> en Katana. La MO la sigue liberando Cynthia.</div>'+
+ else if(S.modal==='confirma'){h='<div class="ttl">¿Terminaste las '+m.piezas+' piezas?</div><div style="font-size:21px;line-height:1.4;color:#C9D6E6">La operación <b>'+E(m.paso)+'</b> de <b>'+m.mo+'</b> se marca <b style="color:#7FE3BC">TERMINADA</b> y aparece en el Resumen del turno para que Cynthia la registre en Katana.</div>'+
   '<div style="display:flex;gap:12px"><button type="button" '+act('confSi')+' style="flex-grow:1;min-height:70px;border-radius:12px;border:0;background:#25C083;color:#07121B;font-size:26px;font-weight:700">Sí, terminé</button><button type="button" class="sec" style="flex-grow:1;min-height:70px" '+act('confNo')+'>No, corregir</button></div>';}
  return '<div class="modal"><div class="mbox">'+h+'</div></div>';}
 
+function vResumen(){var k=S.resDia||diaKey(Date.now()),hoy=diaKey(Date.now()),rows=S.tramos.filter(function(r){return r.d===k;}).slice();
+ if(k===hoy)S.mos.forEach(function(m){var st=m.st;if(st.tramoStart)rows.push({d:k,mo:m.mo,paso:m.paso,op:st.op||'',ini:st.tramoStart,fin:null,trab:trab(st),pausa:st.paused+(st.pauseStart?Date.now()-st.pauseStart:0),motivos:st.motivos,pz:null,vivo:st.status});});
+ rows.sort(function(a,b){return a.ini-b.ini;});
+ var tot={};rows.forEach(function(r){var t=tot[r.mo]=tot[r.mo]||{mo:r.mo,paso:r.paso,pz:0,trab:0,pausa:0,termino:false};t.pz+=r.pz||0;t.trab+=r.trab;t.pausa+=r.pausa;if(r.termino)t.termino=true;});
+ var dias=[];S.tramos.forEach(function(r){if(dias.indexOf(r.d)<0)dias.push(r.d);});if(dias.indexOf(hoy)<0)dias.push(hoy);dias.sort();var i=dias.indexOf(k);
+ var th='style="text-align:left;font-size:14px;letter-spacing:1px;color:var(--tx2);font-weight:600;padding:6px 8px;border-bottom:1px solid var(--line)"',td='style="padding:7px 8px;border-bottom:1px solid #1B2A3D;font-size:17px;vertical-align:top"';
+ var mos=Object.keys(tot).map(function(x){return tot[x];});
+ return '<div class="modal" style="flex-direction:column;gap:14px;padding:22px 26px;align-items:stretch;justify-content:flex-start;background:rgba(5,9,14,.97)">'+
+  '<div style="display:flex;align-items:center;gap:14px"><div style="font-size:28px;font-weight:800;flex-grow:1;white-space:nowrap">📋 Resumen del turno</div>'+
+  '<button type="button" class="sec" '+(i>0?act('resDia',dias[i-1]):'disabled style="opacity:.3"')+'>◀</button><div style="font-size:22px;font-weight:700;min-width:330px;text-align:center;white-space:nowrap">'+diaTxt(k)+(k===hoy?' (hoy)':'')+'</div>'+
+  '<button type="button" class="sec" '+(i<dias.length-1?act('resDia',dias[i+1]):'disabled style="opacity:.3"')+'>▶</button><button type="button" class="sec" style="font-weight:700;border-color:#25C083;color:#7FE3BC;white-space:nowrap" '+act('enviar')+'>'+(S.copiado?'✓ Copiado':'📤 Enviar')+'</button><button type="button" class="sec" style="font-weight:700" '+act('cerrar')+'>✕ Cerrar</button></div>'+
+  '<div style="font-size:16px;color:var(--tx2)">Para Cynthia: por cada MO registra en Katana las piezas y el tiempo de la operación TM-2P. <b style="color:var(--tx)">📤 Enviar</b> lo manda por WhatsApp o correo. Tiempo efectivo: <b style="color:var(--tx)">'+durTxt(mos.reduce(function(a,t){return a+t.trab;},0))+'</b></div>'+
+  (mos.length?'<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px">'+mos.map(function(t){var sp=(t.pz&&t.trab>=1000)?Math.round(t.trab/1000/t.pz):null,pl=(S.mos.filter(function(q){return q.mo===t.mo;})[0]||{}).planeado;
+    return '<div class="kpi" style="padding:10px 14px"><div class="mono" style="font-size:22px;font-weight:700">'+t.mo+(t.termino?' <span style="font-size:14px;color:#7FE3BC">TERMINADA ✓</span>':'')+'</div><div style="font-size:15px;color:var(--tx2)">'+E(t.paso)+'</div>'+
+    '<div style="font-size:20px;margin-top:4px"><b>'+t.pz+' pz</b> · '+durTxt(t.trab)+'</div><div style="font-size:15px;color:var(--tx2)">'+(t.pz?(sp?sp+' s/pz real'+(pl?' · plan '+pl:''):'—'):'sin piezas')+(t.pausa?' · pausas '+durTxt(t.pausa):'')+'</div></div>';}).join('')+'</div>':'')+
+  '<div style="flex-grow:1;overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:12px"><table style="width:100%;border-collapse:collapse">'+
+  '<tr><th '+th+'>HORARIO</th><th '+th+'>MO</th><th '+th+'>OPERADOR</th><th '+th+'>TRABAJO</th><th '+th+'>PAUSAS</th><th '+th+'>PIEZAS</th><th '+th+'>NOTA</th></tr>'+
+  (rows.length?rows.map(function(r){return '<tr><td class="mono" '+td+'>'+hm(r.ini)+'–'+(r.fin?hm(r.fin):'…')+'</td><td class="mono" '+td+'><b>'+r.mo+'</b></td><td '+td+'>'+E(r.op)+'</td><td '+td+'>'+durTxt(r.trab)+'</td><td '+td+'>'+(r.pausa?durTxt(r.pausa)+' <span style="color:var(--tx2)">('+E(r.motivos.join(', '))+')</span>':'—')+'</td><td '+td+'><b>'+(r.pz==null?'—':r.pz)+'</b></td><td style="padding:7px 8px;border-bottom:1px solid #1B2A3D;font-size:16px;color:var(--tx2);vertical-align:top">'+(r.vivo?'<span style="color:#FFD37A">'+(r.vivo==='pausa'?'en pausa':'en proceso')+'</span>':E(r.termino?'Terminó la operación':r.motivo))+'</td></tr>';}).join('')
+   :'<tr><td colspan="7" style="padding:24px;font-size:19px;color:var(--tx2);text-align:center">No hay tramos registrados este día.</td></tr>')+
+  '</table></div></div>';}
+function textoResumen(){var k=S.resDia||diaKey(Date.now()),rows=S.tramos.filter(function(r){return r.d===k;}),tot={},L=['RESUMEN TM-2P · '+diaTxt(k)];
+ rows.forEach(function(r){var t=tot[r.mo]=tot[r.mo]||{paso:r.paso,pz:0,trab:0,termino:false};t.pz+=r.pz;t.trab+=r.trab;if(r.termino)t.termino=true;});
+ Object.keys(tot).forEach(function(mo){var t=tot[mo];L.push(mo+' · '+t.paso+' · '+t.pz+' pz · '+durTxt(t.trab)+(t.termino?' · TERMINADA':''));});
+ L.push('');L.push('Tramos:');rows.forEach(function(r){L.push(hm(r.ini)+'–'+hm(r.fin)+' '+r.mo+' '+r.op+' · '+durTxt(r.trab)+(r.pausa?' · pausa '+durTxt(r.pausa)+' ('+r.motivos.join(', ')+')':'')+' · '+r.pz+' pz'+(r.motivo?' · '+r.motivo:''));});
+ if(!rows.length)L.push('Sin tramos terminados.');return L.join('\n');}
 function render(){document.getElementById('stage').innerHTML=vHeader()+vKpis()+(S.pantalla==='lista'?vLista():vDetalle())+vModal();}
 
 function upd(fn){fn(cur().st);}
 A.abrir=function(v){S.pantalla='detalle';S.sel=+v;};
 A.volver=function(){S.pantalla='lista';};
+A.resumen=function(){S.modal='resumen';S.resDia=diaKey(Date.now());};
+A.resDia=function(v){S.resDia=v;};
+A.enviar=function(){var t=textoResumen();
+ if(navigator.share){navigator.share({title:'Resumen TM-2P',text:t}).catch(function(){});}
+ else if(navigator.clipboard){navigator.clipboard.writeText(t).then(function(){S.copiado=true;render();setTimeout(function(){S.copiado=false;render();},2500);});}};
 A.cerrar=function(){S.modal=null;S.finErr='';};
 A.verPieza=function(){S.modal='pieza';S.zoom=1;};
 A.zoom=function(v){S.zoom=Math.max(1,Math.min(4,S.zoom+(+v)));};
@@ -226,11 +266,11 @@ A.finOk=function(){var m=cur(),falt=m.piezas-m.st.done,n=parseInt(S.fin||'0',10)
  if(n===falt){S.modal='confirma';S.pendiente=n;return;}
  upd(function(x){cerrarTramo(x,n);x.status='none';x.op=null;});S.modal=null;};
 A.motCero=function(v){upd(function(x){cerrarTramo(x,0,v);x.status='none';x.op=null;});S.modal=null;};
-A.confSi=function(){var n=S.pendiente;upd(function(x){cerrarTramo(x,n);x.status='done';x.op=null;});S.modal=null;S.pendiente=null;};
+A.confSi=function(){var n=S.pendiente;upd(function(x){cerrarTramo(x,n);x.status='done';x.op=null;});if(S.tramos.length)S.tramos[S.tramos.length-1].termino=true;S.modal=null;S.pendiente=null;};
 A.confNo=function(){S.modal='fin';S.pendiente=null;};
 
 document.getElementById('stage').addEventListener('click',function(e){var b=e.target.closest('[data-a]');if(!b||b.disabled)return;
- var f=A[b.getAttribute('data-a')];if(f){f(b.getAttribute('data-v'));render();}});
+ var f=A[b.getAttribute('data-a')];if(f){f(b.getAttribute('data-v'));render();guardar();}});
 function fit(){var w=innerWidth,h=innerHeight,sc=Math.min(w/1280,h/800),st=document.getElementById('stage');
  st.style.transform='scale('+sc+')';st.style.left=Math.max(0,(w-1280*sc)/2)+'px';st.style.top=Math.max(0,(h-800*sc)/2)+'px';}
 function isFS(){return !!(document.fullscreenElement||document.webkitFullscreenElement);}
@@ -246,13 +286,14 @@ if(canFS()&&!standalone&&!isFS()){var ov=document.createElement('div');ov.id='ar
  ov.style.cssText='position:fixed;inset:0;z-index:9999;background:#0A101B;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;color:#EAF1F9;font-family:inherit;cursor:pointer;text-align:center;padding:24px';
  ov.innerHTML='<div style="font-size:15px;letter-spacing:3px;color:#8FA3BA">DIMACO · APP DE PISO</div><div style="font-size:54px;font-weight:800">TM-2P</div><div style="font-size:26px;padding:22px 44px;border-radius:18px;background:#1FA463;font-weight:700">Toca para empezar</div><div style="font-size:15px;color:#8FA3BA">Se abre en pantalla completa</div>';
  ov.addEventListener('click',function(){goFS();ov.remove();});document.body.appendChild(ov);}
-addEventListener('resize',fit);fit();render();
+cargar();addEventListener('resize',fit);fit();render();
 /* logo: el mismo del tablero de TV (misma carpeta de GitHub Pages) */
 fetch('../',{cache:'no-store'}).then(function(r){return r.text();}).then(function(t){var m=t.match(/id="logo"\s+src="(data:image\/[^"]+)"/)||t.match(/src="(data:image\/png;base64,[^"]+)"/);if(m){LOGO=m[1];render();}}).catch(function(){});
 setInterval(function(){var c=document.getElementById('crono'),r=document.getElementById('reloj'),e=document.getElementById('efect');
  if(r)r.textContent=hm(Date.now());if(e)e.textContent=dur(maquinaHoy());
  if(c){var st=cur().st;c.textContent=dur(st.tramoStart?trab(st):0);}},1000);
-setInterval(function(){if(!S.modal)render();},60000);
+setInterval(function(){if(!S.modal)render();guardar();},60000);
+addEventListener('pagehide',guardar);document.addEventListener('visibilitychange',guardar);
 })();
 </script>
 </body>
