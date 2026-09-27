@@ -4,6 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0A101B">
 <title>TM-2P · App de piso DIMACO</title>
 <style>
 :root{--bg:#0A1018;--panel:#121C29;--line:#22344A;--tx:#EAF1F9;--tx2:#8FA3BA}
@@ -99,7 +103,7 @@ function vHeader(){var ef=maquinaHoy(),p=Math.min(100,Math.round(100*ef/(8*36000
  '<div style="display:flex;flex-direction:column;flex-grow:1;min-width:0"><div style="font-size:28px;font-weight:700;letter-spacing:.5px">TM-2P · CNC</div><div style="font-size:15px;color:var(--tx2)">Operaciones de MAFESA en orden de ataque · Operador: <b style="color:var(--tx)">'+E(S.pantalla==='detalle'&&cur().st.op?cur().st.op:'—')+'</b></div></div>'+
  '<div class="kpi" style="width:300px;border-color:'+c[1]+';background:'+c[0]+'"><div class="lbl">TM-2P HOY · TIEMPO EFECTIVO</div><div style="display:flex;align-items:baseline;gap:8px"><b class="mono" id="efect" style="font-size:26px;color:'+c[2]+'">'+dur(ef)+'</b><span class="ks">de 8 h · <b id="efPct" style="color:'+c[2]+'">'+p+'%</b></span></div>'+
  '<div style="position:absolute;left:0;right:0;bottom:0;height:6px;background:rgba(255,255,255,.08)"><i id="efBar" style="display:block;height:100%;width:'+p+'%;background:'+c[1]+'"></i></div></div>'+
- '<div style="text-align:right"><div class="mono" id="reloj" style="font-size:42px;font-weight:300;letter-spacing:2px;line-height:1">'+hm(Date.now())+'</div><div style="font-size:16px;color:var(--tx2);margin-top:4px">'+fecha()+'</div></div></div>';}
+ '<button id="fsBtn" title="Pantalla completa" style="width:52px;height:52px;border-radius:12px;border:1px solid var(--line);background:var(--panel);color:var(--tx);font-size:26px;line-height:1;flex:none">'+(isFS()?'✕':'⛶')+'</button><div style="text-align:right"><div class="mono" id="reloj" style="font-size:42px;font-weight:300;letter-spacing:2px;line-height:1">'+hm(Date.now())+'</div><div style="font-size:16px;color:var(--tx2);margin-top:4px">'+fecha()+'</div></div></div>';}
 
 function vKpis(){var pend=S.mos.filter(function(m){return m.st.status!=='done';});
  var pz=pend.reduce(function(a,m){return a+m.piezas-m.st.done;},0),est=pend.reduce(function(a,m){return a+faltanMs(m);},0);
@@ -226,6 +230,19 @@ document.getElementById('stage').addEventListener('click',function(e){var b=e.ta
  var f=A[b.getAttribute('data-a')];if(f){f(b.getAttribute('data-v'));render();}});
 function fit(){var w=innerWidth,h=innerHeight,sc=Math.min(w/1280,h/800),st=document.getElementById('stage');
  st.style.transform='scale('+sc+')';st.style.left=Math.max(0,(w-1280*sc)/2)+'px';st.style.top=Math.max(0,(h-800*sc)/2)+'px';}
+function isFS(){return !!(document.fullscreenElement||document.webkitFullscreenElement);}
+function canFS(){var d=document.documentElement;return !!(d.requestFullscreen||d.webkitRequestFullscreen);}
+function goFS(){var d=document.documentElement;try{var r=d.requestFullscreen?d.requestFullscreen({navigationUI:'hide'}):d.webkitRequestFullscreen();if(r&&r.catch)r.catch(function(){});}catch(e){}}
+function exitFS(){try{(document.exitFullscreen||document.webkitExitFullscreen).call(document);}catch(e){}}
+var standalone=(window.matchMedia&&matchMedia('(display-mode: standalone)').matches)||navigator.standalone===true;
+document.addEventListener('click',function(e){if(e.target.closest('#fsBtn')){e.stopPropagation();isFS()?exitFS():goFS();}},true);
+/* en tablet: cualquier toque regresa a pantalla completa si alguien se salió */
+document.addEventListener('pointerdown',function(e){if(e.pointerType==='touch'&&canFS()&&!isFS()&&!e.target.closest('#fsBtn'))goFS();},true);
+['fullscreenchange','webkitfullscreenchange'].forEach(function(ev){document.addEventListener(ev,function(){setTimeout(fit,50);render();});});
+if(canFS()&&!standalone&&!isFS()){var ov=document.createElement('div');ov.id='arranque';
+ ov.style.cssText='position:fixed;inset:0;z-index:9999;background:#0A101B;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;color:#EAF1F9;font-family:inherit;cursor:pointer;text-align:center;padding:24px';
+ ov.innerHTML='<div style="font-size:15px;letter-spacing:3px;color:#8FA3BA">DIMACO · APP DE PISO</div><div style="font-size:54px;font-weight:800">TM-2P</div><div style="font-size:26px;padding:22px 44px;border-radius:18px;background:#1FA463;font-weight:700">Toca para empezar</div><div style="font-size:15px;color:#8FA3BA">Se abre en pantalla completa</div>';
+ ov.addEventListener('click',function(){goFS();ov.remove();});document.body.appendChild(ov);}
 addEventListener('resize',fit);fit();render();
 /* logo: el mismo del tablero de TV (misma carpeta de GitHub Pages) */
 fetch('../',{cache:'no-store'}).then(function(r){return r.text();}).then(function(t){var m=t.match(/id="logo"\s+src="(data:image\/[^"]+)"/)||t.match(/src="(data:image\/png;base64,[^"]+)"/);if(m){LOGO=m[1];render();}}).catch(function(){});
