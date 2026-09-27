@@ -487,13 +487,13 @@ function renderMes(E){
 }
 function renderMat(D){var m=$('mat');var mt=(D&&D.material)||[];if(!D||D.modo!=='entregas'){m.hidden=true;return;}
   m.hidden=false;m.className=mt.length?'falta':'ok';
-  if(!mt.length){m.innerHTML='<div class="ml">MATERIAL · PRÓXIMOS 5 DÍAS</div><div class="kv" style="color:#4FE0A6">Completo</div>';return;}
+  if(!mt.length){m.innerHTML='<div class="ml">MATERIAL · PRÓXIMOS 7 DÍAS</div><div class="kv" style="color:#4FE0A6">Completo</div>';return;}
   /* mt viene congelado de la base: se copia antes de ordenar */
   var MAX=4,xs=mt.slice().sort(function(a,b){return (b.barras||0)-(a.barras||0);});
   var top=xs.slice(0,MAX),resto=xs.length-top.length;
   var chips=top.map(function(x){return '<span class="chip"><b class="mono">'+esc(x.sku)+'</b><i>'+x.barras+'</i></span>';}).join('');
   if(resto>0)chips+='<span class="chip mas"><i>+'+resto+'</i><em>'+(resto===1?'material más':'materiales más')+'</em></span>';
-  m.innerHTML='<div class="ml">FALTA MATERIAL · PRÓXIMOS 5 DÍAS<span class="mn">'+esc(D.materialNota||'')+'</span></div><div class="chips">'+chips+'</div>';}
+  m.innerHTML='<div class="ml">FALTA MATERIAL · PRÓXIMOS 7 DÍAS<span class="mn">'+esc(D.materialNota||'')+'</span></div><div class="chips">'+chips+'</div>';}
 function render(D){try{renderMat(D);}catch(e){}try{render0(D);}catch(e){}}
 function render0(D){
   var D0=D;D={};for(var kk in D0)D[kk]=D0[kk];
