@@ -278,6 +278,9 @@ header img{height:82px;padding:2px 10px}
    El titulo del encabezado no se corta: fitTitle() ya lo encoge solo. */
 .aviso{flex:0 1 880px;max-width:880px}
 .aviso .at{font-size:23px;line-height:1.25}
+.op{position:relative}
+.op .ord{position:absolute;top:3px;left:7px;font-size:15px;font-weight:800;color:#FFC45C;line-height:1}
+.build{font-size:13px;color:#5C6F86;letter-spacing:.5px;white-space:nowrap;flex:none}
 </style></head><body>
 <div id="stage">
  <header>
@@ -298,7 +301,7 @@ header img{height:82px;padding:2px 10px}
   </div>
   <div class="msg">No olvides reportar el avance diario a las 18:00 y subir la información a Katana.</div>
   <span id="sndIco">🔇</span>
-  <div id="stamp"></div><div class="bar"><i id="pb"></i></div>
+  <div id="stamp"></div><span class="build">v2026-09-28b</span><div class="bar"><i id="pb"></i></div>
  </footer>
  <div id="toasts"></div>
  <div id="snd" hidden><button id="sndBtn" type="button">🔊 Activar sonido y pantalla completa</button>
@@ -415,11 +418,11 @@ function vencida(r){return !!r.deadline&&r.deadline<hoyISO()&&fase(r)!=="listo";
 function fmtF(iso){if(!iso)return "";var p=iso.split("-");return p[2]+"-"+MESES[+p[1]-1];}
 
 function celda(r,op){
-  var m={};r.ops.forEach(function(o){m[o[0]]=o[1];});
+  var m={},p={},f=false,u=-1;r.ops.forEach(function(o,i){m[o[0]]=o[1];p[o[0]]=i+1;var q=ORD[o[0]];if(q!=null){if(q<u)f=true;u=Math.max(u,q);}});
   var st=m[op];if(!st)return '<div class="op empty"></div>';
-  var c={COMPLETED:"done",IN_PROGRESS:"prog",NOT_STARTED:"none"}[st]||"none";
+  var c={COMPLETED:"done",IN_PROGRESS:"prog",PAUSED:"prog",NOT_STARTED:"none"}[st]||"none";
   var k={done:"&#10003;",prog:"&#9679;",none:""}[c];
-  return '<div class="op '+c+'"><span class="dot">'+k+'</span><span class="oplbl">'+LBL[op]+'</span></div>';
+  return '<div class="op '+c+'">'+(f?'<span class="ord">'+p[op]+'</span>':'')+'<span class="dot">'+k+'</span><span class="oplbl">'+LBL[op]+'</span></div>';
 }
 function fila(r){
   var t=tipoDe(r),v=r.entrega?false:vencida(r),l=fase(r)==="listo";
