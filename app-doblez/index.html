@@ -55,7 +55,7 @@ button:disabled{cursor:not-allowed}
 <script>
 (function(){
 "use strict";
-var JORNADA=[8,16], MAQ='Doblez', OPERADOR='Miguel', KEY='dimaco_doblez_v1';
+var JORNADA=[7.5,18.6], MAQ='Doblez', OPERADOR='Miguel', KEY='dimaco_doblez_v1';
 var PZ=window.PIEZAS||{}, LOGO=null;
 function nuevo(){return {status:'none',done:0,worked:0,runStart:null,pauseStart:null,paused:0,motivos:[],op:null,tramoStart:null,log:[]};}
 var TIPOS=[["Tipo 1",["Corte","Limpieza & SQA"],"#17A67F"],["Tipo 2",["Corte","Taladro","Limpieza & SQA"],"#3E8FD8"],["Tipo 3",["Corte","Taladro","Doblez","Limpieza & SQA"],"#7C74D6"],["Tipo 4",["Corte","CNC","Limpieza & SQA"],"#D1663C"],["Tipo 5",["Corte","CNC","Doblez","Limpieza & SQA"],"#D19A2E"]];
@@ -79,11 +79,14 @@ var S={pantalla:'lista',sel:0,modal:null,fin:'',finErr:'',pendiente:null,zoom:1,
 function cur(){return S.mos[S.sel];}
 function trab(st){return st.worked+(st.runStart?Date.now()-st.runStart:0);}
 function maquinaHoy(){var hoy=diaKey(Date.now()),t=0;S.tramos.forEach(function(r){if(r.d===hoy)t+=r.trab;});S.mos.forEach(function(m){t+=trab(m.st);});return t;}
+/* horas de máquina reales (29-sep-2026): turno 7:30-18:36 con breaks 9:00-9:15 y 15:45-16:00 y comida 12:00-13:00 */
+var VENTANAS=[[7.5, 18.6]], PAUSAS=[[9, 9.25], [12, 13], [15.75, 16]], CAPDIA=9.6;
+function hmD(d,h){var x=new Date(d);x.setHours(Math.floor(h),Math.round((h%1)*60),0,0);return x;}
 function disponible(iso){var fin=new Date(iso+'T14:00:00'),t=new Date(),ms=0;
  for(var d=new Date(t.getFullYear(),t.getMonth(),t.getDate());d<=fin;d.setDate(d.getDate()+1)){
   var w=d.getDay();if(w===0||w===6)continue;
-  var a=new Date(d);a.setHours(JORNADA[0],0,0,0);var b=new Date(d);b.setHours(JORNADA[1],0,0,0);
-  if(b>fin)b=fin;if(a<t)a=t;if(b>a)ms+=b-a;}
+  VENTANAS.forEach(function(v){var a=hmD(d,v[0]),b=hmD(d,v[1]);if(b>fin)b=fin;if(a<t)a=t;if(b<=a)return;ms+=b-a;
+   PAUSAS.forEach(function(p){var x=hmD(d,p[0]),y=hmD(d,p[1]);if(x<a)x=a;if(y>b)y=b;if(y>x)ms-=y-x;});});}
  return ms;}
 /* piezas ya hechas en esta estación: terminadas en Katana + lapsos de la tablet; si las notas de la MO traen un avance mayor (ej. 'Doblez: Miguel 155/250'), manda ese */
 function notaPz(m){var r=new RegExp('Doblez[^\\n]*?(\\d+)\\s*/\\s*\\d+','gi'),x,n=0;var t=m.notas||'';while((x=r.exec(t)))n=+x[1];return n;}
@@ -134,12 +137,12 @@ function syncTxt(){if(!enLinea())return ['Modo teléfono','#8FA3BA'];
  return {ok:['● Katana al día','#4FE0A6'],pend:['● Enviando ('+S.cola.length+')','#FFC45C'],err:['● Sin red · '+S.cola.length+' por enviar','#FF6369'],off:['● Conectando…','#8FA3BA']}[S.sync]||['','#8FA3BA'];}
 
 /* ================================ VISTAS ================================ */
-function vHeader(){var ef=maquinaHoy(),p=Math.min(100,Math.round(100*ef/(8*3600000))),c=semaforo(p);
+function vHeader(){var ef=maquinaHoy(),p=Math.min(100,Math.round(100*ef/(CAPDIA*3600000))),c=semaforo(p);
  return '<div class="hdr">'+(LOGO?'<img id="logo" '+act('logo')+' src="'+LOGO+'" alt="DIMACO">':'<div class="logoTxt" '+act('logo')+'>DIMACO</div>')+
  '<div style="flex-grow:1;min-width:0"><div style="font-size:19px;font-weight:800;white-space:nowrap">Estación Doblez</div>'+
  '<div style="font-size:12px;color:var(--tx2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+OPERADOR+' · <b style="color:'+syncTxt()[1]+'">'+E(syncTxt()[0])+'</b></div></div>'+
  '<div style="text-align:right;flex:none"><div class="mono" id="reloj" style="font-size:24px;line-height:1">'+hm(Date.now())+'</div><div style="font-size:11px;color:var(--tx2)">'+fecha()+'</div></div></div>'+
- '<div class="kpi" style="margin-top:8px;border-color:'+c[1]+';background:'+c[0]+';display:flex;justify-content:space-between;align-items:baseline"><span class="lbl">DOBLEZ HOY · TIEMPO EFECTIVO</span><span><b class="mono" id="efect" style="font-size:19px;color:'+c[2]+'">'+dur(ef)+'</b> <span class="ks">de 8 h · <b style="color:'+c[2]+'">'+p+'%</b></span></span>'+
+ '<div class="kpi" style="margin-top:8px;border-color:'+c[1]+';background:'+c[0]+';display:flex;justify-content:space-between;align-items:baseline"><span class="lbl">DOBLEZ HOY · TIEMPO EFECTIVO</span><span><b class="mono" id="efect" style="font-size:19px;color:'+c[2]+'">'+dur(ef)+'</b> <span class="ks">de '+String(CAPDIA).replace('.',',')+' h · <b style="color:'+c[2]+'">'+p+'%</b></span></span>'+
  '<i style="position:absolute;left:0;bottom:0;height:4px;width:'+p+'%;background:'+c[1]+'"></i></div>';}
 function vKpis(){var pend=S.mos.filter(function(m){return m.st.status!=='done';});
  var pz=pend.reduce(function(a,m){return a+Math.max(0,m.piezas-hz(m));},0),est=pend.reduce(function(a,m){return a+faltanMs(m);},0);
@@ -165,7 +168,7 @@ function vLista(){
   '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;gap:6px"><span class="mono sku">'+m.sku+'</span><b style="font-size:19px">'+hz(m)+'/'+m.piezas+' <span class="ks" style="font-weight:400">pz</span></b></div>'+
   '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:7px"><span class="st" style="'+estSty(st)+'">'+E(estTxt(st))+'</span>'+
   (st.status==='none'?'<span class="st" style="background:'+pv[1]+';border:1px solid '+pv[2]+';color:'+pv[3]+'">'+pv[0]+'</span>':'')+'</div></button>';}).join('')+
- '<div style="font-size:12px;color:var(--tx2);margin:6px 0 10px;line-height:1.4">'+(enLinea()?'CONECTADA A KATANA · la cola se actualiza sola.':'PILOTO · MOs de Katana al 28-sep 22:45. Lo capturado se guarda en este teléfono; todavía no escribe en Katana: Cynthia lo registra con el Resumen del turno.')+'</div>';}
+ '<div style="font-size:12px;color:var(--tx2);margin:6px 0 10px;line-height:1.4">'+(enLinea()?'CONECTADA A KATANA · la cola se actualiza sola.':'PILOTO · MOs de Katana al 29-sep 00:10. Lo capturado se guarda en este teléfono; todavía no escribe en Katana: Cynthia lo registra con el Resumen del turno.')+'</div>';}
 function bigBtn(bg,fg,on){return 'background:'+bg+';color:'+fg+';opacity:'+(on?1:.25);}
 function vDetalle(){var m=cur(),st=m.st,falt=Math.max(0,m.piezas-hz(m)),tramo=st.tramoStart?trab(st):0,img=PZ[m.sku],pv=previa(m);
  var noStart=!(st.status==='none'||st.status==='pausa'),noPausa=st.status!=='prog',noFin=!(st.status==='prog'||st.status==='pausa');
@@ -183,7 +186,7 @@ function vDetalle(){var m=cur(),st=m.st,falt=Math.max(0,m.piezas-hz(m)),tramo=st
  '<div class="card" style="padding:12px;margin-top:10px">'+
   '<div style="display:flex;justify-content:space-between;align-items:center"><span class="lbl">TU OPERACIÓN</span><span class="st" style="'+estSty(st)+'">'+E(estTxt(st))+'</span></div>'+
   '<div style="font-size:26px;font-weight:800;margin:4px 0">Doblez</div>'+
-  '<div style="font-size:13px;color:var(--tx2)">Resource: <b style="color:var(--tx)">Doblez Mafesa</b> · Planeado '+m.planeado+' s/pz · Faltan ≈ '+durTxt(faltanMs(m))+'</div>'+
+  '<div style="font-size:13px;color:var(--tx2)">Resource: <b style="color:var(--tx)">Doblez Mafesa</b> · '+(m.fuenteT==='medido'?'TRM medido ':'Planeado Katana ')+m.planeado+' s/pz · Faltan ≈ '+durTxt(faltanMs(m))+'</div>'+
   (m.recursoMal?'<div style="font-size:13px;color:#FFC45C;margin-top:4px">⚠ En Katana esta operación está en otro Resource.</div>':'')+
   (st.status==='none'?'<div style="margin-top:8px"><span class="st" style="background:'+pv[1]+';border:1px solid '+pv[2]+';color:'+pv[3]+'">'+pv[0]+'</span></div>':'')+
   '<div style="display:flex;justify-content:space-between;font-size:16px;margin-top:10px"><span>Llevas <b style="font-size:22px">'+hz(m)+'</b> de '+m.piezas+'</span><span>Faltan <b style="font-size:22px">'+falt+'</b></span></div>'+
