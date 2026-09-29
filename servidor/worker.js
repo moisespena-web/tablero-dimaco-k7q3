@@ -171,6 +171,7 @@ async function cola(k, recursos) {
       sku: variante && variante.sku || '',
       nombre: pm.name || '',
       piezas: num(mo.planned_quantity),
+      hechas: num(mo.completed_quantity),   // terminadas en Katana (parciales)
       deadline: (mo.production_deadline_date || '').slice(0, 10),
       estadoMO: mo.status,
       notas: mo.additional_info || '',

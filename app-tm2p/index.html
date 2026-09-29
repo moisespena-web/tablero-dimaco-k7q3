@@ -54,10 +54,9 @@ var now0=Date.now(), JORNADA=[8,16];   /* supuesto del prototipo: turno 8:00-16:
 var PZ=window.PIEZAS||{}, LOGO=null;
 function nuevo(){return {status:'none',done:0,worked:0,runStart:null,pauseStart:null,paused:0,motivos:[],op:null,tramoStart:null,log:[]};}
 var S={pantalla:'lista',sel:0,modal:null,opSel:null,pin:'',fin:'',finErr:'',pendiente:null,zoom:1,maqHoy:0,tramos:[],resDia:null,cola:[],tReal:{},errores:[],sync:'off',cod:'',conxMsg:'',
-mos:[
-{"mo": "MO-350", "sec": 9, "tipo": "MIXTO", "color": "#8A93A6", "nombre": "TERM AL. 1/4 x 1-1/2 x 3.625", "sku": "36B3480-0011", "piezas": 142, "entrega": "30-sep", "ent": "2026-09-30", "badge": "", "venc": false, "prio": false, "paso": "CNC SLT", "planeado": 189, "ruta": [["Corte", "done"], ["Taladro", "none"], ["TM-2P", "prog"], ["Doblez", "done"], ["Limpieza", "none"]], "ingSku": "ALSL 1/4x1 1/2", "ingNombre": "Solera Aluminio 1/4\" x 1 1/2\"", "ingIn": 514.75, "notas": "Sin notas.","st":nuevo()},
-{"mo": "MO-321", "sec": 17, "tipo": "TIPO 5", "color": "#D19A2E", "nombre": "TERM AL. 1/2 x  4 x 14", "sku": "37A14154-0003", "piezas": 32, "entrega": "2-oct", "ent": "2026-10-02", "badge": "VENCIDA 25-sep", "venc": true, "prio": false, "paso": "CNC Ø", "planeado": 281, "ruta": [["Corte", "done"], ["Taladro", null], ["TM-2P", "none"], ["Doblez", "none"], ["Limpieza", "none"]], "ingSku": "ALSL 1/2x4", "ingNombre": "Solera Aluminio 1/2\" x 4\"", "ingIn": 448.0, "notas": "Sin notas.","st":nuevo()},
-{"mo": "MO-354", "sec": 19, "tipo": "TIPO 4", "color": "#D1663C", "nombre": "TERM CU 1/2 x 4 x 28.5", "sku": "37A14278-0001", "piezas": 22, "entrega": "7-oct", "ent": "2026-10-07", "badge": "", "venc": false, "prio": false, "paso": "CNC Ø + SLT", "planeado": 1260, "ruta": [["Corte", "none"], ["Taladro", null], ["TM-2P", "none"], ["Doblez", null], ["Limpieza", "none"]], "ingSku": "CUSL 1/2x4", "ingNombre": "Solera Cobre 1/2\" x 4\"", "ingIn": 627.0, "notas": "Sin notas.","st":nuevo()}
+mos:[{"mo": "MO-350", "sec": 9, "tipo": "MIXTO", "color": "#8A93A6", "nombre": "TERM AL. 1/4 x 1-1/2 x 3.625", "sku": "36B3480-0011", "piezas": 142, "entrega": "30-sep", "ent": "2026-09-30", "badge": "", "venc": false, "prio": false, "paso": "CNC SLT", "planeado": 189, "ruta": [["Corte", "done"], ["Taladro", "none"], ["TM-2P", "prog"], ["Doblez", "done"], ["Limpieza", "none"]], "ingSku": "ALSL 1/4x1 1/2", "ingNombre": "Solera Aluminio 1/4\" x 1 1/2\"", "ingIn": 514.75, "notas": "Sin notas.", "hechas": 0,"st":nuevo()},
+{"mo": "MO-321", "sec": 17, "tipo": "TIPO 5", "color": "#D19A2E", "nombre": "TERM AL. 1/2 x  4 x 14", "sku": "37A14154-0003", "piezas": 32, "entrega": "2-oct", "ent": "2026-10-02", "badge": "VENCIDA 25-sep", "venc": true, "prio": false, "paso": "CNC Ø", "planeado": 281, "ruta": [["Corte", "done"], ["Taladro", null], ["TM-2P", "none"], ["Doblez", "none"], ["Limpieza", "none"]], "ingSku": "ALSL 1/2x4", "ingNombre": "Solera Aluminio 1/2\" x 4\"", "ingIn": 448.0, "notas": "TM-2P (CNC Ø): Emiliano 10/32 (28/09/2026) · Doblez: Miguel 10/32 (28/09/2026) · Limpieza & SQA: Cynthia 10/32 (28/09/2026)", "hechas": 10,"st":nuevo()},
+{"mo": "MO-354", "sec": 19, "tipo": "TIPO 4", "color": "#D1663C", "nombre": "TERM CU 1/2 x 4 x 28.5", "sku": "37A14278-0001", "piezas": 22, "entrega": "7-oct", "ent": "2026-10-07", "badge": "", "venc": false, "prio": false, "paso": "CNC Ø + SLT", "planeado": 1260, "ruta": [["Corte", "none"], ["Taladro", null], ["TM-2P", "none"], ["Doblez", null], ["Limpieza", "none"]], "ingSku": "CUSL 1/2x4", "ingNombre": "Solera Cobre 1/2\" x 4\"", "ingIn": 627.0, "notas": "Sin notas.", "hechas": 0,"st":nuevo()}
 ]};
 var OPS=['Emiliano','[Operador 2]','[Operador 3]'];
 var DIAS=['domingo','lunes','martes','miércoles','jueves','viernes','sábado'],MESES=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
@@ -85,7 +84,10 @@ function disponible(iso){var fin=new Date(iso+'T14:00:00'),t=new Date(),ms=0;
   var a=new Date(d);a.setHours(JORNADA[0],0,0,0);var b=new Date(d);b.setHours(JORNADA[1],0,0,0);
   if(b>fin)b=fin;if(a<t)a=t;if(b>a)ms+=b-a;}
  return ms;}
-function faltanMs(m){return (m.piezas-m.st.done)*m.planeado*1000;}
+/* piezas ya hechas en esta estación: terminadas en Katana + lapsos de la tablet; si las notas de la MO traen un avance mayor (ej. 'TM-2P (CNC Ø): Miguel 155/250'), manda ese */
+function notaPz(m){var r=new RegExp('TM-2P[^\\n]*?(\\d+)\\s*/\\s*\\d+','gi'),x,n=0;var t=m.notas||'';while((x=r.exec(t)))n=+x[1];return n;}
+function hz(m){return Math.min(m.piezas,Math.max(notaPz(m),(m.hechas||0)+m.st.done));}
+function faltanMs(m){return Math.max(0,m.piezas-hz(m))*m.planeado*1000;}
 function semaforo(p){return p<=40?['#2A1418','#E5484D','#FF6369']:(p<=70?['#33250A','#F2A93B','#FFC45C']:['#0C3024','#25C083','#4FE0A6']);}
 function estTxt(st){return {none:'NO INICIADA',prog:'EN PROCESO · '+(st.op||''),pausa:'EN PAUSA',done:'TERMINADA ✓'}[st.status];}
 function estSty(st){var c={none:['#0E1723','#3A4B62','#8FA3BA'],prog:['#3A2A0C','#8A6413','#FFD37A'],pausa:['#2A1418','#7A2A2E','#FFB3B6'],done:['#0E3628','#1B7A56','#7FE3BC']}[st.status];
@@ -112,7 +114,7 @@ function vHeader(){var ef=maquinaHoy(),p=Math.min(100,Math.round(100*ef/(8*36000
  '<button id="fsBtn" title="Pantalla completa" style="width:52px;height:52px;border-radius:12px;border:1px solid var(--line);background:var(--panel);color:var(--tx);font-size:26px;line-height:1;flex:none">'+(isFS()?'✕':'⛶')+'</button><div style="text-align:right"><div class="mono" id="reloj" style="font-size:42px;font-weight:300;letter-spacing:2px;line-height:1">'+hm(Date.now())+'</div><div style="font-size:16px;color:var(--tx2);margin-top:4px">'+fecha()+'</div></div></div>';}
 
 function vKpis(){var pend=S.mos.filter(function(m){return m.st.status!=='done';});
- var pz=pend.reduce(function(a,m){return a+m.piezas-m.st.done;},0),est=pend.reduce(function(a,m){return a+faltanMs(m);},0);
+ var pz=pend.reduce(function(a,m){return a+Math.max(0,m.piezas-hz(m));},0),est=pend.reduce(function(a,m){return a+faltanMs(m);},0);
  var ents=[];pend.forEach(function(m){if(ents.indexOf(m.ent)<0)ents.push(m.ent);});ents.sort();
  var ult=ents[ents.length-1],disp=ult?disponible(ult):0;
  var chips=ents.map(function(e){var need=pend.filter(function(m){return m.ent<=e;}).reduce(function(a,m){return a+faltanMs(m);},0),h=disponible(e)-need;
@@ -123,7 +125,7 @@ function vKpis(){var pend=S.mos.filter(function(m){return m.st.status!=='done';}
  return '<div class="kpis">'+
  '<div class="kpi"><div class="lbl">PIEZAS PENDIENTES TM-2P</div><div class="kv">'+pz.toLocaleString('en-US')+' <span class="ks">pz · '+pend.length+' MOs</span></div></div>'+
  '<div class="kpi"><div class="lbl">TIEMPO ESTIMADO</div><div class="kv">'+durTxt(est)+'</div></div>'+
- '<div class="kpi"><div class="lbl">DISPONIBLE HASTA '+(ult?ult.slice(8)+'-sep':'—')+'</div><div class="kv">'+durTxt(disp)+'</div></div>'+
+ '<div class="kpi"><div class="lbl">DISPONIBLE HASTA '+(ult?fechaCorta(ult):'—')+'</div><div class="kv">'+durTxt(disp)+'</div></div>'+
  '<div class="kpi" style="border-color:'+hc[1]+';background:'+hc[0]+'"><div class="lbl" style="color:'+hc[2]+'">HOLGURA POR ENTREGA (antes de 14:00)</div><div style="margin-top:2px">'+chips+'</div></div></div>';}
 
 function vLista(){
@@ -135,12 +137,12 @@ function vLista(){
   '<div style="width:200px;flex:none;display:flex;flex-direction:column;gap:4px"><span class="mono" style="font-size:30px;font-weight:700">'+m.mo+'</span><span style="font-size:16px;color:var(--tx2)">#'+m.sec+' <b class="pill" style="background:'+m.color+'">'+m.tipo+'</b></span></div>'+
   '<div style="flex-grow:1;min-width:0;display:flex;flex-direction:column;align-items:flex-start;gap:6px"><span style="font-size:23px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%">'+E(m.nombre)+'</span><span class="mono sku" style="font-size:18px">'+m.sku+'</span></div>'+
   '<div style="width:240px;flex:none;display:flex;flex-direction:column;align-items:flex-start;gap:6px"><span style="font-size:20px">'+E(m.paso)+'</span><span style="'+estSty(st)+'">'+E(estTxt(st))+'</span></div>'+
-  '<div style="width:120px;flex:none;text-align:right"><b style="font-size:28px">'+st.done+'/'+m.piezas+'</b><div style="font-size:14px;color:var(--tx2)">piezas</div></div>'+
+  '<div style="width:120px;flex:none;text-align:right"><b style="font-size:28px">'+hz(m)+'/'+m.piezas+'</b><div style="font-size:14px;color:var(--tx2)">piezas</div></div>'+
   '<div style="width:170px;flex:none;display:flex;flex-direction:column;align-items:flex-end;gap:6px"><span style="font-size:24px;font-weight:700">'+m.entrega+'</span>'+badge(m)+'</div></button>';}).join('')+
- '<div style="margin-top:auto;font-size:14px;color:var(--tx2)">'+(enLinea()?'CONECTADA A KATANA · la cola se actualiza sola y START/PAUSA/FIN se registran en Katana. Las piezas por lapso quedan en el Resumen del turno.':'PILOTO · MOs de Katana al 26-sep. Lo capturado se guarda en esta tablet; todavía no escribe en Katana: Cynthia lo registra con el Resumen del turno.')+'</div></div>';}
+ '<div style="margin-top:auto;font-size:14px;color:var(--tx2)">'+(enLinea()?'CONECTADA A KATANA · la cola se actualiza sola y START/PAUSA/FIN se registran en Katana. Las piezas por lapso quedan en el Resumen del turno.':'PILOTO · MOs de Katana al 28-sep 22:45. Lo capturado se guarda en esta tablet; todavía no escribe en Katana: Cynthia lo registra con el Resumen del turno.')+'</div></div>';}
 
 function bigBtn(bg,fg,on){return 'background:'+bg+';color:'+fg+';opacity:'+(on?1:.25);}
-function vDetalle(){var m=cur(),st=m.st,falt=m.piezas-st.done,tramo=st.tramoStart?trab(st):0,img=PZ[m.sku];
+function vDetalle(){var m=cur(),st=m.st,falt=Math.max(0,m.piezas-hz(m)),tramo=st.tramoStart?trab(st):0,img=PZ[m.sku];
  var noStart=!(st.status==='none'||st.status==='pausa'),noPausa=st.status!=='prog',noFin=!(st.status==='prog'||st.status==='pausa');
  var ruta=m.ruta.map(function(r){var est=r[0]==='TM-2P'?(st.status==='done'?'done':(st.status==='none'?'none':'prog')):r[1];
   if(!est)return '<div style="display:flex;align-items:center;justify-content:center;height:42px;border-radius:9px;border:1px dashed #1E2E42;color:#2C3E56;font-size:15px">'+r[0]+'</div>';
@@ -161,8 +163,8 @@ function vDetalle(){var m=cur(),st=m.st,falt=m.piezas-st.done,tramo=st.tramoStar
     '<div style="display:flex;justify-content:space-between;align-items:baseline"><span class="lbl">TU OPERACIÓN</span><span style="'+estSty(st)+'">'+E(estTxt(st))+'</span></div>'+
     '<div style="font-size:34px;font-weight:700;line-height:1.1">'+E(m.paso)+'</div>'+
     '<div style="font-size:18px;color:var(--tx2)">Resource: <b style="color:var(--tx)">TM-2P</b> · Planeado '+m.planeado+' s/pz · Faltan ≈ '+durTxt(faltanMs(m))+'</div>'+
-    '<div style="display:flex;justify-content:space-between;font-size:19px"><span>Llevas <b style="font-size:24px">'+st.done+'</b> de '+m.piezas+'</span><span>Faltan <b style="font-size:24px">'+falt+'</b></span></div>'+
-    '<div style="height:12px;background:#0E1723;border:1px solid #22344A;border-radius:8px;overflow:hidden"><div style="height:100%;background:#25C083;width:'+Math.round(100*st.done/m.piezas)+'%"></div></div>'+
+    '<div style="display:flex;justify-content:space-between;font-size:19px"><span>Llevas <b style="font-size:24px">'+hz(m)+'</b> de '+m.piezas+'</span><span>Faltan <b style="font-size:24px">'+falt+'</b></span></div>'+
+    '<div style="height:12px;background:#0E1723;border:1px solid #22344A;border-radius:8px;overflow:hidden"><div style="height:100%;background:#25C083;width:'+Math.round(100*hz(m)/m.piezas)+'%"></div></div>'+
     '<div style="display:flex;justify-content:space-between;font-size:17px;color:var(--tx2)"><span>Lapso actual: <b class="mono" id="crono" style="color:var(--tx);font-size:21px">'+dur(tramo)+'</b></span><span>'+E(quien)+'</span></div></div>'+
    '<div class="g3" style="gap:12px;flex-grow:1;min-height:150px">'+
     '<button type="button" class="big" '+act('start')+(noStart?' disabled':'')+' style="'+bigBtn('#25C083','#07121B',!noStart)+'">▶<br>START</button>'+
@@ -181,7 +183,7 @@ function vDetalle(){var m=cur(),st=m.st,falt=m.piezas-st.done,tramo=st.tramoStar
     (st.log.length?st.log.slice(0,3).map(function(l){return '<div style="font-size:15px;padding:2px 0;border-bottom:1px solid #1B2A3D;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+E(l)+'</div>';}).join(''):'<div style="font-size:16px;color:var(--tx2)">Todavía no hay lapsos terminados en esta operación.</div>')+
    '</div></div></div></div>';}
 
-function vModal(){if(!S.modal)return '';var m=cur(),st=m.st,falt=m.piezas-st.done,h='';
+function vModal(){if(!S.modal)return '';var m=cur(),st=m.st,falt=Math.max(0,m.piezas-hz(m)),h='';
  if(S.modal==='resumen')return vResumen();
  if(S.modal==='conx'){h='<div class="ttl">Conexión con Katana</div><div style="font-size:18px;color:var(--tx2);line-height:1.4">Estado: <b style="color:'+syncTxt()[1]+'">'+E(syncTxt()[0])+'</b>'+(S.cola.length?' · '+S.cola.length+' eventos por enviar':'')+'<br>Teclea el código de esta tablet (lo da Moisés).</div>'+
   '<div class="mono" style="font-size:44px;font-weight:700;text-align:center;background:#0A1018;border:2px solid #3E8FD8;border-radius:12px;padding:6px 18px;letter-spacing:6px">'+(S.cod?S.cod.replace(/./g,'•'):'&nbsp;')+'</div>'+
@@ -203,7 +205,7 @@ function vModal(){if(!S.modal)return '';var m=cur(),st=m.st,falt=m.piezas-st.don
    '<div style="min-height:26px;font-size:20px;font-weight:700;color:#FF6369">'+E(S.pinChk?'Revisando PIN…':(S.pinErr||''))+'</div><div style="display:flex;gap:12px"><button type="button" '+act('pinOk')+(listo?'':' disabled')+' style="flex-grow:1;min-height:64px;border-radius:12px;border:0;background:#25C083;color:#07121B;font-size:26px;font-weight:700;opacity:'+(listo?1:.3)+'">Iniciar lapso</button><button type="button" class="sec" '+act('cerrar')+'>Cancelar</button></div>';}
  else if(S.modal==='pausa'){h='<div class="ttl">¿Por qué se pausa?</div><div class="g2">'+['Comida','Falta material','Falla de máquina','Otro'].map(function(t){return '<button type="button" '+act('motPausa',t)+' style="min-height:84px;border-radius:12px;border:2px solid #F2A93B;background:#3A2A0C;color:#FFD37A;font-size:26px;font-weight:700">'+t+'</button>';}).join('')+'</div><button type="button" class="sec" '+act('cerrar')+'>Cancelar</button>';}
  else if(S.modal==='fin'){h='<div class="ttl">¿Cuántas piezas terminaste en este lapso?</div><div style="font-size:19px;color:var(--tx2)">'+m.mo+' · '+E(m.paso)+' · TM-2P · '+E(st.op||'')+'</div>'+
-  '<div style="display:flex;gap:14px;align-items:center"><div class="mono" style="flex-grow:1;font-size:54px;font-weight:700;text-align:right;background:#0A1018;border:2px solid #3E8FD8;border-radius:12px;padding:6px 18px">'+(S.fin||'0')+'</div><div style="font-size:20px;line-height:1.5">Llevas <b>'+st.done+'</b> de '+m.piezas+'<br>Faltan <b>'+falt+'</b></div></div>'+
+  '<div style="display:flex;gap:14px;align-items:center"><div class="mono" style="flex-grow:1;font-size:54px;font-weight:700;text-align:right;background:#0A1018;border:2px solid #3E8FD8;border-radius:12px;padding:6px 18px">'+(S.fin||'0')+'</div><div style="font-size:20px;line-height:1.5">Llevas <b>'+hz(m)+'</b> de '+m.piezas+'<br>Faltan <b>'+falt+'</b></div></div>'+
   '<div style="min-height:26px;font-size:20px;font-weight:700;color:#FF6369">'+E(S.finErr)+'</div><div class="g6">'+teclado('fin')+'</div>'+
   '<div style="display:flex;gap:12px"><button type="button" '+act('finOk')+' style="flex-grow:1;min-height:64px;border-radius:12px;border:0;background:#3E8FD8;color:#fff;font-size:26px;font-weight:700">Guardar</button><button type="button" class="sec" '+act('cerrar')+'>Cancelar</button></div>';}
  else if(S.modal==='cero'){h='<div class="ttl">No terminaste piezas en este lapso. ¿Por qué?</div><div class="g2">'+['Se acabó el turno','Problema con la pieza','Ajuste de máquina','Otro'].map(function(t){return '<button type="button" '+act('motCero',t)+' style="min-height:84px;border-radius:12px;border:2px solid #22344A;background:#18263A;color:#EAF1F9;font-size:24px;font-weight:700">'+t+'</button>';}).join('')+'</div>';}
@@ -258,7 +260,7 @@ function mapaMO(k,dr,idx){var nombres=k.ruta.map(function(o){return o.nombre;}),
  var ruta=['Corte','Taladro','TM-2P','Doblez','Limpieza'].map(function(c){var ops=k.ruta.filter(function(o){return col[o.nombre]===c;});
   if(!ops.length)return [c,null];return [c,ops.every(function(o){return o.status==='COMPLETED';})?'done':(ops.some(function(o){return o.status==='IN_PROGRESS';})?'prog':'none')];});
  var ing=k.ingredientes[0]||{};
- return {id:k.id,mo:k.mo,sec:idx>=0?idx+1:'–',tipo:t[0],color:t[1],nombre:k.nombre,sku:k.sku,piezas:k.piezas,entrega:fechaCorta(ent),ent:ent,
+ return {id:k.id,mo:k.mo,sec:idx>=0?idx+1:'–',tipo:t[0],color:t[1],nombre:k.nombre,sku:k.sku,piezas:k.piezas,hechas:k.hechas||0,entrega:fechaCorta(ent),ent:ent,
   badge:venc?'VENCIDA '+fechaCorta(k.deadline):(dr&&dr.grp==='urge'?'URGE':''),venc:venc,prio:!!(dr&&dr.grp==='urge'),paso:k.op.paso,planeado:k.op.planeado,
   rowId:k.op.rowId,katStatus:k.op.status,tiempoReal:k.op.tiempoReal,ruta:ruta,ings:k.ingredientes,ingSku:ing.sku||'',ingNombre:ing.nombre||'',ingIn:ing.total||0,ingUom:ing.uom||'',
   notas:k.notas||'Sin notas.',st:null};}
@@ -327,7 +329,7 @@ function iniciarTramo(){var op=S.opSel,pin=S.pin;upd(function(x){var t=Date.now(
  else{if(x.tramoStart){katEv('fin',x,x.runStart?t-x.runStart:0);cerrarTramo(x,0,'cambio de operador');}x.tramoStart=t;}
  x.op=op;x.pin=pin;x.runStart=t;x.status='prog';katEv('start',x,0);});S.modal=null;S.pin='';};
 A.motPausa=function(v){upd(function(x){var n=Date.now();katEv('pausa',x,n-x.runStart);x.worked+=n-x.runStart;x.runStart=null;x.pauseStart=n;x.motivos.push(v);x.status='pausa';});S.modal=null;};
-A.finOk=function(){var m=cur(),falt=m.piezas-m.st.done,n=parseInt(S.fin||'0',10);
+A.finOk=function(){var m=cur(),falt=Math.max(0,m.piezas-hz(m)),n=parseInt(S.fin||'0',10);
  if(n>falt){S.finErr='Solo faltan '+falt+' piezas. Revisa la cantidad.';return;}
  if(n===0){S.modal='cero';return;}
  if(n===falt){S.modal='confirma';S.pendiente=n;return;}
