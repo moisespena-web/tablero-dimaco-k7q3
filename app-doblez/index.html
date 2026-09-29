@@ -185,7 +185,7 @@ function vDetalle(){var m=cur(),st=m.st,falt=m.piezas-st.done,tramo=st.tramoStar
   (st.status==='none'?'<div style="margin-top:8px"><span class="st" style="background:'+pv[1]+';border:1px solid '+pv[2]+';color:'+pv[3]+'">'+pv[0]+'</span></div>':'')+
   '<div style="display:flex;justify-content:space-between;font-size:16px;margin-top:10px"><span>Llevas <b style="font-size:22px">'+st.done+'</b> de '+m.piezas+'</span><span>Faltan <b style="font-size:22px">'+falt+'</b></span></div>'+
   '<div style="height:10px;background:#0E1723;border:1px solid #22344A;border-radius:6px;overflow:hidden;margin-top:6px"><div style="height:100%;background:#25C083;width:'+Math.round(100*st.done/m.piezas)+'%"></div></div>'+
-  '<div style="display:flex;justify-content:space-between;font-size:14px;color:var(--tx2);margin-top:8px"><span>Tramo actual: <b class="mono" id="crono" style="color:var(--tx);font-size:18px">'+dur(tramo)+'</b></span><span>'+E(quien)+'</span></div></div>'+
+  '<div style="display:flex;justify-content:space-between;font-size:14px;color:var(--tx2);margin-top:8px"><span>Lapso actual: <b class="mono" id="crono" style="color:var(--tx);font-size:18px">'+dur(tramo)+'</b></span><span>'+E(quien)+'</span></div></div>'+
  '<div class="card" style="padding:10px 12px;margin-top:10px"><div class="lbl" style="margin-bottom:6px">OPERACIONES DE LA MO</div><div class="ruta">'+ruta+'</div></div>'+
  '<button type="button" class="card" '+act('verPieza')+' style="display:block;width:100%;padding:10px 12px;margin-top:10px;text-align:left">'+
   '<div style="display:flex;justify-content:space-between"><span class="lbl">PIEZA</span><span class="lbl">Toca para ampliar ⤢</span></div>'+
@@ -194,8 +194,8 @@ function vDetalle(){var m=cur(),st=m.st,falt=m.piezas-st.done,tramo=st.tramoStar
  '<div class="card" style="padding:10px 12px;margin-top:10px"><div class="lbl" style="margin-bottom:4px">INGREDIENTES · solo lectura</div><div class="mono" style="font-size:16px;font-weight:700">'+E(m.ingSku)+'</div>'+
   '<div style="font-size:14px">'+E(m.ingNombre)+' · <b>'+Number(m.ingTot).toLocaleString('en-US',{maximumFractionDigits:3})+' '+E(m.ingUom)+'</b>'+(m.ingUom==='in'?' (≈'+(m.ingTot/144).toFixed(1)+' barras)':'')+'</div></div>'+
  '<div class="card" style="padding:10px 12px;margin-top:10px"><div class="lbl" style="margin-bottom:4px">NOTAS</div><div style="font-size:15px">'+E(m.notas)+'</div></div>'+
- '<div class="card" style="padding:10px 12px;margin-top:10px"><div class="lbl" style="margin-bottom:4px">REGISTRO DE TRAMOS</div>'+
-  (st.log.length?st.log.slice(0,5).map(function(l){return '<div style="font-size:13px;padding:3px 0;border-bottom:1px solid #1B2A3D">'+E(l)+'</div>';}).join(''):'<div style="font-size:14px;color:var(--tx2)">Todavía no hay tramos en esta MO.</div>')+'</div>'+
+ '<div class="card" style="padding:10px 12px;margin-top:10px"><div class="lbl" style="margin-bottom:4px">REGISTRO DE LAPSOS</div>'+
+  (st.log.length?st.log.slice(0,5).map(function(l){return '<div style="font-size:13px;padding:3px 0;border-bottom:1px solid #1B2A3D">'+E(l)+'</div>';}).join(''):'<div style="font-size:14px;color:var(--tx2)">Todavía no hay lapsos en esta MO.</div>')+'</div>'+
  '<div class="acc">'+
   '<button type="button" class="big" '+act('start')+(noStart?' disabled':'')+' style="'+bigBtn('#25C083','#07121B',!noStart)+'">▶<br>START</button>'+
   '<button type="button" class="big" '+act('pausa')+(noPausa?' disabled':'')+' style="'+bigBtn('#F2A93B','#07121B',!noPausa)+'">❚❚<br>PAUSA</button>'+
@@ -211,11 +211,11 @@ function vModal(){if(!S.modal)return '';var m=cur(),st=m.st,falt=m.piezas-st.don
    '<div style="flex-grow:1;overflow:auto;background:#fff;border-radius:10px;display:flex;align-items:'+(z>1?'flex-start':'center')+';justify-content:'+(z>1?'flex-start':'center')+'">'+
    (img?'<img src="'+img+'" style="width:'+(z*100)+'%;max-width:none">':'<div style="color:#333;font-size:18px">Sin imagen</div>')+'</div></div></div>';}
  if(S.modal==='pausa'){h='<div class="ttl">¿Por qué se pausa?</div><div class="g2">'+['Comida','Falta material','Falla de máquina','Otro'].map(function(t){return '<button type="button" '+act('motPausa',t)+' style="min-height:70px;border-radius:12px;border:2px solid #F2A93B;background:#3A2A0C;color:#FFD37A;font-size:18px;font-weight:700">'+t+'</button>';}).join('')+'</div><button type="button" class="sec" '+act('cerrar')+'>Cancelar</button>';}
- else if(S.modal==='fin'){h='<div class="ttl">¿Cuántas piezas doblaste en este tramo?</div><div style="font-size:14px;color:var(--tx2)">'+m.mo+' · Doblez · '+OPERADOR+'</div>'+
+ else if(S.modal==='fin'){h='<div class="ttl">¿Cuántas piezas doblaste en este lapso?</div><div style="font-size:14px;color:var(--tx2)">'+m.mo+' · Doblez · '+OPERADOR+'</div>'+
   '<div style="display:flex;gap:10px;align-items:center"><div class="mono" style="flex-grow:1;font-size:44px;font-weight:700;text-align:right;background:#0A1018;border:2px solid #3E8FD8;border-radius:12px;padding:4px 14px">'+(S.fin||'0')+'</div><div style="font-size:15px;line-height:1.5">Llevas <b>'+st.done+'</b> de '+m.piezas+'<br>Faltan <b>'+falt+'</b></div></div>'+
   '<div style="min-height:20px;font-size:15px;font-weight:700;color:#FF6369">'+E(S.finErr)+'</div>'+teclado('fin')+
   '<div style="display:flex;gap:10px"><button type="button" '+act('finOk')+' style="flex-grow:1;min-height:56px;border-radius:12px;border:0;background:#3E8FD8;color:#fff;font-size:20px;font-weight:700">Guardar</button><button type="button" class="sec" '+act('cerrar')+'>Cancelar</button></div>';}
- else if(S.modal==='cero'){h='<div class="ttl">No terminaste piezas en este tramo. ¿Por qué?</div><div class="g2">'+['Se acabó el turno','Problema con la pieza','Ajuste de máquina','Otro'].map(function(t){return '<button type="button" '+act('motCero',t)+' style="min-height:70px;border-radius:12px;border:2px solid #22344A;background:#18263A;font-size:17px;font-weight:700">'+t+'</button>';}).join('')+'</div>';}
+ else if(S.modal==='cero'){h='<div class="ttl">No terminaste piezas en este lapso. ¿Por qué?</div><div class="g2">'+['Se acabó el turno','Problema con la pieza','Ajuste de máquina','Otro'].map(function(t){return '<button type="button" '+act('motCero',t)+' style="min-height:70px;border-radius:12px;border:2px solid #22344A;background:#18263A;font-size:17px;font-weight:700">'+t+'</button>';}).join('')+'</div>';}
  else if(S.modal==='confirma'){h='<div class="ttl">¿Terminaste las '+m.piezas+' piezas?</div><div style="font-size:16px;line-height:1.4;color:#C9D6E6">El Doblez de <b>'+m.mo+'</b> se marca <b style="color:#7FE3BC">TERMINADO</b> y aparece en el Resumen del turno para que Cynthia lo registre en Katana.</div>'+
   '<div style="display:flex;gap:10px"><button type="button" '+act('confSi')+' style="flex-grow:1;min-height:60px;border-radius:12px;border:0;background:#25C083;color:#07121B;font-size:20px;font-weight:700">Sí, terminé</button><button type="button" class="sec" style="flex-grow:1;min-height:60px" '+act('confNo')+'>No, corregir</button></div>';}
  else if(S.modal==='conx'){h='<div class="ttl">Conexión con Katana</div><div style="font-size:14px;color:var(--tx2);line-height:1.4">Estado: <b style="color:'+syncTxt()[1]+'">'+E(syncTxt()[0])+'</b><br>Teclea el código de este teléfono (lo da Moisés).</div>'+
@@ -239,15 +239,15 @@ function vResumen(){var k=S.resDia||diaKey(Date.now()),hoy=diaKey(Date.now()),ro
   mos.map(function(t){var sp=(t.pz&&t.trab>=1000)?Math.round(t.trab/1000/t.pz):null,pl=(S.mos.filter(function(q){return q.mo===t.mo;})[0]||{}).planeado;
    return '<div class="kpi"><div style="display:flex;justify-content:space-between"><b class="mono" style="font-size:18px">'+t.mo+'</b>'+(t.termino?'<span style="font-size:12px;color:#7FE3BC;font-weight:700">TERMINADO ✓</span>':'')+'</div>'+
    '<div style="font-size:17px"><b>'+t.pz+' pz</b> · '+durTxt(t.trab)+'</div><div class="ks">'+(t.pz?(sp?sp+' s/pz real'+(pl?' · plan '+pl:''):'—'):'sin piezas')+(t.pausa?' · pausas '+durTxt(t.pausa):'')+'</div></div>';}).join('')+
-  '<div class="lbl" style="margin-top:4px">TRAMOS</div>'+
+  '<div class="lbl" style="margin-top:4px">LAPSOS</div>'+
   (rows.length?rows.map(function(r){return '<div class="card" style="padding:8px 10px;font-size:14px"><div style="display:flex;justify-content:space-between"><b class="mono">'+hm(r.ini)+'–'+(r.fin?hm(r.fin):'…')+'</b><b class="mono">'+r.mo+'</b><b>'+(r.pz==null?'—':r.pz+' pz')+'</b></div>'+
     '<div style="color:var(--tx2)">'+durTxt(r.trab)+' de trabajo'+(r.pausa?' · pausa '+durTxt(r.pausa)+' ('+E(r.motivos.join(', '))+')':'')+(r.vivo?' · <span style="color:#FFD37A">'+(r.vivo==='pausa'?'en pausa':'en proceso')+'</span>':(r.termino?' · Terminó':(r.motivo?' · '+E(r.motivo):'')))+'</div></div>';}).join('')
-   :'<div style="color:var(--tx2);text-align:center;padding:20px">No hay tramos registrados este día.</div>')+'</div></div>';}
+   :'<div style="color:var(--tx2);text-align:center;padding:20px">No hay lapsos registrados este día.</div>')+'</div></div>';}
 function textoResumen(){var k=S.resDia||diaKey(Date.now()),rows=S.tramos.filter(function(r){return r.d===k;}),tot={},L=['RESUMEN DOBLEZ · '+OPERADOR+' · '+diaTxt(k)];
  rows.forEach(function(r){var t=tot[r.mo]=tot[r.mo]||{pz:0,trab:0,termino:false};t.pz+=r.pz;t.trab+=r.trab;if(r.termino)t.termino=true;});
  Object.keys(tot).forEach(function(mo){var t=tot[mo];L.push(mo+' · Doblez · '+t.pz+' pz · '+durTxt(t.trab)+(t.termino?' · TERMINADO':''));});
- L.push('');L.push('Tramos:');rows.forEach(function(r){L.push(hm(r.ini)+'–'+hm(r.fin)+' '+r.mo+' · '+durTxt(r.trab)+(r.pausa?' · pausa '+durTxt(r.pausa)+' ('+r.motivos.join(', ')+')':'')+' · '+r.pz+' pz'+(r.motivo?' · '+r.motivo:''));});
- if(!rows.length)L.push('Sin tramos terminados.');return L.join('\n');}
+ L.push('');L.push('Lapsos:');rows.forEach(function(r){L.push(hm(r.ini)+'–'+hm(r.fin)+' '+r.mo+' · '+durTxt(r.trab)+(r.pausa?' · pausa '+durTxt(r.pausa)+' ('+r.motivos.join(', ')+')':'')+' · '+r.pz+' pz'+(r.motivo?' · '+r.motivo:''));});
+ if(!rows.length)L.push('Sin lapsos terminados.');return L.join('\n');}
 function render(){var y=window.scrollY,prev=S._pant;
  document.getElementById('app').innerHTML=vHeader()+(S.pantalla==='lista'?vKpis()+vLista():vDetalle())+vModal();
  if(prev!==S.pantalla+'|'+S.sel){window.scrollTo(0,0);}else{window.scrollTo(0,y);}S._pant=S.pantalla+'|'+S.sel;
