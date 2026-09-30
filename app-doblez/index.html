@@ -332,7 +332,7 @@ function leerAviso(){var u=(intAv%2?'https://raw.githubusercontent.com/moisespen
 
 /* ============ DOBLADORA PARADA: >15 min sin START dentro del turno ============ */
 /* turno 7:30-18:36 L-V; no cuentan breaks 9:00-9:15 y 15:45-16:00 ni comida 12:00-13:00 (VENTANAS/PAUSAS de arriba) */
-var LIM_PARADA=15*60000, WA_URL='';   /* WA_URL = intermediario que manda el WhatsApp a Moisés */
+var LIM_PARADA=15*60000, WA_URL='https://script.google.com/macros/s/AKfycbxAaapz3Qdb8ZKz65vS_4jeQJW9X_Ujaghla5cX6XFbN_NDDpWruWqbHFSPWPUnLE5v/exec';   /* WA_URL = intermediario que manda el WhatsApp a Moisés */
 var PA={ult:null,ultTxt:'',ep:null,env:null};try{var pj=JSON.parse(localStorage.getItem('dimaco_doblez_parada')||'null');if(pj)PA=pj;}catch(e){}
 function guardarPA(){try{localStorage.setItem('dimaco_doblez_parada',JSON.stringify(PA));}catch(e){}}
 function laborable(a,b){var ms=0;if(b<=a)return 0;var d0=new Date(a);
