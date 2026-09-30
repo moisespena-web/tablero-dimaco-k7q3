@@ -47,6 +47,14 @@ button:disabled{cursor:not-allowed}
 .big{min-height:78px;border-radius:16px;border:0;font-size:19px;font-weight:800;letter-spacing:1px;line-height:1.25}
 .ruta{display:flex;gap:5px;flex-wrap:wrap}
 .rt{flex:1 1 0;min-width:62px;text-align:center;font-size:12px;font-weight:700;padding:7px 3px;border-radius:8px}
+.avi{margin-top:8px;border-radius:12px;padding:9px 12px;background:#3A2A0C;border:2px solid #F2A93B;color:#FFE2A8}
+.avi .al{font-size:11px;letter-spacing:1.5px;font-weight:800;color:#FFC45C}
+.avi .at{font-size:18px;font-weight:700;line-height:1.3;margin-top:2px}
+.avi.alerta{background:#3A1216;border-color:#E5484D;color:#FFD0D2}.avi.alerta .al{color:#FF8A8E}
+.avi.nuevo{animation:avp 1s ease-in-out 6}
+@keyframes avp{50%{box-shadow:0 0 0 6px rgba(242,169,59,.45)}}
+.par{margin-top:8px;border-radius:12px;padding:10px 12px;background:#E5484D;color:#fff;animation:avp 1.2s ease-in-out infinite}
+.par b{font-size:20px;letter-spacing:.5px}.par div{font-size:13px;margin-top:2px}
 </style>
 </head>
 <body>
@@ -263,7 +271,7 @@ function textoResumen(){var k=S.resDia||diaKey(Date.now()),rows=S.tramos.filter(
  L.push('');L.push('Lapsos:');rows.forEach(function(r){L.push(hm(r.ini)+'–'+hm(r.fin)+' '+r.mo+' · '+durTxt(r.trab)+(r.pausa?' · pausa '+durTxt(r.pausa)+' ('+r.motivos.join(', ')+')':'')+' · '+r.pz+' pz'+(r.motivo?' · '+r.motivo:''));});
  if(!rows.length)L.push('Sin lapsos terminados.');return L.join('\n');}
 function render(){var y=window.scrollY,prev=S._pant;
- document.getElementById('app').innerHTML=vHeader()+(S.pantalla==='lista'?vKpis()+vLista():vDetalle())+vModal();
+ document.getElementById('app').innerHTML=vHeader()+vAviso()+vParada()+(S.pantalla==='lista'?vKpis()+vLista():vDetalle())+vModal();
  if(prev!==S.pantalla+'|'+S.sel){window.scrollTo(0,0);}else{window.scrollTo(0,y);}S._pant=S.pantalla+'|'+S.sel;
  document.body.style.overflow=S.modal?'hidden':'';}
 
@@ -306,7 +314,59 @@ A.desconectar=function(){CONX=null;try{localStorage.removeItem('dimaco_doblez_co
 
 document.getElementById('app').addEventListener('click',function(e){var b=e.target.closest('[data-a]');if(!b||b.disabled)return;
  var f=A[b.getAttribute('data-a')];if(f){f(b.getAttribute('data-v'));render();guardar();}});
-cargar();render();
+
+/* ============ AVISOS DE MOISÉS (app-doblez/aviso.json, cada 15 s) ============ */
+var AV={d:null,visto:null,nuevo:false};try{AV.visto=localStorage.getItem('dimaco_doblez_aviso_visto');}catch(e){}
+var ACX=null;function tono(f,t0,d,vol){try{ACX=ACX||new (window.AudioContext||window.webkitAudioContext)();var o=ACX.createOscillator(),g=ACX.createGain();o.type='square';o.frequency.value=f;
+ g.gain.setValueAtTime(vol||0.25,ACX.currentTime+t0);g.gain.exponentialRampToValueAtTime(0.001,ACX.currentTime+t0+d);o.connect(g);g.connect(ACX.destination);o.start(ACX.currentTime+t0);o.stop(ACX.currentTime+t0+d+0.05);}catch(e){}}
+function sonar(tipo){if(tipo==='parada'){for(var i=0;i<6;i++)tono(i%2?660:990,i*0.35,0.3,0.35);}else if(tipo==='alerta'){for(var j=0;j<4;j++)tono(880,j*0.3,0.22,0.3);}else{tono(880,0,0.25);tono(1175,0.3,0.4);}
+ try{navigator.vibrate&&navigator.vibrate(tipo==='parada'?[400,200,400,200,400]:[300,150,300]);}catch(e){}}
+function vAviso(){var d=AV.d,t=(d&&typeof d.texto==='string')?d.texto.trim():'';if(!t)return '';
+ return '<div class="avi'+(d.nivel==='alerta'?' alerta':'')+(AV.nuevo?' nuevo':'')+'"><div class="al">'+(d.nivel==='alerta'?'🚨 ALERTA':'📢 AVISO')+' DE MOISÉS'+(d.actualizado?' · '+hm(Date.parse(d.actualizado)):'')+'</div><div class="at">'+E(t)+'</div></div>';}
+var intAv=0;
+function leerAviso(){var u=(intAv%2?'https://raw.githubusercontent.com/moisespena-web/tablero-dimaco-k7q3/main/app-doblez/aviso.json':'aviso.json')+'?t='+Date.now();
+ fetch(u,{cache:'no-store'}).then(function(r){if(!r.ok)throw 0;return r.json();}).then(function(d){
+  var t=(d&&d.texto||'').trim(),clave=t?(d.actualizado||t):'';var antes=AV.d?JSON.stringify(AV.d):'';AV.d=d;
+  if(t&&clave!==AV.visto){AV.visto=clave;AV.nuevo=true;try{localStorage.setItem('dimaco_doblez_aviso_visto',clave);}catch(e){}sonar(d.nivel==='alerta'?'alerta':'aviso');setTimeout(function(){AV.nuevo=false;},8000);}
+  if(JSON.stringify(d)!==antes&&!S.modal)render();}).catch(function(){intAv++;});}
+
+/* ============ DOBLADORA PARADA: >15 min sin START dentro del turno ============ */
+/* turno 7:30-18:36 L-V; no cuentan breaks 9:00-9:15 y 15:45-16:00 ni comida 12:00-13:00 (VENTANAS/PAUSAS de arriba) */
+var LIM_PARADA=15*60000, WA_URL='';   /* WA_URL = intermediario que manda el WhatsApp a Moisés */
+var PA={ult:null,ultTxt:'',ep:null,env:null};try{var pj=JSON.parse(localStorage.getItem('dimaco_doblez_parada')||'null');if(pj)PA=pj;}catch(e){}
+function guardarPA(){try{localStorage.setItem('dimaco_doblez_parada',JSON.stringify(PA));}catch(e){}}
+function laborable(a,b){var ms=0;if(b<=a)return 0;var d0=new Date(a);
+ for(var d=new Date(d0.getFullYear(),d0.getMonth(),d0.getDate());d<=b;d.setDate(d.getDate()+1)){var w=d.getDay();if(w===0||w===6)continue;
+  VENTANAS.forEach(function(v){var x=Math.max(a,+hmD(d,v[0])),y=Math.min(b,+hmD(d,v[1]));if(y<=x)return;ms+=y-x;
+   PAUSAS.forEach(function(p){var s=Math.max(x,+hmD(d,p[0])),e=Math.min(y,+hmD(d,p[1]));if(e>s)ms-=e-s;});});}
+ return ms;}
+function enTurno(n){return laborable(n-60000,n)>0;}
+function enMarcha(){return S.mos.filter(function(m){return m.st.status==='prog';})[0]||null;}
+function ultimoTxt(){var p=S.mos.filter(function(m){return m.st.status==='pausa';})[0];
+ if(p)return OPERADOR+', '+p.mo+' en pausa por '+(p.st.motivos[p.st.motivos.length-1]||'sin motivo')+' desde las '+hm(p.st.pauseStart);
+ var t=S.tramos[S.tramos.length-1];if(t&&diaKey(t.fin)===diaKey(Date.now()))return OPERADOR+', ultimo lapso en '+t.mo+' termino a las '+hm(t.fin)+' ('+t.pz+' pz)';
+ return OPERADOR+', sin START registrado hoy en la estacion';}
+function inicioParada(){var hoy=new Date(),ini=+hmD(hoy,VENTANAS[0][0]);return Math.max(PA.ult||0,ini);}
+function paradaMs(){if(enMarcha())return 0;var n=Date.now();return laborable(inicioParada(),n);}
+function vParada(){var ms=paradaMs();if(ms<LIM_PARADA||!enTurno(Date.now()))return '';
+ return '<div class="par"><b>⛔ DOBLADORA PARADA · '+durTxt(ms)+'</b><div>Sin START desde las '+hm(inicioParada())+' (sin contar breaks ni comida). Presiona ▶ START en la MO que estés doblando.'+(PA.env&&PA.env===PA.ep?' Ya se avisó a Moisés.':'')+'</div></div>';}
+function enviarWA(ms){if(!WA_URL)return;var ini=inicioParada();
+ var cuerpo=JSON.stringify({estacion:'Dobladora',tiempo:durTxt(ms)+' (desde las '+hm(ini)+')',ultimo:ultimoTxt()});
+ try{fetch(WA_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:cuerpo}).catch(function(){PA.env=null;guardarPA();});}catch(e){}}
+var sonoPar=0;
+function vigilar(){var n=Date.now(),m=enMarcha();
+ if(m){PA.ult=n;PA.ep=null;guardarPA();return;}
+ var ms=paradaMs();if(ms<LIM_PARADA||!enTurno(n))return;
+ var ep=diaKey(n)+'|'+inicioParada();if(PA.ep!==ep){PA.ep=ep;}
+ if(PA.env!==ep){PA.env=ep;guardarPA();enviarWA(ms);sonar('parada');sonoPar=n;if(!S.modal)render();}
+ else if(n-sonoPar>120000){sonoPar=n;sonar('parada');}}
+/* marca el momento en que se deja de operar */
+['start','motPausa','finOk','motCero','confSi'].forEach(function(k){var f=A[k];A[k]=function(v){var r=f(v);PA.ult=Date.now();guardarPA();return r;};});
+/* pantalla siempre encendida mientras la app esté abierta */
+var WL=null;function wake(){try{if(navigator.wakeLock&&document.visibilityState==='visible'&&!WL)navigator.wakeLock.request('screen').then(function(l){WL=l;l.addEventListener('release',function(){WL=null;});}).catch(function(){});}catch(e){}}
+document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible'){wake();leerAviso();vigilar();render();}});
+document.addEventListener('click',function(){try{ACX=ACX||new (window.AudioContext||window.webkitAudioContext)();if(ACX.state==='suspended')ACX.resume();}catch(e){}wake();},true);
+cargar();if(PA.ult==null){PA.ult=Date.now();guardarPA();}render();leerAviso();setInterval(leerAviso,15000);vigilar();setInterval(function(){vigilar();var p=document.querySelector('.par b');if(p)p.textContent='⛔ DOBLADORA PARADA · '+durTxt(paradaMs());},20000);wake();
 /* logo: el mismo del tablero de TV */
 fetch('../',{cache:'no-store'}).then(function(r){return r.text();}).then(function(t){var m=t.match(/id="logo"\s+src="(data:image\/[^"]+)"/)||t.match(/src="(data:image\/png;base64,[^"]+)"/);if(m){LOGO=m[1];render();}}).catch(function(){});
 setInterval(function(){var c=document.getElementById('crono'),r=document.getElementById('reloj'),e=document.getElementById('efect');
