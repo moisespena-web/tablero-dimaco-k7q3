@@ -324,7 +324,7 @@ function sonar(tipo){if(tipo==='parada'){for(var i=0;i<6;i++)tono(i%2?660:990,i*
 function vAviso(){var d=AV.d,t=(d&&typeof d.texto==='string')?d.texto.trim():'';if(!t)return '';
  return '<div class="avi'+(d.nivel==='alerta'?' alerta':'')+(AV.nuevo?' nuevo':'')+'"><div class="al">'+(d.nivel==='alerta'?'🚨 ALERTA':'📢 AVISO')+' DE MOISÉS'+(d.actualizado?' · '+hm(Date.parse(d.actualizado)):'')+'</div><div class="at">'+E(t)+'</div></div>';}
 var intAv=0;
-function leerAviso(){var u=(intAv%2?'https://raw.githubusercontent.com/moisespena-web/tablero-dimaco-k7q3/main/app-doblez/aviso.json':'aviso.json')+'?t='+Date.now();
+function leerAviso(){var u=(intAv%2?'aviso.json':'https://raw.githubusercontent.com/moisespena-web/tablero-dimaco-k7q3/main/app-doblez/aviso.json')+'?t='+Date.now();
  fetch(u,{cache:'no-store'}).then(function(r){if(!r.ok)throw 0;return r.json();}).then(function(d){
   var t=(d&&d.texto||'').trim(),clave=t?(d.actualizado||t):'';var antes=AV.d?JSON.stringify(AV.d):'';AV.d=d;
   if(t&&clave!==AV.visto){AV.visto=clave;AV.nuevo=true;try{localStorage.setItem('dimaco_doblez_aviso_visto',clave);}catch(e){}sonar(d.nivel==='alerta'?'alerta':'aviso');setTimeout(function(){AV.nuevo=false;},8000);}
