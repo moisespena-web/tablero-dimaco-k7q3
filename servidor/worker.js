@@ -1,5 +1,5 @@
 /*
- * DIMACO · Servidor de la app de piso TM-2P  (Cloudflare Worker)
+ * DIMACO · Servidor de las apps de piso TM-2P y Doblez  (Cloudflare Worker)
  * ----------------------------------------------------------------
  * Guarda la llave de Katana para que nunca viaje a la tablet.
  *
@@ -9,16 +9,17 @@
  *   PINES            (secreto)  JSON con el PIN de cada operador, ej. {"Emiliano":"4821","Luis":"1937"}
  *   ORIGEN           (texto)    https://moisespena-web.github.io
  *   RECURSOS         (texto)    TM-2P,Cuadrado Mafesa        (opcional; éste es el valor por omisión)
+ *   RECURSOS_DOBLEZ  (texto)    Doblez Mafesa                (opcional; éste es el valor por omisión)
  *
  * Rutas:
  *   GET  /estado       prueba de conexión con Katana
  *   GET  /operadores   nombres de operadores (sin PIN)
- *   GET  /cola         MOs abiertas con operación en la TM-2P, con ingredientes y ruta
+ *   GET  /cola         MOs abiertas con operación en la TM-2P (o ?estacion=doblez), con ingredientes y ruta
  *   POST /pin          valida el PIN de un operador antes de arrancar
- *   POST /evento       START / PAUSA / FIN / COMPLETAR sobre la operación TM-2P (pide PIN)
+ *   POST /evento       START / PAUSA / FIN / COMPLETAR sobre la operación TM-2P o Doblez (pide PIN)
  *
  * Reglas que respeta:
- *   - Solo toca operaciones cuyo recurso sea TM-2P (o el legado "Cuadrado Mafesa").
+ *   - Solo toca operaciones cuyo recurso sea TM-2P (o el legado "Cuadrado Mafesa") o la dobladora ("Doblez Mafesa").
  *   - Nunca cierra MOs ni mueve inventario: eso lo sigue haciendo Cynthia.
  *   - No toca notas de la MO.
  */
@@ -52,7 +53,11 @@ export default {
     if (!env.KATANA_API_KEY) return json({ ok: false, error: 'Falta KATANA_API_KEY en el servidor' }, 500);
 
     const k = katana(env.KATANA_API_KEY);
-    const recursos = new Set((env.RECURSOS || 'TM-2P,Cuadrado Mafesa').split(',').map(s => s.trim()).filter(Boolean));
+    const lista = (v, d) => new Set((v || d).split(',').map(s => s.trim()).filter(Boolean));
+    const recTM = lista(env.RECURSOS, 'TM-2P,Cuadrado Mafesa');
+    const recDoblez = lista(env.RECURSOS_DOBLEZ, 'Doblez Mafesa');
+    const recursos = recTM;                                   // cola de la TM-2P (valor por omisión)
+    const permitidos = new Set([...recTM, ...recDoblez]);     // operaciones que /evento puede tocar
 
     try {
       if (req.method === 'GET' && ruta === '/estado') {
@@ -63,7 +68,8 @@ export default {
         return json({ ok: true, operadores: Object.keys(pines(env)) });
       }
       if (req.method === 'GET' && ruta === '/cola') {
-        return json({ ok: true, hora: new Date().toISOString(), mos: await cola(k, recursos) });
+        const est = (url.searchParams.get('estacion') || '').toLowerCase();
+        return json({ ok: true, hora: new Date().toISOString(), mos: await cola(k, est === 'doblez' ? recDoblez : recTM) });
       }
       if (req.method === 'POST' && ruta === '/pin') {
         let b = {}; try { b = await req.json(); } catch (e) {}
@@ -73,7 +79,7 @@ export default {
       if (req.method === 'POST' && ruta === '/evento') {
         let body;
         try { body = await req.json(); } catch (e) { return json({ ok: false, error: 'JSON inválido' }, 400); }
-        const r = await evento(k, recursos, pines(env), body);
+        const r = await evento(k, permitidos, pines(env), body);
         return json(r, r.ok ? 200 : (r.status || 400));
       }
       return json({ ok: false, error: 'Ruta no encontrada' }, 404);
@@ -211,7 +217,7 @@ async function evento(k, recursos, PIN, b) {
 
   const row = await k.get('/manufacturing_order_operation_rows/' + rowId);
   if (!row || row.deleted_at) return { ok: false, status: 404, error: 'La operación ya no existe en Katana' };
-  if (!esTM2P(row, recursos)) return { ok: false, status: 403, error: 'Esa operación no es de la TM-2P' };
+  if (!esTM2P(row, recursos)) return { ok: false, status: 403, error: 'Esa operación no es de la TM-2P ni de Doblez' };
   const mo = await k.get('/manufacturing_orders/' + row.manufacturing_order_id);
   if (mo.status === 'DONE') return { ok: false, status: 409, error: mo.order_no + ' ya está cerrada en Katana' };
   if (row.status === 'COMPLETED' && b.accion !== 'completar') return { ok: false, status: 409, error: 'La operación ya está completada en Katana' };
@@ -239,8 +245,9 @@ async function evento(k, recursos, PIN, b) {
   };
 
   // read-modify-write: se reenvían los campos de la operación tal como están, cambiando solo estado, tiempo y operadores
+  // Ojo: Katana rechaza manufacturing_order_id en este PATCH (422 "must NOT have additional properties",
+  // comprobado el 1-oct-2026), así que no se manda.
   const cuerpo = {
-    manufacturing_order_id: row.manufacturing_order_id,
     status: acc.status,
     operation_id: row.operation_id,
     resource_id: row.resource_id,
