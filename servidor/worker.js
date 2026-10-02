@@ -7,6 +7,7 @@
  *   KATANA_API_KEY  (secreto)  llave de API de Katana
  *   CODIGO_TABLET   (secreto)  código del iPad de la Estación TM-2P (6 a 10 dígitos)
  *   CODIGO_DOBLEZ   (secreto)  código del teléfono de la Estación Doblez (6 a 10 dígitos)
+ *   CODIGO_LASER    (secreto)  código del teléfono de la Estación Láser y Router (6 a 10 dígitos)
  *   PINES           (secreto)  JSON con el PIN de cada operador de la TM-2P, ej. {"Emiliano":"4821"}
  *   ORIGEN          (texto)    https://moisespena-web.github.io   (opcional)
  *
@@ -27,6 +28,7 @@ const MEM = new Map();
 const ESTACIONES = {
   tm2p:   { nombre: 'TM-2P',  recursos: ['TM-2P', 'Cuadrado Mafesa'], etiqueta: r => 'TM-2P (' + (r.operation_name || '').trim() + ')', conPin: true },
   doblez: { nombre: 'Doblez', recursos: ['Doblez Mafesa'],            etiqueta: () => 'Doblez', conPin: false, operador: 'Miguel' },
+  laser:  { nombre: 'Láser y Router', recursos: ['Corte Laser', 'Router'], etiqueta: r => (r.operation_name || '').trim() || 'Láser', conPin: false, operador: 'Luis' },
 };
 
 export default {
@@ -50,6 +52,7 @@ export default {
     let est = null;
     if (iguales(codigo, env.CODIGO_TABLET || '')) est = ESTACIONES.tm2p;
     else if (iguales(codigo, env.CODIGO_DOBLEZ || '')) est = ESTACIONES.doblez;
+    else if (iguales(codigo, env.CODIGO_LASER || '')) est = ESTACIONES.laser;
     if (!est) return json({ ok: false, error: 'Dispositivo no autorizado' }, 401);
     if (!env.KATANA_API_KEY) return json({ ok: false, error: 'Falta KATANA_API_KEY en el servidor' }, 500);
 
