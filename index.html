@@ -281,6 +281,13 @@ header img{height:82px;padding:2px 10px}
 .op{position:relative}
 .op .ord{position:absolute;top:3px;left:7px;font-size:15px;font-weight:800;color:#FFC45C;line-height:1}
 .op .avn{font-size:19px;font-weight:800;letter-spacing:0;font-variant-numeric:tabular-nums}
+/* regla 3-oct-2026: grupo de Cynthia (solo falta Limpieza & SQA) y alarma roja */
+#pages.compacto .sep.limp{color:#FFB3B6;border-top:3px solid #E5484D;margin-top:4px}
+#alimp{position:absolute;left:30px;right:30px;top:118px;z-index:25;background:#B4141B;border:6px solid #FFD0D2;border-radius:18px;color:#fff;
+padding:20px 34px;box-shadow:0 0 70px rgba(229,72,77,.95);animation:alimpP 1s steps(2,end) infinite}
+#alimp .t1{font-size:48px;font-weight:900;letter-spacing:1px;line-height:1.15}
+#alimp .t2{font-size:30px;font-weight:600;margin-top:8px;line-height:1.25}
+@keyframes alimpP{0%{background:#B4141B;border-color:#FFD0D2}50%{background:#E5484D;border-color:#fff}}
 .build{font-size:13px;color:#5C6F86;letter-spacing:.5px;white-space:nowrap;flex:none}
 </style></head><body>
 <div id="stage">
@@ -302,8 +309,9 @@ header img{height:82px;padding:2px 10px}
   </div>
   <div class="msg">No olvides reportar el avance diario a las 18:00 y subir la información a Katana.</div>
   <span id="sndIco">🔇</span>
-  <div id="stamp"></div><span class="build">v2026-10-02</span><div class="bar"><i id="pb"></i></div>
+  <div id="stamp"></div><span class="build">v2026-10-03</span><div class="bar"><i id="pb"></i></div>
  </footer>
+ <div id="alimp" hidden></div>
  <div id="toasts"></div>
  <div id="snd" hidden><button id="sndBtn" type="button">🔊 Activar sonido y pantalla completa</button>
   <p>Presiona el botón central del control una vez al día: activa las alarmas y quita la barra del navegador.</p></div>
@@ -499,7 +507,7 @@ function renderMat(D){var m=$('mat');var mt=(D&&D.material)||[];if(!D||D.modo!==
   var chips=top.map(function(x){return '<span class="chip"><b class="mono">'+esc(x.sku)+'</b><i>'+x.barras+'</i></span>';}).join('');
   if(resto>0)chips+='<span class="chip mas"><i>+'+resto+'</i><em>'+(resto===1?'material más':'materiales más')+'</em></span>';
   m.innerHTML='<div class="ml">FALTA MATERIAL · PRÓXIMOS 7 DÍAS<span class="mn">'+esc(D.materialNota||'')+'</span></div><div class="chips">'+chips+'</div>';}
-function render(D){try{renderMat(D);}catch(e){}try{render0(D);}catch(e){}}
+function render(D){try{renderMat(D);}catch(e){}try{render0(D);}catch(e){}try{checarLimp();}catch(e){}}
 function render0(D){
   var D0=D;D={};for(var kk in D0)D[kk]=D0[kk];
   D.rows=(D0.rows||[]).map(function(r){var o={};for(var q in r)o[q]=r[q];return o;});
@@ -526,9 +534,9 @@ function render0(D){
   var bloques=[];
   if(D.modo==="entregas"){
     var n=0;rows.forEach(function(r){r.sec=++n;});
-    var G=[["urge",D.urgeTitulo||"URGE"],["hoy",D.hoyTitulo||"ENTREGA DE HOY"],["sig",D.sigTitulo||"SIGUIENTE ENTREGA"]];
+    var G=[["urge",D.urgeTitulo||"URGE"],["hoy",D.hoyTitulo||"ENTREGA DE HOY"],["sig",D.sigTitulo||"SIGUIENTE ENTREGA"],["limp",D.limpTitulo||"SOLO FALTA LIMPIEZA & SQA · CYNTHIA"]];
     var items=[];G.forEach(function(g){var xs=rows.filter(function(r){return r.grp===g[0];});
-      if(xs.length){if(false)items.push({sep:g[1]+" · "+xs.length+" órdenes · "+xs.reduce(function(a,r){return a+r.piezas;},0).toLocaleString("en-US")+" pz"});xs.forEach(function(r){items.push(r);});}});
+      if(xs.length){if(g[0]==="limp")items.push({limp:1,sep:g[1]+" · "+xs.length+" órdenes · "+xs.reduce(function(a,r){return a+r.piezas;},0).toLocaleString("en-US")+" pz"});xs.forEach(function(r){items.push(r);});}});
     $("pages").className="compacto";
     var hDisp=$("pages").clientHeight||600, ROWH=53, SEPH=34, CAB=26+28+10;
     var pages=[],cur=[],usado=CAB;
@@ -553,7 +561,7 @@ function render0(D){
   if(pagina>=bloques.length)pagina=0;
   $("pages").innerHTML=bloques.map(function(b,i){
     if(b[2]==="mes"){var hm="";try{hm=renderMes(D.entregasMes);}catch(e){}return '<div class="page pmes'+(i===pagina?" on":"")+'">'+hm+'</div>';}
-    return '<div class="page'+(i===pagina?" on":"")+'"><div class="ptitle">'+b[0]+(datos&&datos.modo==="entregas"?LEYT:"")+'</div>'+(datos&&datos.modo==="entregas"?HEAD.replace("LÍMITE","ENTREGA"):HEAD)+b[1].map(function(x){return x.sep?'<div class="sep">'+esc(x.sep)+'</div>':fila(x);}).join("")+'</div>';}).join("");
+    return '<div class="page'+(i===pagina?" on":"")+'"><div class="ptitle">'+b[0]+(datos&&datos.modo==="entregas"?LEYT:"")+'</div>'+(datos&&datos.modo==="entregas"?HEAD.replace("LÍMITE","ENTREGA"):HEAD)+b[1].map(function(x){return x.sep?'<div class="sep'+(x.limp?' limp':'')+'">'+esc(x.sep)+'</div>':fila(x);}).join("")+'</div>';}).join("");
   var sp=$("stamp");sp.setAttribute("data-ts",D.stamp||"");
   sp.setAttribute("data-base","Datos de Katana: "+String(D.stamp||"").slice(11,16));
   edad();
@@ -697,8 +705,20 @@ function checarVencidas(){
     if(r)evento("vencida",r.mo+" se venció — límite "+fmtF(r.deadline));}});}
   LS.set("ev-vencidas",JSON.stringify(act));
 }
-setInterval(function(){checarReloj();checarVencidas();},20000);
-setTimeout(function(){checarReloj();checarVencidas();},2000);
+function checarLimp(){
+  /* regla 3-oct-2026: si más del 30% de los SKUs con MO abierta sólo esperan Limpieza & SQA, alarma roja + sirena cada 10 min (L-V 7:30-19:00) */
+  var el=$("alimp"),a=datos&&datos.alertaLimpieza;if(!el)return;
+  if(!a){el.hidden=true;return;}
+  el.hidden=false;
+  el.innerHTML='<div class="t1">🚨 CYNTHIA: '+a.n+' ÓRDENES ('+a.pct+'%) ESPERAN LIMPIEZA &amp; SQA</div>'+
+   '<div class="t2">Por favor terminemos su limpieza e inspección y liberémoslas en Katana, para que entren órdenes nuevas a las máquinas.</div>';
+  var u=typeof mx==="function"?mx():null,n=new Date(),dia=u?u.dia:n.getDay(),hh=u?u.h:n.getHours(),mm=u?u.m:n.getMinutes(),h=hh+mm/60;
+  if(dia<1||dia>5||h<7.5||h>=19)return;
+  var k=hoyISO()+" "+Math.floor((hh*60+mm)/10);
+  if(LS.get("ev-limp")!==k){LS.set("ev-limp",k);sonar("alerta");setTimeout(function(){sonar("alerta");},3600);setTimeout(function(){sonar("alerta");},7200);}
+}
+setInterval(function(){checarReloj();checarVencidas();try{checarLimp();}catch(e){}},20000);
+setTimeout(function(){checarReloj();checarVencidas();try{checarLimp();}catch(e){}},2000);
 
 /* ---------- datos iniciales ---------- */
 render(window.__DATOS__);
