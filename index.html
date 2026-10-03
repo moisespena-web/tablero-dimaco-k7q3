@@ -283,6 +283,7 @@ header img{height:82px;padding:2px 10px}
 .op .avn{font-size:19px;font-weight:800;letter-spacing:0;font-variant-numeric:tabular-nums}
 /* regla 3-oct-2026: grupo de Cynthia (solo falta Limpieza & SQA) y alarma roja */
 #pages.compacto .sep.limp{color:#FFB3B6;border-top:3px solid #E5484D;margin-top:4px}
+#pages.compacto .ptitle.limp{color:#FFB3B6;font-weight:700;font-size:20px;letter-spacing:2px}
 #alimp{position:absolute;left:30px;right:30px;top:118px;z-index:25;background:#B4141B;border:6px solid #FFD0D2;border-radius:18px;color:#fff;
 padding:20px 34px;box-shadow:0 0 70px rgba(229,72,77,.95);animation:alimpP 1s steps(2,end) infinite}
 #alimp .t1{font-size:48px;font-weight:900;letter-spacing:1px;line-height:1.15}
@@ -309,7 +310,7 @@ padding:20px 34px;box-shadow:0 0 70px rgba(229,72,77,.95);animation:alimpP 1s st
   </div>
   <div class="msg">No olvides reportar el avance diario a las 18:00 y subir la información a Katana.</div>
   <span id="sndIco">🔇</span>
-  <div id="stamp"></div><span class="build">v2026-10-03b</span><div class="bar"><i id="pb"></i></div>
+  <div id="stamp"></div><span class="build">v2026-10-03c</span><div class="bar"><i id="pb"></i></div>
  </footer>
  <div id="alimp" hidden></div>
  <div id="toasts"></div>
@@ -534,21 +535,20 @@ function render0(D){
   var bloques=[];
   if(D.modo==="entregas"){
     var n=0;rows.forEach(function(r){r.sec=++n;});
-    var G=[["urge",D.urgeTitulo||"URGE"],["hoy",D.hoyTitulo||"ENTREGA DE HOY"],["sig",D.sigTitulo||"SIGUIENTE ENTREGA"],["limp",D.limpTitulo||"SOLO FALTA LIMPIEZA & SQA · CYNTHIA"]];
-    var items=[];G.forEach(function(g){var xs=rows.filter(function(r){return r.grp===g[0];});
-      if(xs.length){if(g[0]==="limp")items.push({limp:1,sep:g[1]+" · "+xs.length+" órdenes · "+xs.reduce(function(a,r){return a+r.piezas;},0).toLocaleString("en-US")+" pz"});xs.forEach(function(r){items.push(r);});}});
+    /* regla de Moisés 3-oct-2026: las que solo esperan Limpieza & SQA (Cynthia) van en SUS PROPIAS páginas,
+       aparte del programa de máquinas; cada grupo se reparte en páginas parejas (1/2, 2/2...) */
+    var G=[["urge",D.urgeTitulo||"URGE"],["hoy",D.hoyTitulo||"ENTREGA DE HOY"],["sig",D.sigTitulo||"SIGUIENTE ENTREGA"]];
+    var items=[];G.forEach(function(g){rows.filter(function(r){return r.grp===g[0];}).forEach(function(r){items.push(r);});});
+    var limp=rows.filter(function(r){return r.grp==="limp";});
     $("pages").className="compacto";
-    var hDisp=$("pages").clientHeight||600, ROWH=53, SEPH=34, CAB=26+28+10;
-    var pages=[],cur=[],usado=CAB;
-    items.forEach(function(it,i){
-      var h=it.sep?SEPH:ROWH;
-      var necesita=h+(it.sep?ROWH:0);
-      if(cur.length&&usado+necesita>hDisp){pages.push(cur);cur=[];usado=CAB;}
-      if(false){var j=i;while(j>=0&&!items[j].sep)j--;cur.push({sep:items[j].sep+" (cont.)"});usado+=SEPH;}
-      cur.push(it);usado+=h;});
-    if(cur.length)pages.push(cur);
-    if(pages.length>1){var per=Math.ceil(items.length/pages.length);pages=[];for(var z=0;z<items.length;z+=per)pages.push(items.slice(z,z+per));}
-    pages.forEach(function(p,i){bloques.push(["PROGRAMA DE ENTREGAS"+(pages.length>1?" · "+(i+1)+"/"+pages.length:""),p]);});
+    var hDisp=$("pages").clientHeight||600, ROWH=53, CAB=26+28+10;
+    function paginar(xs,tit,cls){
+      if(!xs.length)return;
+      var cab=Math.max(1,Math.floor((hDisp-CAB)/ROWH)),np=Math.ceil(xs.length/cab),per=Math.ceil(xs.length/np);
+      for(var z=0,i=0;z<xs.length;z+=per,i++)bloques.push([tit+(np>1?" · "+(i+1)+"/"+np:""),xs.slice(z,z+per),null,cls]);
+    }
+    paginar(items,"PROGRAMA DE ENTREGAS","");
+    paginar(limp,(D.limpTitulo||"SOLO FALTA LIMPIEZA & SQA · CYNTHIA")+" · "+limp.length+" órdenes · "+limp.reduce(function(a,r){return a+r.piezas;},0).toLocaleString("en-US")+" pz","limp");
     $("pages").className="compacto";
   }else{
   var c1=partir(piso),c2=partir(cola.concat(listo));
@@ -561,7 +561,7 @@ function render0(D){
   if(pagina>=bloques.length)pagina=0;
   $("pages").innerHTML=bloques.map(function(b,i){
     if(b[2]==="mes"){var hm="";try{hm=renderMes(D.entregasMes);}catch(e){}return '<div class="page pmes'+(i===pagina?" on":"")+'">'+hm+'</div>';}
-    return '<div class="page'+(i===pagina?" on":"")+'"><div class="ptitle">'+b[0]+(datos&&datos.modo==="entregas"?LEYT:"")+'</div>'+(datos&&datos.modo==="entregas"?HEAD.replace("LÍMITE","ENTREGA"):HEAD)+b[1].map(function(x){return x.sep?'<div class="sep'+(x.limp?' limp':'')+'">'+esc(x.sep)+'</div>':fila(x);}).join("")+'</div>';}).join("");
+    return '<div class="page'+(i===pagina?" on":"")+'"><div class="ptitle'+(b[3]?' '+b[3]:'')+'">'+b[0]+(datos&&datos.modo==="entregas"&&!b[3]?LEYT:"")+'</div>'+(datos&&datos.modo==="entregas"?HEAD.replace("LÍMITE","ENTREGA"):HEAD)+b[1].map(function(x){return x.sep?'<div class="sep'+(x.limp?' limp':'')+'">'+esc(x.sep)+'</div>':fila(x);}).join("")+'</div>';}).join("");
   var sp=$("stamp");sp.setAttribute("data-ts",D.stamp||"");
   sp.setAttribute("data-base","Datos de Katana: "+String(D.stamp||"").slice(11,16));
   edad();
