@@ -280,6 +280,7 @@ header img{height:82px;padding:2px 10px}
 .aviso .at{font-size:23px;line-height:1.25}
 .op{position:relative}
 .op .ord{position:absolute;top:3px;left:7px;font-size:15px;font-weight:800;color:#FFC45C;line-height:1}
+.op .avn{font-size:19px;font-weight:800;letter-spacing:0;font-variant-numeric:tabular-nums}
 .build{font-size:13px;color:#5C6F86;letter-spacing:.5px;white-space:nowrap;flex:none}
 </style></head><body>
 <div id="stage">
@@ -301,7 +302,7 @@ header img{height:82px;padding:2px 10px}
   </div>
   <div class="msg">No olvides reportar el avance diario a las 18:00 y subir la información a Katana.</div>
   <span id="sndIco">🔇</span>
-  <div id="stamp"></div><span class="build">v2026-09-28b</span><div class="bar"><i id="pb"></i></div>
+  <div id="stamp"></div><span class="build">v2026-10-02</span><div class="bar"><i id="pb"></i></div>
  </footer>
  <div id="toasts"></div>
  <div id="snd" hidden><button id="sndBtn" type="button">🔊 Activar sonido y pantalla completa</button>
@@ -422,7 +423,8 @@ function celda(r,op){
   var st=m[op];if(!st)return '<div class="op empty"></div>';
   var c={COMPLETED:"done",IN_PROGRESS:"prog",PAUSED:"prog",NOT_STARTED:"none"}[st]||"none";
   var k={done:"&#10003;",prog:"&#9679;",none:""}[c];
-  return '<div class="op '+c+'">'+(f?'<span class="ord">'+p[op]+'</span>':'')+'<span class="dot">'+k+'</span><span class="oplbl">'+LBL[op]+'</span></div>';
+  var a=c!=="done"&&r.av&&r.av[op];
+  return '<div class="op '+c+'">'+(f?'<span class="ord">'+p[op]+'</span>':'')+'<span class="dot">'+k+'</span><span class="oplbl'+(a?' avn':'')+'">'+(a?esc(a):LBL[op])+'</span></div>';
 }
 function fila(r){
   var t=tipoDe(r),v=r.entrega?false:vencida(r),l=fase(r)==="listo";
