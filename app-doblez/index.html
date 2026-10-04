@@ -98,7 +98,7 @@ function disponible(iso){var fin=new Date(iso+'T14:00:00'),t=new Date(),ms=0;
    PAUSAS.forEach(function(p){var x=hmD(d,p[0]),y=hmD(d,p[1]);if(x<a)x=a;if(y>b)y=b;if(y>x)ms-=y-x;});});}
  return ms;}
 /* piezas ya hechas en esta estación: terminadas en Katana + lapsos de la tablet; si las notas de la MO traen un avance mayor (ej. 'Doblez: Miguel 155/250'), manda ese */
-function notaPz(m){var r=new RegExp('Doblez[^\\n]*?(\\d+)\\s*/\\s*\\d+','gi'),x,n=0;var t=m.notas||'';while((x=r.exec(t)))n=+x[1];return n;}
+function notaPz(m){var t=m.notas||'',n=0;(t.match(/^[ \t]*Doblez[^\n]*/gim)||[]).forEach(function(l){var r=/(\d+)\s*\/\s*(\d+)/g,x;while((x=r.exec(l))){var a=l.charAt(x.index-1),b=l.charAt(r.lastIndex);if(/[\d\/]/.test(a)||/[\d\/]/.test(b))continue;n=+x[1];}});return n;} /* 4-oct-2026: toma el ultimo x/y de la linea de la estacion, sin confundir fechas (02/10/2026) */
 function hz(m){return Math.min(m.piezas,Math.max(notaPz(m),(m.hechas||0)+m.st.done));}
 function faltanMs(m){return Math.max(0,m.piezas-hz(m))*m.planeado*1000;}
 function semaforo(p){return p<=40?['#2A1418','#E5484D','#FF6369']:(p<=70?['#33250A','#F2A93B','#FFC45C']:['#0C3024','#25C083','#4FE0A6']);}
@@ -208,7 +208,7 @@ function vDetalle(){var m=cur(),st=m.st,falt=Math.max(0,m.piezas-hz(m)),tramo=st
    '<div style="border:1px dashed #22344A;border-radius:8px;margin-top:6px;padding:26px 0;text-align:center;color:var(--tx2)">Sin imagen para este SKU</div>')+'</button>'+
  '<div class="card" style="padding:10px 12px;margin-top:10px"><div class="lbl" style="margin-bottom:4px">INGREDIENTES · solo lectura</div><div class="mono" style="font-size:16px;font-weight:700">'+E(m.ingSku)+'</div>'+
   '<div style="font-size:14px">'+E(m.ingNombre)+' · <b>'+Number(m.ingTot).toLocaleString('en-US',{maximumFractionDigits:3})+' '+E(m.ingUom)+'</b>'+(m.ingUom==='in'?' (≈'+(m.ingTot/144).toFixed(1)+' barras)':'')+'</div></div>'+
- '<div class="card" style="padding:10px 12px;margin-top:10px"><div class="lbl" style="margin-bottom:4px">NOTAS</div><div style="font-size:15px">'+E(m.notas)+'</div></div>'+
+ '<div class="card" style="padding:10px 12px;margin-top:10px"><div class="lbl" style="margin-bottom:4px">NOTAS</div><div style="font-size:15px">'+E(m.notas).replace(/\n/g,'<br>')+'</div></div>'+
  '<div class="card" style="padding:10px 12px;margin-top:10px"><div class="lbl" style="margin-bottom:4px">REGISTRO DE LAPSOS</div>'+
   (st.log.length?st.log.slice(0,5).map(function(l){return '<div style="font-size:13px;padding:3px 0;border-bottom:1px solid #1B2A3D">'+E(l)+'</div>';}).join(''):'<div style="font-size:14px;color:var(--tx2)">Todavía no hay lapsos en esta MO.</div>')+'</div>'+
  '<div class="acc">'+
