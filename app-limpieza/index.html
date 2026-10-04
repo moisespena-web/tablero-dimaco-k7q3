@@ -8,10 +8,10 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#0A101B">
-<meta name="apple-mobile-web-app-title" content="Estación Limpieza">
-<link rel="apple-touch-icon" href="../app-doblez/icon.png">
+<meta name="apple-mobile-web-app-title" content="Limpieza & SQA">
+<link rel="apple-touch-icon" href="icon.png">
 <link rel="icon" type="image/png" href="icon.png">
-<title>Estación Doblez · DIMACO</title>
+<title>Estación Limpieza &amp; SQA · DIMACO</title>
 <style>
 :root{--bg:#0A1018;--panel:#121C29;--line:#22344A;--tx:#EAF1F9;--tx2:#8FA3BA;--safe-b:env(safe-area-inset-bottom,0px);--safe-t:env(safe-area-inset-top,0px)}
 *{box-sizing:border-box}
@@ -129,7 +129,7 @@ function cargar(){try{var j=JSON.parse(localStorage.getItem(KEY)||'null');if(!j)
 
 /* ============ CONEXIÓN CON KATANA (apagada mientras SRV_URL esté vacío) ============ */
 var SRV_URL='';
-var CONX=null;try{CONX=JSON.parse(localStorage.getItem('dimaco_doblez_conx')||'null');}catch(e){}
+var CONX=null;try{CONX=JSON.parse(localStorage.getItem('dimaco_limpieza_conx')||'null');}catch(e){}
 function enLinea(){return !!(SRV_URL&&CONX&&CONX.codigo);}
 function api(met,ruta,body){return fetch(SRV_URL.replace(/\/$/,'')+ruta,{method:met,headers:{'X-Tablet':CONX.codigo,'Content-Type':'application/json'},body:body?JSON.stringify(body):undefined,cache:'no-store'})
  .then(function(r){return r.json().catch(function(){return {ok:false,error:'HTTP '+r.status};}).then(function(j){j._status=r.status;return j;});});}
@@ -224,7 +224,7 @@ function vModal(){if(!S.modal)return '';var m=cur(),st=m.st,falt=Math.max(0,m.pi
  if(S.modal==='pieza'){var img=PZ[m.sku],imd=PZD[m.sku],z=S.zoom;
   var cuerpo;
   if(imd){cuerpo='<div style="padding:10px 12px">'+
-    '<div style="display:inline-block;background:#1D4F7A;color:#fff;font-weight:700;font-size:13px;letter-spacing:1px;border-radius:6px;padding:2px 10px;margin-bottom:6px">VISTA DEL DOBLEZ</div>'+
+    '<div style="display:inline-block;background:#1D4F7A;color:#fff;font-weight:700;font-size:13px;letter-spacing:1px;border-radius:6px;padding:2px 10px;margin-bottom:6px">VISTA DE LIMPIEZA</div>'+
     '<img src="'+imd+'" style="width:'+(z*100)+'%;max-width:none;display:block">'+
     (img?'<div style="display:inline-block;background:#5B6874;color:#fff;font-weight:700;font-size:13px;letter-spacing:1px;border-radius:6px;padding:2px 10px;margin:14px 0 6px">VISTA PLANA</div>'+
     '<img src="'+img+'" style="width:'+(z*100)+'%;max-width:none;display:block">':'')+'</div>';}
@@ -236,7 +236,7 @@ function vModal(){if(!S.modal)return '';var m=cur(),st=m.st,falt=Math.max(0,m.pi
    '<div style="flex-grow:1;overflow:auto;background:#fff;border-radius:10px;display:flex;'+(imd?'flex-direction:column;align-items:stretch;justify-content:flex-start':'align-items:'+(z>1?'flex-start':'center')+';justify-content:'+(z>1?'flex-start':'center'))+'">'+
    cuerpo+'</div></div></div>';}
  if(S.modal==='pausa'){h='<div class="ttl">¿Por qué se pausa?</div><div class="g2">'+['Comida','Falta material','Falla de máquina','Otro'].map(function(t){return '<button type="button" '+act('motPausa',t)+' style="min-height:70px;border-radius:12px;border:2px solid #F2A93B;background:#3A2A0C;color:#FFD37A;font-size:18px;font-weight:700">'+t+'</button>';}).join('')+'</div><button type="button" class="sec" '+act('cerrar')+'>Cancelar</button>';}
- else if(S.modal==='fin'){h='<div class="ttl">¿Cuántas piezas doblaste en este lapso?</div><div style="font-size:14px;color:var(--tx2)">'+m.mo+' · Doblez · '+OPERADOR+'</div>'+
+ else if(S.modal==='fin'){h='<div class="ttl">¿Cuántas piezas limpiaste en este lapso?</div><div style="font-size:14px;color:var(--tx2)">'+m.mo+' · Limpieza & SQA · '+OPERADOR+'</div>'+
   '<div style="display:flex;gap:10px;align-items:center"><div class="mono" style="flex-grow:1;font-size:44px;font-weight:700;text-align:right;background:#0A1018;border:2px solid #3E8FD8;border-radius:12px;padding:4px 14px">'+(S.fin||'0')+'</div><div style="font-size:15px;line-height:1.5">Llevas <b>'+hz(m)+'</b> de '+m.piezas+'<br>Faltan <b>'+falt+'</b></div></div>'+
   '<div style="min-height:20px;font-size:15px;font-weight:700;color:#FF6369">'+E(S.finErr)+'</div>'+teclado('fin')+
   '<div style="display:flex;gap:10px"><button type="button" '+act('finOk')+' style="flex-grow:1;min-height:56px;border-radius:12px;border:0;background:#3E8FD8;color:#fff;font-size:20px;font-weight:700">Guardar</button><button type="button" class="sec" '+act('cerrar')+'>Cancelar</button></div>';}
@@ -268,9 +268,9 @@ function vResumen(){var k=S.resDia||diaKey(Date.now()),hoy=diaKey(Date.now()),ro
   (rows.length?rows.map(function(r){return '<div class="card" style="padding:8px 10px;font-size:14px"><div style="display:flex;justify-content:space-between"><b class="mono">'+hm(r.ini)+'–'+(r.fin?hm(r.fin):'…')+'</b><b class="mono">'+r.mo+'</b><b>'+(r.pz==null?'—':r.pz+' pz')+'</b></div>'+
     '<div style="color:var(--tx2)">'+durTxt(r.trab)+' de trabajo'+(r.pausa?' · pausa '+durTxt(r.pausa)+' ('+E(r.motivos.join(', '))+')':'')+(r.vivo?' · <span style="color:#FFD37A">'+(r.vivo==='pausa'?'en pausa':'en proceso')+'</span>':(r.termino?' · Terminó':(r.motivo?' · '+E(r.motivo):'')))+'</div></div>';}).join('')
    :'<div style="color:var(--tx2);text-align:center;padding:20px">No hay lapsos registrados este día.</div>')+'</div></div>';}
-function textoResumen(){var k=S.resDia||diaKey(Date.now()),rows=S.tramos.filter(function(r){return r.d===k;}),tot={},L=['RESUMEN DOBLEZ · '+OPERADOR+' · '+diaTxt(k)];
+function textoResumen(){var k=S.resDia||diaKey(Date.now()),rows=S.tramos.filter(function(r){return r.d===k;}),tot={},L=['RESUMEN LIMPIEZA & SQA · '+OPERADOR+' · '+diaTxt(k)];
  rows.forEach(function(r){var t=tot[r.mo]=tot[r.mo]||{pz:0,trab:0,termino:false};t.pz+=r.pz;t.trab+=r.trab;if(r.termino)t.termino=true;});
- Object.keys(tot).forEach(function(mo){var t=tot[mo];L.push(mo+' · Doblez · '+t.pz+' pz · '+durTxt(t.trab)+(t.termino?' · TERMINADO':''));});
+ Object.keys(tot).forEach(function(mo){var t=tot[mo];L.push(mo+' · Limpieza & SQA · '+t.pz+' pz · '+durTxt(t.trab)+(t.termino?' · TERMINADO':''));});
  L.push('');L.push('Lapsos:');rows.forEach(function(r){L.push(hm(r.ini)+'–'+hm(r.fin)+' '+r.mo+' · '+durTxt(r.trab)+(r.pausa?' · pausa '+durTxt(r.pausa)+' ('+r.motivos.join(', ')+')':'')+' · '+r.pz+' pz'+(r.motivo?' · '+r.motivo:''));});
  if(!rows.length)L.push('Sin lapsos terminados.');return L.join('\n');}
 function render(){var y=window.scrollY,prev=S._pant;
@@ -287,7 +287,7 @@ A.cerrar=function(){S.modal=null;S.finErr='';};
 A.resumen=function(){S.modal='resumen';S.resDia=diaKey(Date.now());};
 A.resDia=function(v){S.resDia=v;};
 A.enviar=function(){var t=textoResumen();
- if(navigator.share){navigator.share({title:'Resumen Doblez',text:t}).catch(function(){});}
+ if(navigator.share){navigator.share({title:'Resumen Limpieza & SQA',text:t}).catch(function(){});}
  else if(navigator.clipboard){navigator.clipboard.writeText(t).then(function(){S.copiado=true;render();setTimeout(function(){S.copiado=false;render();},2500);});}};
 A.verPieza=function(){S.modal='pieza';S.zoom=1;};
 A.zoom=function(v){S.zoom=Math.max(1,Math.min(4,S.zoom+(+v)));};
@@ -310,16 +310,16 @@ A.confSi=function(){var n=S.pendiente;upd(function(x){katEv('completar',x,x.runS
 A.confNo=function(){S.modal='fin';S.pendiente=null;};
 var toques=[];
 A.logo=function(){var n=Date.now();toques=toques.filter(function(t){return n-t<3000;});toques.push(n);if(toques.length>=5){toques=[];S.modal='conx';S.cod='';S.conxMsg='';}};
-A.codOk=function(){if(S.cod.length<6){S.conxMsg='El código tiene al menos 6 dígitos';return;}CONX={codigo:S.cod};try{localStorage.setItem('dimaco_doblez_conx',JSON.stringify(CONX));}catch(e){}
+A.codOk=function(){if(S.cod.length<6){S.conxMsg='El código tiene al menos 6 dígitos';return;}CONX={codigo:S.cod};try{localStorage.setItem('dimaco_limpieza_conx',JSON.stringify(CONX));}catch(e){}
  S.conxMsg=SRV_URL?'Probando…':'Código guardado. El servidor todavía no está configurado en esta versión.';
  if(SRV_URL)api('GET','/estado').then(function(r){S.conxMsg=r.ok?'✓ Conectado a Katana':'✗ '+(r.error||'No autorizado');render();}).catch(function(){S.conxMsg='✗ Sin conexión';render();});};
-A.desconectar=function(){CONX=null;try{localStorage.removeItem('dimaco_doblez_conx');}catch(e){}S.conxMsg='Teléfono desconectado.';S.sync='off';};
+A.desconectar=function(){CONX=null;try{localStorage.removeItem('dimaco_limpieza_conx');}catch(e){}S.conxMsg='Teléfono desconectado.';S.sync='off';};
 
 document.getElementById('app').addEventListener('click',function(e){var b=e.target.closest('[data-a]');if(!b||b.disabled)return;
  var f=A[b.getAttribute('data-a')];if(f){f(b.getAttribute('data-v'));render();guardar();}});
 
-/* ============ AVISOS DE MOISÉS (app-doblez/aviso.json, cada 15 s) ============ */
-var AV={d:null,visto:null,nuevo:false};try{AV.visto=localStorage.getItem('dimaco_doblez_aviso_visto');}catch(e){}
+/* ============ AVISOS DE MOISÉS (app-limpieza/aviso.json, cada 15 s) ============ */
+var AV={d:null,visto:null,nuevo:false};try{AV.visto=localStorage.getItem('dimaco_limpieza_aviso_visto');}catch(e){}
 var ACX=null;function tono(f,t0,d,vol){try{ACX=ACX||new (window.AudioContext||window.webkitAudioContext)();var o=ACX.createOscillator(),g=ACX.createGain();o.type='square';o.frequency.value=f;
  g.gain.setValueAtTime(vol||0.25,ACX.currentTime+t0);g.gain.exponentialRampToValueAtTime(0.001,ACX.currentTime+t0+d);o.connect(g);g.connect(ACX.destination);o.start(ACX.currentTime+t0);o.stop(ACX.currentTime+t0+d+0.05);}catch(e){}}
 function sonar(tipo){if(tipo==='parada'){for(var i=0;i<6;i++)tono(i%2?660:990,i*0.35,0.3,0.35);}else if(tipo==='alerta'){for(var j=0;j<4;j++)tono(880,j*0.3,0.22,0.3);}else{tono(880,0,0.25);tono(1175,0.3,0.4);}
@@ -330,14 +330,14 @@ var intAv=0;
 function leerAviso(){var u=(intAv%2?'aviso.json':'https://raw.githubusercontent.com/moisespena-web/tablero-dimaco-k7q3/main/app-limpieza/aviso.json')+'?t='+Date.now();
  fetch(u,{cache:'no-store'}).then(function(r){if(!r.ok)throw 0;return r.json();}).then(function(d){
   var t=(d&&d.texto||'').trim(),clave=t?(d.actualizado||t):'';var antes=AV.d?JSON.stringify(AV.d):'';AV.d=d;
-  if(t&&clave!==AV.visto){AV.visto=clave;AV.nuevo=true;try{localStorage.setItem('dimaco_doblez_aviso_visto',clave);}catch(e){}sonar(d.nivel==='alerta'?'alerta':'aviso');setTimeout(function(){AV.nuevo=false;},8000);}
+  if(t&&clave!==AV.visto){AV.visto=clave;AV.nuevo=true;try{localStorage.setItem('dimaco_limpieza_aviso_visto',clave);}catch(e){}sonar(d.nivel==='alerta'?'alerta':'aviso');setTimeout(function(){AV.nuevo=false;},8000);}
   if(JSON.stringify(d)!==antes&&!S.modal)render();}).catch(function(){intAv++;});}
 
-/* ============ DOBLADORA PARADA: >15 min sin START dentro del turno ============ */
+/* ============ LIMPIEZA PARADA: >15 min sin START dentro del turno ============ */
 /* turno 7:30-18:36 L-V; no cuentan breaks 9:00-9:15 y 15:45-16:00 ni comida 12:00-13:00 (VENTANAS/PAUSAS de arriba) */
 var LIM_PARADA=1e12, WA_URL='', WA_URL0='https://script.google.com/macros/s/AKfycbxAaapz3Qdb8ZKz65vS_4jeQJW9X_Ujaghla5cX6XFbN_NDDpWruWqbHFSPWPUnLE5v/exec';   /* WA_URL = intermediario que manda el WhatsApp a Moisés */
-var PA={ult:null,ultTxt:'',ep:null,env:null};try{var pj=JSON.parse(localStorage.getItem('dimaco_doblez_parada')||'null');if(pj)PA=pj;}catch(e){}
-function guardarPA(){try{localStorage.setItem('dimaco_doblez_parada',JSON.stringify(PA));}catch(e){}}
+var PA={ult:null,ultTxt:'',ep:null,env:null};try{var pj=JSON.parse(localStorage.getItem('dimaco_limpieza_parada')||'null');if(pj)PA=pj;}catch(e){}
+function guardarPA(){try{localStorage.setItem('dimaco_limpieza_parada',JSON.stringify(PA));}catch(e){}}
 function laborable(a,b){var ms=0;if(b<=a)return 0;var d0=new Date(a);
  for(var d=new Date(d0.getFullYear(),d0.getMonth(),d0.getDate());d<=b;d.setDate(d.getDate()+1)){var w=d.getDay();if(w===0||w===6)continue;
   VENTANAS.forEach(function(v){var x=Math.max(a,+hmD(d,v[0])),y=Math.min(b,+hmD(d,v[1]));if(y<=x)return;ms+=y-x;
@@ -352,9 +352,9 @@ function ultimoTxt(){var p=S.mos.filter(function(m){return m.st.status==='pausa'
 function inicioParada(){var hoy=new Date(),ini=+hmD(hoy,VENTANAS[0][0]);return Math.max(PA.ult||0,ini);}
 function paradaMs(){if(enMarcha())return 0;var n=Date.now();return laborable(inicioParada(),n);}
 function vParada(){var ms=paradaMs();if(ms<LIM_PARADA||!enTurno(Date.now()))return '';
- return '<div class="par"><b>⛔ DOBLADORA PARADA · '+durTxt(ms)+'</b><div>Sin START desde las '+hm(inicioParada())+' (sin contar breaks ni comida). Presiona ▶ START en la MO que estés doblando.'+(PA.env&&PA.env===PA.ep?' Ya se avisó a Moisés.':'')+'</div></div>';}
+ return '<div class="par"><b>⛔ LIMPIEZA PARADA · '+durTxt(ms)+'</b><div>Sin START desde las '+hm(inicioParada())+' (sin contar breaks ni comida). Presiona ▶ START en la MO que estés limpiando.'+(PA.env&&PA.env===PA.ep?' Ya se avisó a Moisés.':'')+'</div></div>';}
 function enviarWA(ms){if(!WA_URL)return;var ini=inicioParada();
- var cuerpo=JSON.stringify({estacion:'Dobladora',tiempo:durTxt(ms)+' (desde las '+hm(ini)+')',ultimo:ultimoTxt()});
+ var cuerpo=JSON.stringify({estacion:'Limpieza & SQA',tiempo:durTxt(ms)+' (desde las '+hm(ini)+')',ultimo:ultimoTxt()});
  try{fetch(WA_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:cuerpo}).catch(function(){PA.env=null;guardarPA();});}catch(e){}}
 var sonoPar=0;
 function vigilar(){var n=Date.now(),m=enMarcha();
@@ -369,7 +369,7 @@ function vigilar(){var n=Date.now(),m=enMarcha();
 var WL=null;function wake(){try{if(navigator.wakeLock&&document.visibilityState==='visible'&&!WL)navigator.wakeLock.request('screen').then(function(l){WL=l;l.addEventListener('release',function(){WL=null;});}).catch(function(){});}catch(e){}}
 document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible'){wake();leerAviso();vigilar();render();}});
 document.addEventListener('click',function(){try{ACX=ACX||new (window.AudioContext||window.webkitAudioContext)();if(ACX.state==='suspended')ACX.resume();}catch(e){}wake();},true);
-cargar();if(PA.ult==null){PA.ult=Date.now();guardarPA();}render();leerAviso();setInterval(leerAviso,15000);vigilar();setInterval(function(){vigilar();var p=document.querySelector('.par b');if(p)p.textContent='⛔ DOBLADORA PARADA · '+durTxt(paradaMs());},20000);wake();
+cargar();if(PA.ult==null){PA.ult=Date.now();guardarPA();}render();leerAviso();setInterval(leerAviso,15000);vigilar();setInterval(function(){vigilar();var p=document.querySelector('.par b');if(p)p.textContent='⛔ LIMPIEZA PARADA · '+durTxt(paradaMs());},20000);wake();
 /* logo: el mismo del tablero de TV */
 fetch('../',{cache:'no-store'}).then(function(r){return r.text();}).then(function(t){var m=t.match(/id="logo"\s+src="(data:image\/[^"]+)"/)||t.match(/src="(data:image\/png;base64,[^"]+)"/);if(m){LOGO=m[1];render();}}).catch(function(){});
 setInterval(function(){var c=document.getElementById('crono'),r=document.getElementById('reloj'),e=document.getElementById('efect');
