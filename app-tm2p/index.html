@@ -85,7 +85,7 @@ function disponible(iso){var fin=new Date(iso+'T14:00:00'),t=new Date(),ms=0;
    PAUSAS.forEach(function(p){var x=hmD(d,p[0]),y=hmD(d,p[1]);if(x<a)x=a;if(y>b)y=b;if(y>x)ms-=y-x;});});}
  return ms;}
 /* piezas ya hechas en esta estación: terminadas en Katana + lapsos de la tablet; si las notas de la MO traen un avance mayor (ej. 'TM-2P (CNC Ø): Miguel 155/250'), manda ese */
-function notaPz(m){var r=new RegExp('TM-2P[^\\n]*?(\\d+)\\s*/\\s*\\d+','gi'),x,n=0;var t=m.notas||'';while((x=r.exec(t)))n=+x[1];return n;}
+function notaPz(m){var t=m.notas||'',n=0;(t.match(/^[ \t]*TM-2P[^\n]*/gim)||[]).forEach(function(l){var r=/(\d+)\s*\/\s*(\d+)/g,x;while((x=r.exec(l))){var a=l.charAt(x.index-1),b=l.charAt(r.lastIndex);if(/[\d\/]/.test(a)||/[\d\/]/.test(b))continue;n=+x[1];}});return n;} /* 4-oct-2026: toma el ultimo x/y de la linea de la estacion, sin confundir fechas (02/10/2026) */
 function hz(m){return Math.min(m.piezas,Math.max(notaPz(m),(m.hechas||0)+m.st.done));}
 function faltanMs(m){return Math.max(0,m.piezas-hz(m))*m.planeado*1000;}
 function semaforo(p){return p<=40?['#2A1418','#E5484D','#FF6369']:(p<=70?['#33250A','#F2A93B','#FFC45C']:['#0C3024','#25C083','#4FE0A6']);}
@@ -178,7 +178,7 @@ function vDetalle(){var m=cur(),st=m.st,falt=Math.max(0,m.piezas-hz(m)),tramo=st
      '<div style="flex-grow:1;width:100%;border:1px dashed #22344A;border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--tx2);font-size:18px">Sin imagen para este SKU</div>')+'</button>'+
    '<div style="display:flex;gap:10px">'+
     '<div class="card" style="flex:1.3;padding:8px 14px;overflow:hidden"><div class="lbl" style="margin-bottom:4px">INGREDIENTES · solo lectura</div>'+(m.ings||[{sku:m.ingSku,nombre:m.ingNombre,total:m.ingIn,uom:'in'}]).slice(0,2).map(function(g){var u=g.uom||'';return '<div class="mono" style="font-size:18px;font-weight:700">'+E(g.sku)+'</div><div style="font-size:16px">'+E(g.nombre)+' · <b>'+Number(g.total).toLocaleString('en-US',{maximumFractionDigits:3})+' '+E(u)+'</b>'+(u==='in'?' (≈'+(g.total/144).toFixed(1)+' barras)':'')+'</div>';}).join('')+((m.ings||[]).length>2?'<div style="font-size:14px;color:var(--tx2)">+'+(m.ings.length-2)+' más</div>':'')+'</div>'+
-    '<div class="card" style="flex:1;padding:8px 14px"><div class="lbl" style="margin-bottom:4px">NOTAS</div><div style="font-size:17px;line-height:1.3">'+E(m.notas)+'</div></div></div>'+
+    '<div class="card" style="flex:1;padding:8px 14px"><div class="lbl" style="margin-bottom:4px">NOTAS</div><div style="font-size:17px;line-height:1.3">'+E(m.notas).replace(/\n/g,'<br>')+'</div></div></div>'+
    '<div class="card" style="padding:8px 14px;height:96px;overflow:hidden;flex:none"><div class="lbl" style="margin-bottom:4px">REGISTRO DE LAPSOS (es tu TRM)</div>'+
     (st.log.length?st.log.slice(0,3).map(function(l){return '<div style="font-size:15px;padding:2px 0;border-bottom:1px solid #1B2A3D;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+E(l)+'</div>';}).join(''):'<div style="font-size:16px;color:var(--tx2)">Todavía no hay lapsos terminados en esta operación.</div>')+
    '</div></div></div></div>';}
