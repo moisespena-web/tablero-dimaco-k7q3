@@ -177,7 +177,7 @@ function vLista(){
   '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;gap:6px"><span class="mono sku">'+m.sku+'</span><b style="font-size:19px">'+hz(m)+'/'+m.piezas+' <span class="ks" style="font-weight:400">pz</span></b></div>'+
   '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:7px"><span class="st" style="'+estSty(st)+'">'+E(estTxt(st))+'</span>'+
   (st.status==='none'?'<span class="st" style="background:'+pv[1]+';border:1px solid '+pv[2]+';color:'+pv[3]+'">'+pv[0]+'</span>':'')+'</div></button>';}).join('')+
- '<div style="font-size:12px;color:var(--tx2);margin:6px 0 10px;line-height:1.4">'+(enLinea()?'CONECTADA A KATANA · la cola se actualiza sola.':'PILOTO · MOs de Katana al 4-oct 00:07. Lo capturado se guarda en este teléfono; todavía no escribe en Katana: el Ing. Moisés lo registra con el Resumen del turno.')+'</div>';}
+ '<div style="font-size:12px;color:var(--tx2);margin:6px 0 10px;line-height:1.4">'+(enLinea()?'CONECTADA A KATANA · la cola se actualiza sola.':'PILOTO · MOs de Katana al 4-oct 00:41. Lo capturado se guarda en este teléfono; todavía no escribe en Katana: el Ing. Moisés lo registra con el Resumen del turno.')+'</div>';}
 function bigBtn(bg,fg,on){return 'background:'+bg+';color:'+fg+';opacity:'+(on?1:.25);}
 function vDetalle(){var m=cur(),st=m.st,falt=Math.max(0,m.piezas-hz(m)),tramo=st.tramoStart?trab(st):0,img=PZ[m.sku],pv=previa(m);
  var noStart=!(st.status==='none'||st.status==='pausa'),noPausa=st.status!=='prog',noFin=!(st.status==='prog'||st.status==='pausa');
