@@ -333,7 +333,7 @@ padding:20px 34px;box-shadow:0 0 70px rgba(229,72,77,.95);animation:alimpP 1s st
   </div>
   <div class="msg"></div>
   <span id="sndIco">🔇</span>
-  <div id="stamp"></div><span class="build">v2026-10-04a</span><div class="bar"><i id="pb"></i></div>
+  <div id="stamp"></div><span class="build">v2026-10-05a</span><div class="bar"><i id="pb"></i></div>
  </footer>
  <div id="alimp" hidden></div>
  <div id="toasts"></div>
@@ -524,13 +524,13 @@ function renderMes(E){
 }
 function renderMat(D){var m=$('mat');var mt=(D&&D.material)||[];if(!D||D.modo!=='entregas'){m.hidden=true;return;}
   m.hidden=false;m.className=mt.length?'falta':'ok';
-  if(!mt.length){m.innerHTML='<div class="ml">MATERIAL · PRÓXIMOS 7 DÍAS</div><div class="kv" style="color:#4FE0A6">Completo</div>';return;}
+  if(!mt.length){m.innerHTML='<div class="ml">MATERIAL PARA MOs ABIERTAS</div><div class="kv" style="color:#4FE0A6">Completo</div>';return;}
   /* mt viene congelado de la base: se copia antes de ordenar */
   var MAX=4,xs=mt.slice().sort(function(a,b){return (b.barras||0)-(a.barras||0);});
   var top=xs.slice(0,MAX),resto=xs.length-top.length;
   var chips=top.map(function(x){return '<span class="chip"><b class="mono">'+esc(x.sku)+'</b><i>'+x.barras+'</i></span>';}).join('');
   if(resto>0)chips+='<span class="chip mas"><i>+'+resto+'</i><em>'+(resto===1?'material más':'materiales más')+'</em></span>';
-  m.innerHTML='<div class="ml">FALTA MATERIAL · PRÓXIMOS 7 DÍAS<span class="mn">'+esc(D.materialNota||'')+'</span></div><div class="chips">'+chips+'</div>';}
+  m.innerHTML='<div class="ml">MATERIAL PARA MOs ABIERTAS · FALTA<span class="mn">'+esc(D.materialNota||'')+'</span></div><div class="chips">'+chips+'</div>';}
 function avProcHTML(A){
   var xs=A.slice().sort(function(a,b){return b.pct-a.pct;});
   return '<div class="kpi avp"><div class="kl">AVANCE POR PROCESO · PIEZAS</div><div class="apl">'+xs.map(function(x,i){
