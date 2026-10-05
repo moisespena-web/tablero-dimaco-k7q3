@@ -125,7 +125,7 @@ function cargar(){try{var j=JSON.parse(localStorage.getItem(KEY)||'null');if(!j)
  S.tramos=j.tramos||[];S.cola=j.cola||[];S.tReal=j.tReal||{};S.errores=j.errores||[];(j.st||[]).forEach(function(p){S.stK[p[0]]=p[1];S.mos.forEach(function(m){if(m.mo===p[0])m.st=Object.assign(nuevo(),p[1]);});});}catch(e){}}
 
 /* ============ CONEXIÓN CON KATANA (apagada mientras SRV_URL esté vacío) ============ */
-var SRV_URL='';
+var SRV_URL='https://dimaco-estaciones.moises-pena.workers.dev';
 var CONX=null;try{CONX=JSON.parse(localStorage.getItem('dimaco_laser_conx')||'null');}catch(e){}
 function enLinea(){return !!(SRV_URL&&CONX&&CONX.codigo);}
 function api(met,ruta,body){return fetch(SRV_URL.replace(/\/$/,'')+ruta,{method:met,headers:{'X-Tablet':CONX.codigo,'Content-Type':'application/json'},body:body?JSON.stringify(body):undefined,cache:'no-store'})
