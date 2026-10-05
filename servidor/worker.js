@@ -14,6 +14,7 @@
  *   CODIGO_PINTURA  (secreto)  código del teléfono de la Estación Pintura
  *   CODIGO_VESTIDO  (secreto)  código del teléfono de la Estación Rotulado y Vestido
  *   CODIGO_ARMADO1  (secreto)  código del teléfono de la Estación Armado y Soldadura 1
+ *   CODIGO_TALADRO  (secreto)  código del teléfono de la Estación Taladro (MAFESA)
  *   PINES           (secreto)  JSON con el PIN de cada operador de la TM-2P, ej. {"Emiliano":"4821"}
  *   ORIGEN          (texto)    https://moisespena-web.github.io   (opcional)
  *
@@ -41,6 +42,7 @@ const ESTACIONES = {
   pintura:  { nombre: 'Pintura', recursos: ['Pintura'], etiqueta: () => 'Pintura', conPin: false, operador: 'Operador' },
   vestido:  { nombre: 'Rotulado y Vestido', recursos: ['Vestido', 'Colocación Dunnage'], etiqueta: () => 'Vestido', conPin: false, operador: 'Operador' },
   armado1:  { nombre: 'Armado y Soldadura 1', recursos: ['Armado y Soldadura'], etiqueta: () => 'Armado y Soldadura', conPin: false, operador: 'Operador' },
+  taladro:  { nombre: 'Taladro', recursos: ['Taladro Mafesa', 'Ø'], etiqueta: () => 'Taladro', conPin: false, operador: 'Operador' },
 };
 
 export default {
@@ -71,6 +73,7 @@ export default {
     else if (iguales(codigo, env.CODIGO_PINTURA || '')) est = ESTACIONES.pintura;
     else if (iguales(codigo, env.CODIGO_VESTIDO || '')) est = ESTACIONES.vestido;
     else if (iguales(codigo, env.CODIGO_ARMADO1 || '')) est = ESTACIONES.armado1;
+    else if (iguales(codigo, env.CODIGO_TALADRO || '')) est = ESTACIONES.taladro;
     if (!est) return json({ ok: false, error: 'Dispositivo no autorizado' }, 401);
     if (!env.KATANA_API_KEY) return json({ ok: false, error: 'Falta KATANA_API_KEY en el servidor' }, 500);
 
