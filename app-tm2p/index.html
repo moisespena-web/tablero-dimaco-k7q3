@@ -248,7 +248,7 @@ function upd(fn){fn(cur().st);}
    Sin SRV_URL la app trabaja como hoy (modo tablet). Con SRV_URL + código de tablet:
    - la cola se lee de Katana en vivo (orden igual que la TV, vía ../datos.json)
    - START/PAUSA/FIN/COMPLETAR se mandan a Katana; si no hay red se guardan y se reenvían. */
-var SRV_URL='';
+var SRV_URL='https://dimaco-estaciones.moises-pena.workers.dev';
 var CONX=null;try{CONX=JSON.parse(localStorage.getItem('dimaco_tm2p_conx')||'null');}catch(e){}
 var TIPOS=[["Tipo 1",["Corte","Limpieza & SQA"],"#17A67F"],["Tipo 2",["Corte","Taladro","Limpieza & SQA"],"#3E8FD8"],["Tipo 3",["Corte","Taladro","Doblez","Limpieza & SQA"],"#7C74D6"],["Tipo 4",["Corte","CNC","Limpieza & SQA"],"#D1663C"],["Tipo 5",["Corte","CNC","Doblez","Limpieza & SQA"],"#D19A2E"]];
 var MES3=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
