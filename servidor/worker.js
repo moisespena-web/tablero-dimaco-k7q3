@@ -9,6 +9,11 @@
  *   CODIGO_DOBLEZ   (secreto)  código del teléfono de la Estación Doblez (6 a 10 dígitos)
  *   CODIGO_LASER    (secreto)  código del teléfono de la Estación Láser y Router (6 a 10 dígitos)
  *   CODIGO_LIMPIEZA (secreto)  código del teléfono de la Estación Limpieza & SQA (Cynthia) (6 a 10 dígitos)
+ *   CODIGO_HABILITADO (secreto) código del teléfono de la Estación Habilitado (Corte Sierra, racks)
+ *   CODIGO_CORTE    (secreto)  código del teléfono de la Estación Corte (Corte Mafesa)
+ *   CODIGO_PINTURA  (secreto)  código del teléfono de la Estación Pintura
+ *   CODIGO_VESTIDO  (secreto)  código del teléfono de la Estación Rotulado y Vestido
+ *   CODIGO_ARMADO1  (secreto)  código del teléfono de la Estación Armado y Soldadura 1
  *   PINES           (secreto)  JSON con el PIN de cada operador de la TM-2P, ej. {"Emiliano":"4821"}
  *   ORIGEN          (texto)    https://moisespena-web.github.io   (opcional)
  *
@@ -31,6 +36,11 @@ const ESTACIONES = {
   doblez: { nombre: 'Doblez', recursos: ['Doblez Mafesa'],            etiqueta: () => 'Doblez', conPin: false, operador: 'Miguel' },
   laser:  { nombre: 'Láser y Router', recursos: ['Corte Laser', 'Router'], etiqueta: r => (r.operation_name || '').trim() || 'Láser', conPin: false, operador: 'Luis' },
   limpieza: { nombre: 'Limpieza & SQA', recursos: ['Limpieza & SQA'], etiqueta: () => 'Limpieza', conPin: false, operador: 'Cynthia' },
+  habilitado: { nombre: 'Habilitado', recursos: ['Corte Sierra'], etiqueta: () => 'Corte', conPin: false, operador: 'Mario' },
+  corte:    { nombre: 'Corte', recursos: ['Corte Mafesa'], etiqueta: () => 'Corte', conPin: false, operador: 'Operador' },
+  pintura:  { nombre: 'Pintura', recursos: ['Pintura'], etiqueta: () => 'Pintura', conPin: false, operador: 'Operador' },
+  vestido:  { nombre: 'Rotulado y Vestido', recursos: ['Vestido', 'Colocación Dunnage'], etiqueta: () => 'Vestido', conPin: false, operador: 'Operador' },
+  armado1:  { nombre: 'Armado y Soldadura 1', recursos: ['Armado y Soldadura'], etiqueta: () => 'Armado y Soldadura', conPin: false, operador: 'Operador' },
 };
 
 export default {
@@ -56,6 +66,11 @@ export default {
     else if (iguales(codigo, env.CODIGO_DOBLEZ || '')) est = ESTACIONES.doblez;
     else if (iguales(codigo, env.CODIGO_LASER || '')) est = ESTACIONES.laser;
     else if (iguales(codigo, env.CODIGO_LIMPIEZA || '')) est = ESTACIONES.limpieza;
+    else if (iguales(codigo, env.CODIGO_HABILITADO || '')) est = ESTACIONES.habilitado;
+    else if (iguales(codigo, env.CODIGO_CORTE || '')) est = ESTACIONES.corte;
+    else if (iguales(codigo, env.CODIGO_PINTURA || '')) est = ESTACIONES.pintura;
+    else if (iguales(codigo, env.CODIGO_VESTIDO || '')) est = ESTACIONES.vestido;
+    else if (iguales(codigo, env.CODIGO_ARMADO1 || '')) est = ESTACIONES.armado1;
     if (!est) return json({ ok: false, error: 'Dispositivo no autorizado' }, 401);
     if (!env.KATANA_API_KEY) return json({ ok: false, error: 'Falta KATANA_API_KEY en el servidor' }, 500);
 
