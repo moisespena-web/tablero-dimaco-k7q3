@@ -333,7 +333,7 @@ padding:20px 34px;box-shadow:0 0 70px rgba(229,72,77,.95);animation:alimpP 1s st
   </div>
   <div class="msg"></div>
   <span id="sndIco">🔇</span>
-  <div id="stamp"></div><span class="build">v2026-10-05a</span><div class="bar"><i id="pb"></i></div>
+  <div id="stamp"></div><span class="build">v2026-10-06a</span><div class="bar"><i id="pb"></i></div>
  </footer>
  <div id="alimp" hidden></div>
  <div id="toasts"></div>
@@ -769,14 +769,16 @@ render(window.__DATOS__);
     if(cambio)evento(alerta?"alerta":"aviso",t);
     if(alerta)repetir=setInterval(function(){sonar("alerta");},300000);
   }
-  var intento=0;
+  /* --- 6-oct-2026: primero el buzón de Cloudflare (lee Dropbox al momento); si falla, GitHub como antes --- */
+  var BUZON="https://dimaco-estaciones.moises-pena.workers.dev",RAWG="https://raw.githubusercontent.com/moisespena-web/tablero-dimaco-k7q3/main/",ultStamp="";
+  function pedir(urls,ok){var i=0;(function sig(){if(i>=urls.length)return;var u=urls[i++],x=new XMLHttpRequest();
+    x.open("GET",u+(u.indexOf("?")<0?"?":"&")+"t="+Date.now(),true);x.timeout=15000;x.onerror=x.ontimeout=sig;
+    x.onload=function(){if(x.status!==200)return sig();var j;try{j=JSON.parse(x.responseText);}catch(e){return sig();}ok(j);};x.send();})();}
   function cargar(){
-    var x=new XMLHttpRequest();
-    x.open("GET",(intento%2?"https://raw.githubusercontent.com/moisespena-web/tablero-dimaco-k7q3/main/datos.json":"datos.json")+"?t="+Date.now(),true);
-    x.onerror=function(){intento++;};
-    x.onload=function(){if(x.status!==200){intento++;return;}var j;try{j=JSON.parse(x.responseText);}catch(e){return;}
+    pedir([BUZON+"/tablero","datos.json",RAWG+"datos.json"],function(j){
       var D=j&&j.datos;
-      if(D&&D.rows){
+      if(D&&D.rows&&(!ultStamp||!D.stamp||D.stamp>=ultStamp)){
+        if(D.stamp)ultStamp=D.stamp;
         if(!primera&&datos){
           var ahora={};D.rows.forEach(function(r){ahora[clave(r)]=r;});
           datos.rows.forEach(function(r){if(fase(r)==="listo")return;var n=ahora[clave(r)];
@@ -784,21 +786,12 @@ render(window.__DATOS__);
         }
         primera=false;render(D);checarVencidas();
       }
-      if(!avisoPropio)aviso(j&&j.aviso);                      // respaldo: solo mientras aviso.json no responda
-    };
-    x.send();
+      if(!avisoPropio)aviso(j&&j.aviso);                      // respaldo: solo mientras el aviso propio no responda
+    });
   }
-  /* --- el aviso va en su propio archivo (~100 bytes): se relee cada 15 s --- */
+  /* --- el aviso se relee cada 15 s (buzón primero, luego aviso.json de GitHub) --- */
   function cargarAviso(){
-    var x=new XMLHttpRequest();
-    x.open("GET",(intentoA%2?"https://raw.githubusercontent.com/moisespena-web/tablero-dimaco-k7q3/main/aviso.json":"aviso.json")+"?t="+Date.now(),true);
-    x.onerror=function(){intentoA++;};
-    x.onload=function(){
-      if(x.status!==200){intentoA++;return;}
-      var a;try{a=JSON.parse(x.responseText);}catch(e){return;}
-      avisoPropio=true;aviso(a);
-    };
-    x.send();
+    pedir([BUZON+"/tablero/aviso","aviso.json",RAWG+"aviso.json"],function(a){avisoPropio=true;aviso(a);});
   }
   cargarAviso();setInterval(cargarAviso,15000);              // el aviso, cada 15 s
   cargar();setInterval(cargar,60000);                        // los datos, cada minuto
