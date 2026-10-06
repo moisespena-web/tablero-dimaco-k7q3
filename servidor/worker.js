@@ -18,7 +18,10 @@
  *   PINES           (secreto)  JSON con el PIN de cada operador de la TM-2P, ej. {"Emiliano":"4821"}
  *   ORIGEN          (texto)    https://moisespena-web.github.io   (opcional)
  *
+ *   DROPBOX_URL     (secreto)  link compartido de la carpeta Dropbox "Dimaco/Tablero TV" (el mismo que usa GitHub)
+ *
  * Rutas:  GET /estado · GET /operadores · GET /cola · POST /pin · POST /evento
+ *         GET /tablero (público: {datos, aviso} más recientes de Dropbox) · GET /tablero/aviso
  *
  * Qué escribe en Katana (solo en la operación cuyo Resource es el de la estación):
  *   start      → IN_PROGRESS + operador asignado
@@ -61,6 +64,15 @@ export default {
 
     const url = new URL(req.url);
     const ruta = url.pathname.replace(/\/+$/, '') || '/';
+
+    // --- Buzón del Tablero de TV (6-oct-2026): lee la carpeta Dropbox "Tablero TV" directo, sin esperar a GitHub ---
+    if (req.method === 'GET' && (ruta === '/tablero' || ruta === '/tablero/aviso')) {
+      try {
+        const t = await tablero(env);
+        if (!t) return json({ ok: false, error: 'Falta DROPBOX_URL o la carpeta no tiene datos' }, 503);
+        return json(ruta === '/tablero' ? t : (t.aviso || {}));
+      } catch (e) { return json({ ok: false, error: String(e && e.message || e) }, 502); }
+    }
 
     const codigo = req.headers.get('X-Tablet') || '';
     let est = null;
@@ -339,4 +351,59 @@ function iguales(a, b) {
   let d = 0;
   for (let i = 0; i < a.length; i++) d |= a.charCodeAt(i) ^ b.charCodeAt(i);
   return d === 0;
+}
+
+
+/* ---------- Buzón del Tablero de TV ----------
+   Descarga la carpeta compartida de Dropbox como ZIP (dl=1), toma el datos-*.json más nuevo y el aviso-*.json más nuevo
+   que sea JSON válido (si no hay aviso-*, usa el aviso que trae el datos). Mismo criterio que el robot de GitHub.
+   Se guarda 20 s en la caché del Worker para no pegarle a Dropbox en cada consulta de la TV. */
+async function tablero(env) {
+  if (!env.DROPBOX_URL) return null;
+  const cache = caches.default, key = new Request('https://tablero.cache/v1');
+  const hit = await cache.match(key);
+  if (hit) return await hit.json();
+  let u = String(env.DROPBOX_URL).replace('dl=0', 'dl=1');
+  if (!/[?&]dl=1/.test(u)) u += (u.includes('?') ? '&' : '?') + 'dl=1';
+  const r = await fetch(u, { redirect: 'follow' });
+  if (!r.ok) throw new Error('Dropbox respondió ' + r.status);
+  const files = await leerZip(new Uint8Array(await r.arrayBuffer()), n => /(^|\/)(datos|aviso)-[^/]*\.json$/.test(n));
+  const base = n => n.split('/').pop();
+  const datosN = Object.keys(files).filter(n => base(n).startsWith('datos-')).sort((a, b) => base(a) < base(b) ? -1 : 1);
+  const avisoN = Object.keys(files).filter(n => base(n).startsWith('aviso-')).sort((a, b) => base(a) < base(b) ? 1 : -1);
+  let datos = null, avisoDatos = null, archivo = null;
+  for (let i = datosN.length - 1; i >= 0; i--) {
+    try { const j = JSON.parse(files[datosN[i]]); if (j && j.datos && j.datos.rows && j.datos.rows.length) { datos = j.datos; avisoDatos = j.aviso || null; archivo = base(datosN[i]); break; } } catch (e) {}
+  }
+  if (!datos) return null;
+  let aviso = null;
+  for (const n of avisoN) { try { aviso = JSON.parse(files[n]); break; } catch (e) {} }
+  if (!aviso && !avisoN.length) aviso = avisoDatos;
+  delete datos.requisicion; (datos.rows || []).forEach(x => { delete x.ocs; });   // la página es pública
+  const out = { datos, aviso: aviso || {}, fuente: archivo, leido: new Date().toISOString() };
+  await cache.put(key, new Response(JSON.stringify(out), { headers: { 'Content-Type': 'application/json', 'Cache-Control': 'max-age=20' } }));
+  return out;
+}
+
+async function leerZip(b, quiero) {
+  const dv = new DataView(b.buffer, b.byteOffset, b.byteLength), td = new TextDecoder();
+  let e = -1;
+  for (let i = b.length - 22; i >= Math.max(0, b.length - 70000); i--) { if (dv.getUint32(i, true) === 0x06054b50) { e = i; break; } }
+  if (e < 0) throw new Error('ZIP de Dropbox inválido');
+  const n = dv.getUint16(e + 10, true); let p = dv.getUint32(e + 16, true); const out = {};
+  for (let k = 0; k < n; k++) {
+    if (dv.getUint32(p, true) !== 0x02014b50) break;
+    const metodo = dv.getUint16(p + 10, true), csize = dv.getUint32(p + 20, true);
+    const nl = dv.getUint16(p + 28, true), xl = dv.getUint16(p + 30, true), cl = dv.getUint16(p + 32, true), loc = dv.getUint32(p + 42, true);
+    const nombre = td.decode(b.subarray(p + 46, p + 46 + nl));
+    p += 46 + nl + xl + cl;
+    if (!quiero(nombre)) continue;
+    const ini = loc + 30 + dv.getUint16(loc + 26, true) + dv.getUint16(loc + 28, true), crudo = b.subarray(ini, ini + csize);
+    let datos;
+    if (metodo === 0) datos = crudo;
+    else if (metodo === 8) datos = new Uint8Array(await new Response(new Blob([crudo]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).arrayBuffer());
+    else continue;
+    out[nombre] = td.decode(datos);
+  }
+  return out;
 }
