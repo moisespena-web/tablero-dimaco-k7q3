@@ -192,7 +192,7 @@ async function cola(k, est) {
     const av = leerAvance(mo.additional_info, est.etiqueta(fila));
     mos.push({
       id: mo.id, mo: mo.order_no, sku: variante && variante.sku || '', nombre: pm.name || '',
-      piezas: num(mo.planned_quantity), hechas: av ? av.pz : 0,
+      piezas: num(mo.planned_quantity), entregadas: num(mo.completed_quantity), hechas: av ? av.pz : 0,   // 5-oct-2026: la estación muestra piezas − entregadas
       deadline: (mo.production_deadline_date || '').slice(0, 10), estadoMO: mo.status,
       notas: mo.additional_info || '',
       ruta: ops.map(o => ({ nombre: normop(o), paso: o.operation_name, recurso: o.resource_name, status: o.status })),
@@ -263,7 +263,9 @@ async function evento(k, est, env, b) {
   }
 
   const etq = est.etiqueta(row);
-  const prev = leerAvance(mo.additional_info, etq) || { ops: [], pz: 0, total: num(mo.planned_quantity), fecha: '', seg: 0 };
+  // 5-oct-2026: si la estación aún no tiene renglón y la MO ya tiene entregas parciales, el avance arranca en lo entregado
+  // (las notas cuentan sobre la MO completa: x/planeadas)
+  const prev = leerAvance(mo.additional_info, etq) || { ops: [], pz: num(mo.completed_quantity), total: num(mo.planned_quantity), fecha: '', seg: 0 };
   const suma = b.accion !== 'start';
 
   // reintento de un evento ya aplicado (el dispositivo perdió la respuesta): no sumar dos veces

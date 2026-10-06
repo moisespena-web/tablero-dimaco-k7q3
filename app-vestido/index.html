@@ -98,7 +98,18 @@ function disponible(iso){var fin=new Date(iso+'T14:00:00'),t=new Date(),ms=0;
  return ms;}
 /* piezas ya hechas en esta estación: terminadas en Katana + lapsos de la tablet; si las notas de la MO traen un avance mayor (ej. 'Corte: Mario 30/50'; no cuenta 'Corte Laser'), manda ese */
 function notaPz(m){var r=new RegExp('\\bVestido'+'[^\\n]*?(\\d+)\\s*/\\s*\\d+','gi'),x,n=0;var t=m.notas||'';while((x=r.exec(t)))n=+x[1];return n;}
-function hz(m){return Math.min(m.piezas,Math.max(notaPz(m),(m.hechas||0)+m.st.done));}
+function hz(m){var e=m.entr||0;return Math.min(m.piezas,Math.max(Math.max(0,notaPz(m)-e),Math.max(0,(m.hechas||0)-e)+m.st.done));}
+/* 5-oct-2026 (Moisés): MOs con entregas parciales en Katana (Partially completed) — la estación muestra solo lo PENDIENTE.
+   En los datos, piezas = planeadas y entregadas = completed_quantity de Katana; si no viene, se toma del tablero de TV
+   (datos.json trae piezas = remaining_quantity): entregadas = planeadas − piezas de la TV. Las notas (x/y) cuentan sobre
+   la MO completa, por eso a lo hecho se le restan las entregadas. */
+var TVPZ={};
+function entrDe(m){if(m.entregadas!=null)return Math.max(0,+m.entregadas||0);var t=(TVPZ||{})[m.mo];return (t!=null&&t<m.plan)?m.plan-t:0;}
+function pendEnt(m){if(m.plan==null)m.plan=m.piezas;m.entr=Math.min(m.plan,entrDe(m));m.piezas=Math.max(0,m.plan-m.entr);return m;}
+function leerTV(){fetch('../datos.json?x='+Date.now(),{cache:'no-store'}).then(function(r){return r.json();}).then(function(d){
+ ((d&&d.datos&&d.datos.rows)||[]).forEach(function(r){if(r.mo&&r.piezas!=null)TVPZ[r.mo]=+r.piezas;});
+ S.mos.forEach(pendEnt);if(!S.modal)render();}).catch(function(){});}
+S.mos.forEach(pendEnt);setTimeout(leerTV,800);setInterval(leerTV,600000);
 function faltanMs(m){return Math.max(0,m.piezas-hz(m))*m.planeado*1000;}
 function semaforo(p){return p<=40?['#2A1418','#E5484D','#FF6369']:(p<=70?['#33250A','#F2A93B','#FFC45C']:['#0C3024','#25C083','#4FE0A6']);}
 function estTxt(st){return {none:'NO INICIADA',prog:'EN PROCESO',pausa:'EN PAUSA',done:'TERMINADA ✓'}[st.status];}

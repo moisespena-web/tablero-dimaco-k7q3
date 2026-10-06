@@ -89,7 +89,18 @@ function disponible(iso){var fin=new Date(iso+'T14:00:00'),t=new Date(),ms=0;
  return ms;}
 /* piezas ya hechas en esta estación: terminadas en Katana + lapsos de la tablet; si las notas de la MO traen un avance mayor (ej. 'TM-2P (CNC Ø): Miguel 155/250'), manda ese */
 function notaPz(m){var t=m.notas||'',n=0;(t.match(/^[ \t]*TM-2P[^\n]*/gim)||[]).forEach(function(l){var r=/(\d+)\s*\/\s*(\d+)/g,x;while((x=r.exec(l))){var a=l.charAt(x.index-1),b=l.charAt(r.lastIndex);if(/[\d\/]/.test(a)||/[\d\/]/.test(b))continue;n=+x[1];}});return n;} /* 4-oct-2026: toma el ultimo x/y de la linea de la estacion, sin confundir fechas (02/10/2026) */
-function hz(m){return Math.min(m.piezas,Math.max(notaPz(m),(m.hechas||0)+m.st.done));}
+function hz(m){var e=m.entr||0;return Math.min(m.piezas,Math.max(Math.max(0,notaPz(m)-e),Math.max(0,(m.hechas||0)-e)+m.st.done));}
+/* 5-oct-2026 (Moisés): MOs con entregas parciales en Katana (Partially completed) — la estación muestra solo lo PENDIENTE.
+   En los datos, piezas = planeadas y entregadas = completed_quantity de Katana; si no viene, se toma del tablero de TV
+   (datos.json trae piezas = remaining_quantity): entregadas = planeadas − piezas de la TV. Las notas (x/y) cuentan sobre
+   la MO completa, por eso a lo hecho se le restan las entregadas. */
+var TVPZ={};
+function entrDe(m){if(m.entregadas!=null)return Math.max(0,+m.entregadas||0);var t=(TVPZ||{})[m.mo];return (t!=null&&t<m.plan)?m.plan-t:0;}
+function pendEnt(m){if(m.plan==null)m.plan=m.piezas;m.entr=Math.min(m.plan,entrDe(m));m.piezas=Math.max(0,m.plan-m.entr);return m;}
+function leerTV(){fetch('../datos.json?x='+Date.now(),{cache:'no-store'}).then(function(r){return r.json();}).then(function(d){
+ ((d&&d.datos&&d.datos.rows)||[]).forEach(function(r){if(r.mo&&r.piezas!=null)TVPZ[r.mo]=+r.piezas;});
+ S.mos.forEach(pendEnt);if(!S.modal)render();}).catch(function(){});}
+S.mos.forEach(pendEnt);setTimeout(leerTV,800);setInterval(leerTV,600000);
 function faltanMs(m){return Math.max(0,m.piezas-hz(m))*m.planeado*1000;}
 function semaforo(p){return p<=40?['#2A1418','#E5484D','#FF6369']:(p<=70?['#33250A','#F2A93B','#FFC45C']:['#0C3024','#25C083','#4FE0A6']);}
 function estTxt(st){return {none:'NO INICIADA',prog:'EN PROCESO · '+(st.op||''),pausa:'EN PAUSA',done:'TERMINADA ✓'}[st.status];}
@@ -263,7 +274,7 @@ function mapaMO(k,dr,idx){var nombres=k.ruta.map(function(o){return o.nombre;}),
  var ruta=['Corte','Taladro','TM-2P','Doblez','Limpieza'].map(function(c){var ops=k.ruta.filter(function(o){return col[o.nombre]===c;});
   if(!ops.length)return [c,null];return [c,ops.every(function(o){return o.status==='COMPLETED';})?'done':(ops.some(function(o){return o.status==='IN_PROGRESS';})?'prog':'none')];});
  var ing=k.ingredientes[0]||{};
- return {id:k.id,mo:k.mo,sec:idx>=0?idx+1:'–',tipo:t[0],color:t[1],nombre:k.nombre,sku:k.sku,piezas:k.piezas,hechas:k.hechas||0,entrega:fechaCorta(ent),ent:ent,
+ return {id:k.id,mo:k.mo,sec:idx>=0?idx+1:'–',tipo:t[0],color:t[1],nombre:k.nombre,sku:k.sku,piezas:k.piezas,entregadas:k.entregadas,hechas:k.hechas||0,entrega:fechaCorta(ent),ent:ent,
   badge:venc?'VENCIDA '+fechaCorta(k.deadline):(dr&&dr.grp==='urge'?'URGE':''),venc:venc,prio:!!(dr&&dr.grp==='urge'),paso:k.op.paso,planeado:k.op.planeado,
   rowId:k.op.rowId,katStatus:k.op.status,tiempoReal:k.op.tiempoReal,ruta:ruta,ings:k.ingredientes,ingSku:ing.sku||'',ingNombre:ing.nombre||'',ingIn:ing.total||0,ingUom:ing.uom||'',
   notas:k.notas||'Sin notas.',st:null};}
@@ -272,13 +283,13 @@ function cargarCola(){if(!enLinea())return Promise.resolve();
  .then(function(res){var c=res[0],d=res[1],ops=res[2];
   if(!c||!c.ok){S.sync='err';S.conxMsg=(c&&c.error)||'Sin respuesta del servidor';render();return;}
   if(ops&&ops.ok&&ops.operadores.length)OPS=ops.operadores;
-  var rows=(d&&d.datos&&d.datos.rows)||[],pos={};rows.forEach(function(r,i){pos[r.mo]=i;});
+  var rows=(d&&d.datos&&d.datos.rows)||[],pos={};rows.forEach(function(r,i){pos[r.mo]=i;});rows.forEach(function(r){if(r.mo&&r.piezas!=null)TVPZ[r.mo]=+r.piezas;});
   var selMo=S.mos[S.sel]&&S.mos[S.sel].mo;
   S.stK=S.stK||{};S.mos.forEach(function(m){S.stK[m.mo]=m.st;});
   var lista=c.mos.map(function(k){var i=pos[k.mo]!=null?pos[k.mo]:-1,m=mapaMO(k,i>=0?rows[i]:null,i);
    m.st=Object.assign(nuevo(),S.stK[k.mo]||{});if(S.tReal[m.rowId]==null)S.tReal[m.rowId]=m.tiempoReal;return m;});
   lista.sort(function(a,b){var ia=pos[a.mo]!=null?pos[a.mo]:9999,ib=pos[b.mo]!=null?pos[b.mo]:9999;return ia-ib||(a.ent<b.ent?-1:a.ent>b.ent?1:0);});
-  S.mos=lista;var ni=-1;lista.forEach(function(m,i){if(m.mo===selMo)ni=i;});
+  lista.forEach(pendEnt);S.mos=lista;var ni=-1;lista.forEach(function(m,i){if(m.mo===selMo)ni=i;});
   if(ni<0){S.sel=0;if(S.pantalla==='detalle'&&!S.modal)S.pantalla='lista';}else S.sel=ni;
   S.katHora=Date.now();S.sync=S.cola.length?'pend':'ok';S.conxMsg='';if(!S.modal)render();guardar();})
  .catch(function(){S.sync='err';S.conxMsg='Sin conexión';render();});}
