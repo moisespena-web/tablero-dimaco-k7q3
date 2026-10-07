@@ -19,3 +19,9 @@ Si ya hay piezas hechas, el estado dice EN PROCESO aunque la tablet diga NO INIC
 | `patch_tv.py`, `patch_est.py` | Los cambios ya aplicados al `index.html` de la TV y a las 10 estaciones (idempotentes; sirven para la copia artifact de la TV). |
 
 Estaciones: cada entrada de datos debe traer `entregadas` (= `completed_quantity`) y su `ruta`; sin `entregadas` la app lo deduce del `datos.json` de la TV.
+
+## 2a parte (6-oct-2026 21:08): barra y leyenda también en PDF y Excel
+`parche_reportes.py` ahora también agrega:
+- **PDF**: en las MOs con avance, un renglón extra con la leyenda ("1,200 entregadas · 724 listas → Limpieza · 1,576 faltan en Doblez") y la barra (verde oscuro / azul / gris claro: se distingue en B/N).
+- **Excel**: columnas O "Avance" (barra de 20 bloques de color, como en las estaciones) y P "Desglose" (la leyenda en texto); el filtro llega hasta P.
+- **Widget**: se sigue generando y guardando en Dropbox, pero ya no se le envía a Moisés (pedido del 6-oct-2026).

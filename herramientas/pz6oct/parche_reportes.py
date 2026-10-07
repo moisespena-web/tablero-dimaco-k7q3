@@ -94,3 +94,61 @@ if os.path.exists(os.path.join(D,'build_widget_racks.py')):
         b='''f'<span class="chip">Faltan <b>{faltan_rk(r):,}</b> de {r["qty_mo"]:,}</span></div>\''''
         assert t.count(a)==1,'build_widget_racks.py NO ENCONTRADO chip'; t=t.replace(a,b)
         i=t.index('\ndef '); t=t[:i]+'\n# PZ6OCT · regla 6-oct-2026'+RK+t[i:]; open(p,'w').write(t); print('ok build_widget_racks.py')
+
+# ===== 2a parte (Moisés, 6-oct-2026 21:08): "esto mismo en Excel y PDF" — barra + leyenda como en estaciones y TV =====
+def patch2(fn,pares,extra=None):
+    p=os.path.join(D,fn)
+    if not os.path.exists(p): print('no está (se omite)',fn); return
+    t=open(p).read()
+    if 'PZ6B' in t: print('ya (2a)',fn); return
+    assert 'PZ6OCT' in t,'%s: falta la 1a parte del parche'%fn
+    for a,b in pares:
+        n=t.count(a); assert n==1,('%s: NO ENCONTRADO (%d) -> %s'%(fn,n,a[:100])); t=t.replace(a,b)
+    if extra: t=extra(t)
+    open(p,'w').write('# PZ6B\n'+t); print('ok (2a)',fn)
+
+def leyenda_txt():
+    return '''
+def leyenda(r):
+    P=calc(r); s=[]
+    if P['entr']: s.append(f"{P['entr']:,} entregadas")
+    if P['listas']: s.append(f"{P['listas']:,} "+('lista' if P['listas']==1 else 'listas')+((' → '+P['sig']) if P['sig'] else ' para entregar'))
+    s.append(f"{P['faltan']:,} faltan"+((' en '+P['est']) if P['est'] else ''))
+    return ' · '.join(s)
+'''
+
+# PDF: renglón extra de 9 pt solo en MOs con avance: barra (entregadas oscuro, listas medio, faltan claro; se lee en B/N) + leyenda
+patch2('build_pdf_entregas.py',[
+ ('RH=rh+max(0,len(ocl)-1)*7.2','RH=rh+max(0,len(ocl)-1)*7.2+(10 if (calc(r)["entr"]+calc(r)["listas"])>0 else 0)'),
+ ('''        c.setStrokeColor(RULE); c.setLineWidth(.4); c.line(36,y-RH,36+TW,y-RH); y-=RH''',
+  '''        P_=calc(r)
+        if P_["entr"]+P_["listas"]>0:   # PZ6B barra + leyenda
+            yb=y-RH+3.2; x0=xs["sku"][0]+2; lt=leyenda(r); c.setFont("Helvetica",5.6); c.setFillColor(INK); c.drawString(x0,yb,lt)
+            bx=x0+pdfmetrics.stringWidth(lt,"Helvetica",5.6)+8; bw=(xs["entrega"][0]-4)-bx; T_=P_["plan"] or 1
+            for n_,col_ in ((P_["entr"],"#1F7A3A"),(P_["listas"],"#5B9BD5"),(P_["faltan"],"#E1E5EA")):
+                w_=bw*n_/T_
+                if w_>0: c.setFillColor(colors.HexColor(col_)); c.rect(bx,yb-0.4,w_,4.2,stroke=0,fill=1); bx+=w_
+            c.setFillColor(INK)
+        c.setStrokeColor(RULE); c.setLineWidth(.4); c.line(36,y-RH,36+TW,y-RH); y-=RH'''),
+ ('''c.drawString(x+32,y-2.2,"= hechas en esa estación, pasan a la siguiente · Faltan X de Y = faltan en la estación actual, de las Y de la MO"); x+=360''',
+  '''c.drawString(x+32,y-2.2,"= hechas en esa estación, pasan a la siguiente · Faltan X de Y = faltan en la estación actual, de las Y de la MO"); x+=360
+    for col_,l_ in (("#1F7A3A","entregadas"),("#5B9BD5","listas → sig."),("#E1E5EA","faltan")):
+        c.setFillColor(colors.HexColor(col_)); c.rect(x,y-3.6,10,5,stroke=0,fill=1); c.setFillColor(colors.HexColor("#333333")); c.setFont("Helvetica",6.4); c.drawString(x+13,y-2.2,l_); x+=pdfmetrics.stringWidth(l_,"Helvetica",6.4)+24'''),
+],extra=lambda t:t.replace('\ndef ','\n'+leyenda_txt()+'\ndef ',1))
+
+# Excel: columnas O "Avance" (barra de 20 bloques con colores, como en estaciones) y P "Desglose" (texto); filtro hasta P
+patch2('build_xlsx_mo.py',[
+ ("'Entrega','Qty en TE']","'Entrega','Qty en TE','Avance','Desglose']"),
+ ("ws.auto_filter.ref='A%d:N%d'%(HR,last)","ws.auto_filter.ref='A%d:P%d'%(HR,last)"),
+ ("for k,w in zip('ABCDEFGHIJKLMN',[5,16,min(60,max(12,max(OCW or [10])+2)),9,17,30,18,14,14,14,14,16,10,11]): ws.column_dimensions[k].width=w",
+  "for k,w in zip('ABCDEFGHIJKLMNOP',[5,16,min(60,max(12,max(OCW or [10])+2)),9,17,30,18,14,14,14,14,16,10,11,24,52]): ws.column_dimensions[k].width=w"),
+ ("    ws.cell(r,7).number_format=","    ws.cell(r,15).value=barra_xl(x); ws.cell(r,16,leyenda(x)); ws.cell(r,15).alignment=Alignment(horizontal='left',vertical='center'); ws.cell(r,16).alignment=Alignment(horizontal='left',vertical='center',wrap_text=True)\n    for j_ in (15,16): ws.cell(r,j_).border=Border(top=thin,bottom=thin,left=thin,right=thin)\n    ws.cell(r,7).number_format="),
+],extra=lambda t:t.replace('\nH=[','\n'+leyenda_txt()+'''
+from openpyxl.cell.rich_text import CellRichText,TextBlock
+from openpyxl.cell.text import InlineFont
+def barra_xl(x,N=20):
+    P=calc(x); T=P['plan'] or 1; e=round(N*P['entr']/T); l=round(N*P['listas']/T); e=min(e,N); l=min(l,N-e); f=N-e-l
+    parts=[TextBlock(InlineFont(color=c_,sz=11),'█'*n_) for n_,c_ in ((e,'1F7A3A'),(l,'3E8FD8'),(f,'D9DEE5')) if n_>0]
+    return CellRichText(*parts)
+H=[''',1))
+print('listo 2a')
