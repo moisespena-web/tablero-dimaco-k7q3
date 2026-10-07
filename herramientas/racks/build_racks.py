@@ -93,6 +93,11 @@ for m in mos:
         _g=0 if prio else (1 if ini else 2),_old=s['order_created_date'],
         _n=int(m['order_no'].split('-')[1]) if m['order_no'].split('-')[-1].isdigit() else 0))
 tv.sort(key=lambda r:(r['_g'],r['_old'],r['_n']))
+# agrupado por cliente (pedido de Moisés, 6-oct-2026): el cliente con la MO más urgente va primero;
+# dentro de cada cliente se respeta el orden de ataque
+pos={}
+for i,r in enumerate(tv): pos.setdefault(r['cliente'],i)
+tv.sort(key=lambda r:pos[r['cliente']])          # sort estable: conserva el orden de ataque dentro del cliente
 for r in tv:
     for k in ('_g','_old','_n'): r.pop(k)
 # ---- avance por proceso (piezas que ya pasaron / piezas que deben pasar) ----
@@ -103,7 +108,7 @@ for r in tv:
         H[k]+= r['piezas'] if s=='COMPLETED' else (min(r['piezas'],int(av.split('/')[0])) if av else 0)
 usadas=[c for c in COLS if T[c[0]]]+[(k,k.upper()) for k in T if k not in dict(COLS)]
 datos=dict(stamp=NOW.strftime('%Y-%m-%dT%H:%M:00-06:00'),modo='entregas',proyecto='racks',
-    ops=[list(c) for c in usadas],clientes=[[c,CCOL[c]] for c in clientes],rows=tv,
+    ops=[list(c) for c in usadas],clientes=[[c,CCOL[c]] for c in clientes if any(r['cliente']==c for r in tv)],rows=tv,
     avProc=[dict(p=lbl,h=H[k],t=T[k],pct=round(100*H[k]/T[k])) for k,lbl in usadas if T[k]],
     faltaPz=int(sum(pend_so.values())),
     soSinMO=[o['order_no']+' · '+cust.get(o['customer_id'],'?') for o in so
