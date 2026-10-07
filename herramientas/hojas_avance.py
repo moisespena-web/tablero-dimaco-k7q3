@@ -38,6 +38,9 @@ def nota_pz(notas,clave):
             if re.match(r'[\d/]',a or ' ') or re.match(r'[\d/]',b or ' '): continue
             n=int(m.group(1))
     return n
+# PZ7OCT (Moisés, 6-oct-2026 23:06): "Faltan X de Y" = Remaining de Katana (planeadas − entregadas), igual que TV y estaciones.
+HECHO={'Corte':'cortadas','Taladro':'taladradas','TM-2P':'maquinadas','Doblez':'dobladas','Limpieza':'limpias','Limpieza & SQA':'limpias'}
+PORH={'Corte':'por cortar','Taladro':'por taladrar','TM-2P':'por maquinar','Doblez':'por doblar','Limpieza':'por limpiar','Limpieza & SQA':'por limpiar'}
 def actual(m):
     r=m.get('ruta') or []; i=-1
     for k,x in enumerate(r):
@@ -71,6 +74,8 @@ COLS=[('#',18),('MO',48),('SKU',70),('Pieza',122),('Operación',60),('Entrega',4
 def hoja(app,est,proy,out,hoy,hora):
     t=open('%s/%s/index.html'%(REPO,app)).read()
     mos=arr(t,'var DATA=[') if 'var DATA=[' in t else arr(t[t.index('mos:[{'):],'mos:[')
+    _pie=re.search(r'MOs de Katana al ([0-9]{1,2}-[a-z]{3}) ([0-9]{1,2}:[0-9]{2})',t)   # la hora del corte de datos, no la de impresión
+    if _pie: hoy,hora=_pie.group(1),_pie.group(2)
     c=canvas.Canvas(out,pagesize=(W,H)); c.setTitle('Hoja de avance · '+est)
     x0=30; TW=W-60; fixed=sum(w for _,w in COLS); ws=[w or (TW-fixed) for _,w in COLS]
     RH=26; pag=[0]
@@ -84,7 +89,7 @@ def hoja(app,est,proy,out,hoy,hora):
         c.drawRightString(x0+TW,y-6,'Fecha: ____ / ____ / ______'); c.drawRightString(x0+TW,y-22,'Operador: ______________________')
         y-=44
         c.setFont('Helvetica',7.6); c.setFillColor(MUT)
-        c.drawString(x0,y,'Por cada lapso de trabajo anota la hora de inicio, la hora de fin y cuántas piezas terminaste. "Faltan X de Y" = piezas que faltan en esta estación, de las Y de la MO.')
+        c.drawString(x0,y,'Por cada lapso de trabajo anota la hora de inicio, la hora de fin y cuántas piezas terminaste. "Faltan X de Y" = lo que falta entregar de la MO, igual que en Katana, la TV y la estación.')
         y-=8
         # encabezado de grupos
         xs=x0
@@ -108,7 +113,7 @@ def hoja(app,est,proy,out,hoy,hora):
             c.setFillColor(INK); c.setFont(fn,fs); c.drawString(xs+3,ty,ell(c,v,fn,fs,ws[k]-6)); xs+=ws[k]
         if m.get('prio'): c.setFont('Helvetica-Bold',6.4); c.drawString(x0+sum(ws[:1])+3,y-21,'URGE')
         # Faltan X de Y + mini barra
-        w=ws[6]; a_=f"{f:,}"; b_=f" de {plan:,}"
+        w=ws[6]; a_=f"{plan-e:,}"; b_=f" de {plan:,}"
         c.setFont('Helvetica-Bold',9.5); wa=pdfmetrics.stringWidth(a_,'Helvetica-Bold',9.5); c.drawString(xs+3,ty,a_)
         c.setFont('Helvetica',6.8); c.setFillColor(MUT); c.drawString(xs+3+wa,ty,b_); c.setFillColor(INK)
         bx=xs+3; bw=w-6; T=plan or 1
@@ -118,7 +123,7 @@ def hoja(app,est,proy,out,hoy,hora):
         c.setFillColor(INK)
         if e or h:
             c.setFont('Helvetica',5.6); c.setFillColor(MUT)
-            txt=(f"{e:,} entr. · " if e else '')+(f"{h:,} listas"+(f" → {sig}" if sig else '') if h else '')
+            txt=(f"{e:,} entregadas · " if e else '')+(f"{h:,} ya {HECHO.get(est,'hechas')}"+(f" → {sig}" if sig else '')+" · " if h else '')+f"{f:,} {PORH.get(est,'por hacer')}"
             c.drawString(x0+sum(ws[:3])+3,y-RH+5,ell(c,txt,'Helvetica',5.6,ws[3]+ws[4]-6)); c.setFillColor(INK)
         xs+=w
         # casillas para escribir

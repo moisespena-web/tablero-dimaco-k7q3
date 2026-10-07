@@ -39,7 +39,7 @@ rep('''pedir([BUZON+"/tablero","datos.json",RAWG+"datos.json"],function(j){''','
 rep('''pedir([BUZON+"/tablero/aviso","aviso.json",RAWG+"aviso.json"],''','''pedir([BUZON+"/tablero/aviso","../aviso.json",RAWG+"aviso.json"],''')
 rep('<title>','<title>',1)
 src=re.sub(r'<title>[^<]*</title>','<title>MO en proceso · Racks</title>',src,1)
-src=re.sub(r'<span class="build">v[^<]*</span>','<span class="build">r2026-10-06c</span>',src,1)
+src=re.sub(r'<span class="build">v[^<]*</span>','<span class="build">r2026-10-06d</span>',src,1)
 # CSS para N columnas (7 en racks)
 css='''
 /* ---- RACKS: 7 estaciones ---- */

@@ -1,7 +1,7 @@
 """Uso: python3 parche_reportes.py DIR   (DIR = donde quedaron build_entregas.py, build_pdf_entregas.py,
 build_widget_entregas.py y build_xlsx_mo.py escritos desde el skill tablero-entregas-mafesa).
 Regla de Moisés (6-oct-2026): en TV, estaciones, PDF, widget y Excel las piezas se muestran como
-FALTAN X (en la estación actual) · de TOTAL, y el avance de una estación como 'N listas' (ya pasan a la siguiente).
+PZ7OCT (6-oct-2026 23:06): FALTAN X de TOTAL, donde X = Remaining de Katana (planeadas − entregadas), igual en TV, estaciones y Katana; el avance de una estación se muestra como 'N dobladas/cortadas/…' (ya pasan a la siguiente).
 Idempotente (marca PZ6OCT). Si algo no se encuentra, falla con el texto que faltó: NO publicar reportes a medias."""
 import sys,os,re
 D=sys.argv[1] if len(sys.argv)>1 else '.'
@@ -27,24 +27,24 @@ patch('build_entregas.py',[(
 patch('build_pdf_entregas.py',[
  ('("nombre","Nombre",122),("piezas","Piezas",32)','("nombre","Nombre",100),("piezas","Faltan",54)'),
  ("""cx,cw=xs["piezas"]; c.setFont("Helvetica-Bold",7); c.drawCentredString(cx+cw/2,ty,f"{r['piezas']:,}")""",
-  """cx,cw=xs["piezas"]; P=calc(r); a_=f"{P['faltan']:,}"; b_=f" de {P['plan']:,}"; wa=pdfmetrics.stringWidth(a_,"Helvetica-Bold",7); wb=pdfmetrics.stringWidth(b_,"Helvetica",5.6); x_=cx+cw/2-(wa+wb)/2
+  """cx,cw=xs["piezas"]; P=calc(r); a_=f"{P['pend']:,}"; b_=f" de {P['plan']:,}"; wa=pdfmetrics.stringWidth(a_,"Helvetica-Bold",7); wb=pdfmetrics.stringWidth(b_,"Helvetica",5.6); x_=cx+cw/2-(wa+wb)/2
         c.setFillColor(INK); c.setFont("Helvetica-Bold",7); c.drawString(x_,ty,a_); c.setFillColor(MUTED); c.setFont("Helvetica",5.6); c.drawString(x_+wa,ty,b_); c.setFillColor(INK)"""),
  ("""if av and s!="COMPLETED":
                     c.setFillColor(ORANGE)""","""if av and s!="COMPLETED":
                     av=listas_op(r,op) or av; c.setFillColor(ORANGE)"""),
  ("""cx,cw=xs["piezas"]; c.drawCentredString(cx+cw/2,y-rh+4.6,f"{sum(r['piezas'] for r in rows):,}"); y-=rh""",
-  """cx,cw=xs["piezas"]; c.drawCentredString(cx+cw/2,y-rh+4.6,f"{sum(calc(r)['faltan'] for r in rows):,} de {sum(calc(r)['plan'] for r in rows):,}"); y-=rh"""),
+  """cx,cw=xs["piezas"]; c.drawCentredString(cx+cw/2,y-rh+4.6,f"{sum(calc(r)['pend'] for r in rows):,} de {sum(calc(r)['plan'] for r in rows):,}"); y-=rh"""),
  ('''c.drawString(x,y-2.2,"115/182"); c.setFillColor(colors.HexColor("#333333")); c.setFont("Helvetica",6.4)
     c.drawString(x+28,y-2.2,"= piezas hechas / total (avance anotado en Katana)"); x+=200''',
-  '''c.drawString(x,y-2.2,"85 listas"); c.setFillColor(colors.HexColor("#333333")); c.setFont("Helvetica",6.4)
-    c.drawString(x+32,y-2.2,"= hechas en esa estación, pasan a la siguiente · Faltan X de Y = faltan en la estación actual, de las Y de la MO"); x+=360'''),
+  '''c.drawString(x,y-2.2,"724 dobladas"); c.setFillColor(colors.HexColor("#333333")); c.setFont("Helvetica",6.4)
+    c.drawString(x+32,y-2.2,"= ya hechas en esa estación (pasan a la siguiente) · Faltan X de Y = lo que falta entregar de la MO, igual que el Remaining de Katana"); x+=380'''),
 ],inject_after='from reportlab.lib.utils import ImageReader\n')
 
 # 3) widget
 patch('build_widget_entregas.py',[
  ('''{(" <b>"+E((r.get("av") or {}).get(o))+"</b>") if (r.get("av") or {}).get(o) and s!="COMPLETED" else ""}''',
   '''{(" <b>"+E(listas_op(r,o) or (r.get("av") or {}).get(o))+"</b>") if (r.get("av") or {}).get(o) and s!="COMPLETED" else ""}'''),
- ('''<span>{r["piezas"]:,} pz</span>''','''<span>Faltan <b>{calc(r)["faltan"]:,}</b> de {calc(r)["plan"]:,}</span>'''),
+ ('''<span>{r["piezas"]:,} pz</span>''','''<span>Faltan <b>{calc(r)["pend"]:,}</b> de {calc(r)["plan"]:,}</span>'''),
  ('''<div class="ops">{ops}</div></div>')''','''<div class="ops">{ops}</div>{barra_w(r)}</div>')'''),
  ('''.op b{{color:#92400E}}''','''.op b{{color:#92400E}} .bz{{display:flex;height:7px;border-radius:4px;overflow:hidden;background:#E5E7EB;margin-top:6px}} .bz i{{display:block;height:100%}} .bzl{{display:flex;flex-wrap:wrap;gap:2px 10px;font-size:11.5px;color:#374151;margin-top:3px}} .bzl i{{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:4px}}'''),
 ],inject_after='E=html.escape\n')
@@ -56,14 +56,14 @@ def barra_w(r):
     P=calc(r); T=P['plan'] or 1; w=lambda n:'%.2f%%'%(100*n/T)
     s='<div class="bz"><i style="width:%s;background:#25A35A"></i><i style="width:%s;background:#3E8FD8"></i><i style="width:%s;background:#CBD5E1"></i></div>'%(w(P['entr']),w(P['listas']),w(P['faltan']))
     if P['entr'] or P['listas']:
-        s+='<div class="bzl">'+(('<span><i style="background:#25A35A"></i>%s entregadas</span>'%f"{P['entr']:,}") if P['entr'] else '')+(('<span><i style="background:#3E8FD8"></i>%s listas%s</span>'%(f"{P['listas']:,}",(' → '+E(P['sig'])) if P['sig'] else ' para entregar')) if P['listas'] else '')+'<span><i style="background:#CBD5E1"></i>%s faltan%s</span></div>'%(f"{P['faltan']:,}",(' en '+E(P['est'])) if P['est'] else '')
+        s+='<div class="bzl">'+(('<span><i style="background:#25A35A"></i>%s entregadas</span>'%f"{P['entr']:,}") if P['entr'] else '')+(('<span><i style="background:#3E8FD8"></i>%s ya %s%s</span>'%(f"{P['listas']:,}",P['hecho'],(' → '+E(P['sig'])) if P['sig'] else ' → entregar')) if P['listas'] else '')+'<span><i style="background:#CBD5E1"></i>%s %s</span></div>'%(f"{P['faltan']:,}",P['por'])
     return s
 def fd(i):''',1); open(p,'w').write(t)
 
 # 4) Excel
 patch('build_xlsx_mo.py',[
  ("H=['#','MO','# OC','Tipo','SKU','Nombre','Piezas',","H=['#','MO','# OC','Tipo','SKU','Nombre','Faltan (de total)',"),
- ("x['sku'],x['nombre'],x['piezas'],None,","x['sku'],x['nombre'],calc(x)['faltan'],None,"),
+ ("x['sku'],x['nombre'],x['piezas'],None,","x['sku'],x['nombre'],calc(x)['pend'],None,"),
  ("if av and s in('IN_PROGRESS','PAUSED'): t='◐ '+av","if av and s in('IN_PROGRESS','PAUSED'): t='◐ '+(listas_op(x,op) or av)"),
  ("ws.cell(r,7).number_format='#,##0';","ws.cell(r,7).number_format='#,##0\" de %s\"'%f\"{calc(x)['plan']:,}\";"),
 ],inject_after='from openpyxl.drawing.image import Image\n')
@@ -74,7 +74,7 @@ print('listo')
 #    Qty MO sigue siendo planned_quantity (la identidad del reporte no cambia); se muestra "faltan X de Qty MO".
 RK='''
 def faltan_rk(r):
-    q=int(r.get("qty_mo") or 0); return max(0,q-int(r.get("entr_mo") or 0)-int(r.get("listas") or 0))
+    q=int(r.get("qty_mo") or 0); return max(0,q-int(r.get("entr_mo") or 0))   # PZ7OCT: Remaining de Katana
 '''
 if os.path.exists(os.path.join(D,'build_pdf_racks.py')):
     p=os.path.join(D,'build_pdf_racks.py'); t=open(p).read()
@@ -112,8 +112,8 @@ def leyenda_txt():
 def leyenda(r):
     P=calc(r); s=[]
     if P['entr']: s.append(f"{P['entr']:,} entregadas")
-    if P['listas']: s.append(f"{P['listas']:,} "+('lista' if P['listas']==1 else 'listas')+((' → '+P['sig']) if P['sig'] else ' para entregar'))
-    s.append(f"{P['faltan']:,} faltan"+((' en '+P['est']) if P['est'] else ''))
+    if P['listas']: s.append(f"{P['listas']:,} ya "+P['hecho']+((' → '+P['sig']) if P['sig'] else ' → entregar'))
+    s.append(f"{P['faltan']:,} "+P['por'])
     return ' · '.join(s)
 '''
 
@@ -130,9 +130,9 @@ patch2('build_pdf_entregas.py',[
                 if w_>0: c.setFillColor(colors.HexColor(col_)); c.rect(bx,yb-0.4,w_,4.2,stroke=0,fill=1); bx+=w_
             c.setFillColor(INK)
         c.setStrokeColor(RULE); c.setLineWidth(.4); c.line(36,y-RH,36+TW,y-RH); y-=RH'''),
- ('''c.drawString(x+32,y-2.2,"= hechas en esa estación, pasan a la siguiente · Faltan X de Y = faltan en la estación actual, de las Y de la MO"); x+=360''',
-  '''c.drawString(x+32,y-2.2,"= hechas en esa estación, pasan a la siguiente · Faltan X de Y = faltan en la estación actual, de las Y de la MO"); x+=360
-    for col_,l_ in (("#1F7A3A","entregadas"),("#5B9BD5","listas → sig."),("#E1E5EA","faltan")):
+ ('''c.drawString(x+32,y-2.2,"= ya hechas en esa estación (pasan a la siguiente) · Faltan X de Y = lo que falta entregar de la MO, igual que el Remaining de Katana"); x+=380''',
+  '''c.drawString(x+32,y-2.2,"= ya hechas en esa estación (pasan a la siguiente) · Faltan X de Y = lo que falta entregar de la MO, igual que el Remaining de Katana"); x+=380
+    for col_,l_ in (("#1F7A3A","entregadas"),("#5B9BD5","ya hechas → sig."),("#E1E5EA","por hacer")):
         c.setFillColor(colors.HexColor(col_)); c.rect(x,y-3.6,10,5,stroke=0,fill=1); c.setFillColor(colors.HexColor("#333333")); c.setFont("Helvetica",6.4); c.drawString(x+13,y-2.2,l_); x+=pdfmetrics.stringWidth(l_,"Helvetica",6.4)+24'''),
 ],extra=lambda t:t.replace('\ndef ','\n'+leyenda_txt()+'\ndef ',1))
 

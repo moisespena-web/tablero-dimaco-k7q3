@@ -5,6 +5,9 @@ Las notas de la MO traen el avance como "x/y" sobre la MO completa, por eso list
 Misma lógica que pzMO() del index.html de la TV y barraPz() de las estaciones."""
 import re
 LBL={"Corte":"Corte","Taladro":"Taladro","CNC":"TM-2P","Doblez":"Doblez","Limpieza & SQA":"Limpieza"}
+# PZ7OCT (Moisés, 6-oct-2026 23:06): el número grande es el Remaining de Katana (pend = planeadas − entregadas).
+HECHO={"Corte":"cortadas","Taladro":"taladradas","TM-2P":"maquinadas","Doblez":"dobladas","Limpieza":"limpias","Láser":"cortadas en láser","Router":"ruteadas","Armado":"armadas","Pintura":"pintadas","Vestido":"vestidas"}
+PORH={"Corte":"por cortar","Taladro":"por taladrar","TM-2P":"por maquinar","Doblez":"por doblar","Limpieza":"por limpiar","Láser":"por cortar en láser","Router":"por rutear","Armado":"por armar","Pintura":"por pintar","Vestido":"por vestir"}
 def avN(s):
     m=re.search(r'(\d+)\s*/\s*(\d+)',s or '');return (int(m.group(1)),int(m.group(2))) if m else None
 def calc(r):
@@ -16,11 +19,12 @@ def calc(r):
     sig=LBL.get(ops[i+1][0],ops[i+1][0]) if est and i+1<len(ops) else ''
     a=avN(av.get(est)) if est else None
     listas=min(pend,max(0,a[0]-entr)) if (est and a) else (0 if est else pend)
-    return dict(plan=plan,entr=entr,listas=listas,faltan=max(0,pend-listas),est=LBL.get(est,est or ''),sig=sig)
+    e_=LBL.get(est,est or '')
+    return dict(plan=plan,entr=entr,pend=pend,listas=listas,faltan=max(0,pend-listas),est=e_,sig=sig,hecho=HECHO.get(e_,'hechas'),por=PORH.get(e_,'por hacer'))
 def listas_op(r,op):
     a=avN((r.get('av') or {}).get(op));
     n=max(0,a[0]-calc(r)['entr']) if a else 0
-    return ('%s %s'%(f"{n:,}",'lista' if n==1 else 'listas')) if a else ''
+    return ('%s %s'%(f"{n:,}",HECHO.get(LBL.get(op,op),'hechas'))) if a else ''
 def enriquecer(rows,mos):
     """rows de tv_datos.json; mos = lista de MOs de Katana (todas las respuestas). Agrega plan y entr por MO."""
     by={m.get('order_no'):m for m in mos}
