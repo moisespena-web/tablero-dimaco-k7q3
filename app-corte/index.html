@@ -60,12 +60,16 @@ button:disabled{cursor:not-allowed}
 <body>
 <div id="app"></div>
 <script src="../app-tm2p/piezas.js?v=20260930b"></script>
+<script src="../app-doblez/piezas-doblez.js?v=20260930b"></script>
 <script src="../piezas-extra.js?v=20261005b"></script>
 <script>
 (function(){
 "use strict";
-var JORNADA=[7.5,18.6], MAQ='Corte', OPERADOR='Operador', KEY='dimaco_corte_v1';
-var PZ=window.PIEZAS||{}, PZD={}, LOGO=null;
+var JORNADA=[7.5,18.6], MAQ="Corte", OPERADOR="Operador", KEY='dimaco_corte_v1', PINOPS=false, ESPERA=false, RECURSO="Corte Mafesa";
+var OPS=['Emiliano','[Operador 2]','[Operador 3]'];
+var PZ=window.PIEZAS||{}, PZD=false?(window.PIEZAS_DOBLEZ||{}):{}, LOGO=null;
+var AVP=null, AVPN="Corte";   /* avance por proceso: se lee en vivo del datos.json de la TV (leerTV) */
+function vAvp(){if(!AVP||!AVP.t)return '';var p=AVP.pct,c=p>=70?['#0C3024','#25C083','#4FE0A6']:(p>=50?['#33250A','#F2A93B','#FFC45C']:['#3A1216','#E5484D','#FF6369']);return '<div style="position:relative;overflow:hidden;background:'+c[0]+';border:2px solid '+c[1]+';border-radius:12px;padding:8px 14px 12px;margin:6px 0 8px;flex:none;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap"><span style="font-size:14px;letter-spacing:2px;color:#C9D6E6;font-weight:700">AVANCE '+E(AVP.p.toUpperCase())+'</span><span style="font-size:15px;color:#C9D6E6">'+AVP.h.toLocaleString('en-US')+' de '+AVP.t.toLocaleString('en-US')+' pz · todas las MOs de la TV</span><b style="margin-left:auto;font-size:30px;line-height:1;color:'+c[2]+'">'+p+'%</b><i style="position:absolute;left:0;bottom:0;height:5px;width:'+Math.max(2,p)+'%;background:'+c[1]+'"></i></div>';}
 function nuevo(){return {status:'none',done:0,worked:0,runStart:null,pauseStart:null,paused:0,motivos:[],op:null,tramoStart:null,log:[]};}
 var TIPOS=[["Tipo 1",["Corte","Limpieza & SQA"],"#17A67F"],["Tipo 2",["Corte","Taladro","Limpieza & SQA"],"#3E8FD8"],["Tipo 3",["Corte","Taladro","Doblez","Limpieza & SQA"],"#7C74D6"],["Tipo 4",["Corte","CNC","Limpieza & SQA"],"#D1663C"],["Tipo 5",["Corte","CNC","Doblez","Limpieza & SQA"],"#D19A2E"]];
 var DATA=[{"mo": "MO-376", "nombre": "TERM AL. 1/4 x 3/4 x 3.188", "sku": "37A10685A-0004", "piezas": 24, "ent": "2026-10-05", "deadline": "2026-10-05", "prio": false, "grupo": "Corte", "tipo": "MAFESA", "color": "#17A67F", "paso": "Corte", "opName": "Corte", "recurso": "Corte Mafesa", "planeado": 27, "recursoMal": false, "rowId": 32220417, "ruta": [["Corte", "none", true], ["Limpieza", "none", false]], "ingSku": "ALSL 1/4x3/4", "ingNombre": "Solera Aluminio 1/4\" x 3/4\"", "ingTot": 76.512, "ingUom": "in", "notas": "Auto · OC 3063 (24)", "hechas": 0, "cliente": "MAFESA", "sec": 1}, {"mo": "MO-377", "nombre": "TERM AL. 1/4 x 3/4 x 7", "sku": "37A10786A-0002", "piezas": 16, "ent": "2026-10-07", "deadline": "2026-10-07", "prio": false, "grupo": "Corte", "tipo": "MAFESA", "color": "#17A67F", "paso": "Corte", "opName": "Corte", "recurso": "Corte Mafesa", "planeado": 27, "recursoMal": false, "rowId": 32220423, "ruta": [["Corte", "none", true], ["Taladro", "none", false], ["Doblez", "none", false], ["Limpieza", "none", false]], "ingSku": "ALSL 1/4x3/4", "ingNombre": "Solera Aluminio 1/4\" x 3/4\"", "ingTot": 112.0, "ingUom": "in", "notas": "Auto · OC 2670 (6), 3063 (10)", "hechas": 0, "cliente": "MAFESA", "sec": 2}, {"mo": "MO-378", "nombre": "TERM AL. 1/4 x 1 x 3.563", "sku": "37A5683-0002", "piezas": 692, "ent": "2026-10-07", "deadline": "2026-10-07", "prio": false, "grupo": "Corte", "tipo": "MAFESA", "color": "#17A67F", "paso": "Corte", "opName": "Corte", "recurso": "Corte Mafesa", "planeado": 27, "recursoMal": false, "rowId": 32220425, "ruta": [["Corte", "none", true], ["Taladro", "none", false], ["Doblez", "none", false], ["Limpieza", "none", false]], "ingSku": "ALSL 1/4x1", "ingNombre": "Solera Aluminio 1/4\" x 1\"", "ingTot": 2465.596, "ingUom": "in", "notas": "Auto · OC 2736 (100), 2769 (300), 2807 (292)", "hechas": 0, "cliente": "MAFESA", "sec": 3}, {"mo": "MO-379", "nombre": "TERM AL. 1/4 x 1 x 2.812\"", "sku": "36B3480-0020", "piezas": 692, "ent": "2026-10-07", "deadline": "2026-10-07", "prio": false, "grupo": "Corte", "tipo": "MAFESA", "color": "#17A67F", "paso": "Corte", "opName": "Corte", "recurso": "Corte Mafesa", "planeado": 27, "recursoMal": false, "rowId": 32220431, "ruta": [["Corte", "none", true], ["Doblez", "none", false], ["TM-2P", "none", false], ["Taladro", "none", false], ["Limpieza", "none", false]], "ingSku": "ALSL 1/4x1", "ingNombre": "Solera Aluminio 1/4\" x 1\"", "ingTot": 1945.904, "ingUom": "in", "notas": "Auto · OC 2716 (170), 2736 (105), 2769 (417)", "hechas": 0, "cliente": "MAFESA", "sec": 4}, {"mo": "MO-383", "nombre": "TERM AL. 1/4 x 1-1/2 x 3.938\"", "sku": "37A7850-0003", "piezas": 416, "ent": "2026-10-07", "deadline": "2026-10-07", "prio": false, "grupo": "Corte", "tipo": "MAFESA", "color": "#17A67F", "paso": "Corte", "opName": "Corte", "recurso": "Corte Mafesa", "planeado": 27, "recursoMal": false, "rowId": 32220446, "ruta": [["Corte", "none", true], ["Taladro", "none", false], ["Doblez", "none", false], ["Limpieza", "none", false]], "ingSku": "ALSL 1/4x1 1/2", "ingNombre": "Solera Aluminio 1/4\" x 1 1/2\"", "ingTot": 1638.208, "ingUom": "in", "notas": "Auto · OC 2716 (38), 2736 (170), 2807 (100), 2846 (100), 2990 (8)", "hechas": 0, "cliente": "MAFESA", "sec": 5}, {"mo": "MO-384", "nombre": "TERM AL. 1/4 x 1 x 10.5", "sku": "37A7851-0001", "piezas": 31, "ent": "2026-10-07", "deadline": "2026-10-07", "prio": false, "grupo": "Corte", "tipo": "MAFESA", "color": "#17A67F", "paso": "Corte", "opName": "Corte", "recurso": "Corte Mafesa", "planeado": 27, "recursoMal": false, "rowId": 32238159, "ruta": [["Corte", "none", true], ["Limpieza", "none", false]], "ingSku": "ALSL 1/4x1", "ingNombre": "Solera Aluminio 1/4\" x 1\"", "ingTot": 325.5, "ingUom": "in", "notas": "Auto · OC 2716 (15), 2846 (16)", "hechas": 0, "cliente": "MAFESA", "sec": 6}, {"mo": "MO-380", "nombre": "TERM AL. 1/4 x 1 x 5", "sku": "37A11432-0001", "piezas": 288, "ent": "2026-10-09", "deadline": "2026-10-09", "prio": false, "grupo": "Corte", "tipo": "MAFESA", "color": "#17A67F", "paso": "Corte", "opName": "Corte", "recurso": "Corte Mafesa", "planeado": 27, "recursoMal": false, "rowId": 32220433, "ruta": [["Corte", "none", true], ["TM-2P", "none", false], ["Limpieza", "none", false]], "ingSku": "ALSL 1/4x1", "ingNombre": "Solera Aluminio 1/4\" x 1\"", "ingTot": 1440.0, "ingUom": "in", "notas": "Auto · OC 2736 (30), 2846 (60), 2888 (6), 2990 (50), 3021 (35), 3063 (100), 3090 (7)", "hechas": 0, "cliente": "MAFESA", "sec": 7}, {"mo": "MO-381", "nombre": "TERM AL. 1/4 x 1 x  2.188", "sku": "37A10685-0001", "piezas": 240, "ent": "2026-10-09", "deadline": "2026-10-09", "prio": false, "grupo": "Corte", "tipo": "MAFESA", "color": "#17A67F", "paso": "Corte", "opName": "Corte", "recurso": "Corte Mafesa", "planeado": 27, "recursoMal": false, "rowId": 32220439, "ruta": [["Corte", "none", true], ["Taladro", "none", false], ["Doblez", "none", false], ["Limpieza", "none", false]], "ingSku": "ALSL 1/4x1", "ingNombre": "Solera Aluminio 1/4\" x 1\"", "ingTot": 525.12, "ingUom": "in", "notas": "Auto · OC 2736 (25), 2846 (47), 2990 (20), 3021 (34), 3063 (90), 3090 (24)", "hechas": 0, "cliente": "MAFESA", "sec": 8}, {"mo": "MO-382", "nombre": "TERM AL. 3/8  x  2 x 7.875", "sku": "37A12254-0003", "piezas": 213, "ent": "2026-10-09", "deadline": "2026-10-09", "prio": false, "grupo": "Corte", "tipo": "MAFESA", "color": "#17A67F", "paso": "Corte", "opName": "Corte", "recurso": "Corte Mafesa", "planeado": 45, "recursoMal": false, "rowId": 32220440, "ruta": [["Corte", "none", true], ["Taladro", "none", false], ["Doblez", "none", false], ["Limpieza", "none", false]], "ingSku": "ALSL 3/8x2", "ingNombre": "Solera Aluminio 3/8\" x 2\"", "ingTot": 1677.375, "ingUom": "in", "notas": "Auto · OC 2736 (60), 2769 (80), 2807 (13), 2888 (30), 2990 (30)", "hechas": 0, "cliente": "MAFESA", "sec": 9}, {"mo": "MO-385", "nombre": "TERM AL. 3/8 x 2 x 21", "sku": "37A9935-0005", "piezas": 82, "ent": "2026-10-09", "deadline": "2026-10-09", "prio": false, "grupo": "Corte", "tipo": "MAFESA", "color": "#17A67F", "paso": "Corte", "opName": "Corte", "recurso": "Corte Mafesa", "planeado": 45, "recursoMal": false, "rowId": 32238163, "ruta": [["Corte", "none", true], ["Taladro", "none", false], ["Limpieza", "none", false]], "ingSku": "ALSL 3/8x2", "ingNombre": "Solera Aluminio 3/8\" x 2\"", "ingTot": 1722.0, "ingUom": "in", "notas": "Auto · OC 2736 (10), 2846 (20), 2888 (11), 2939 (36), 2990 (5)", "hechas": 0, "cliente": "MAFESA", "sec": 10}, {"mo": "MO-386", "nombre": "TERM AL. 1/4 x 1 x 3.75", "sku": "37A10685A-0006", "piezas": 54, "ent": "2026-10-09", "deadline": "2026-10-09", "prio": false, "grupo": "Corte", "tipo": "MAFESA", "color": "#17A67F", "paso": "Corte", "opName": "Corte", "recurso": "Corte Mafesa", "planeado": 27, "recursoMal": false, "rowId": 32238168, "ruta": [["Corte", "none", true], ["Limpieza", "none", false]], "ingSku": "ALSL 1/4x1", "ingNombre": "Solera Aluminio 1/4\" x 1\"", "ingTot": 202.5, "ingUom": "in", "notas": "Auto · OC 2716 (10), 2846 (20), 2990 (20), 3090 (4)", "hechas": 0, "cliente": "MAFESA", "sec": 11}, {"mo": "MO-388", "nombre": "TERM CU 3/8 x 3 x 12.125", "sku": "37A14277-0002", "piezas": 55, "ent": "2026-10-09", "deadline": "2026-10-09", "prio": false, "grupo": "Corte", "tipo": "MAFESA", "color": "#17A67F", "paso": "Corte", "opName": "Corte", "recurso": "Corte Mafesa", "planeado": 45, "recursoMal": false, "rowId": 32265291, "ruta": [["Corte", "none", true], ["TM-2P", "none", false], ["Doblez", "none", false], ["Limpieza", "none", false]], "ingSku": "CUSL 3/8x3", "ingNombre": "Solera Cobre 3/8\" x 3\"", "ingTot": 666.875, "ingUom": "in", "notas": "Auto · OC 2496 (11), 2792 (44)", "hechas": 0, "cliente": "MAFESA", "sec": 12}, {"mo": "MO-389", "nombre": "TERM AL. 1/4 x 1-1/2 7.75", "sku": "37A14254-0002", "piezas": 50, "ent": "2026-10-12", "deadline": "2026-10-12", "prio": false, "grupo": "Corte", "tipo": "MAFESA", "color": "#17A67F", "paso": "Corte", "opName": "Corte", "recurso": "Corte Mafesa", "planeado": 27, "recursoMal": false, "rowId": 32265307, "ruta": [["Corte", "none", true], ["TM-2P", "none", false], ["Doblez", "none", false], ["Limpieza", "none", false]], "ingSku": "ALSL 1/4x1 1/2", "ingNombre": "Solera Aluminio 1/4\" x 1 1/2\"", "ingTot": 387.5, "ingUom": "in", "notas": "Auto · OC 2716 (50)", "hechas": 0, "cliente": "MAFESA", "sec": 13}, {"mo": "MO-390", "nombre": "TERM AL. 1/2 x 3 x 21", "sku": "37A9935-0003", "piezas": 43, "ent": "2026-10-12", "deadline": "2026-10-12", "prio": false, "grupo": "Corte", "tipo": "MAFESA", "color": "#17A67F", "paso": "Corte", "opName": "Corte", "recurso": "Corte Mafesa", "planeado": 60, "recursoMal": false, "rowId": 32265326, "ruta": [["Corte", "none", true], ["Taladro", "none", false], ["Limpieza", "none", false]], "ingSku": "ALSL 1/2x3", "ingNombre": "Solera Aluminio 1/2\" x 3\"", "ingTot": 903.0, "ingUom": "in", "notas": "Auto · OC 2736 (4), 2807 (2), 2846 (12), 2888 (10), 2939 (10), 2990 (5)", "hechas": 0, "cliente": "MAFESA", "sec": 14}];
@@ -81,11 +85,12 @@ function diaTxt(k){var p=k.split('-'),d=new Date(+p[0],+p[1]-1,+p[2]);return DIA
 function fechaCorta(iso){var p=iso.split('-');return (+p[2])+'-'+MES3[+p[1]-1];}
 function tipoDe(ruta){var n=ruta.map(function(r){return {'TM-2P':'CNC','Limpieza':'Limpieza & SQA'}[r[0]]||r[0];}).sort().join('|');
  for(var i=0;i<TIPOS.length;i++){if(TIPOS[i][1].slice().sort().join('|')===n)return [TIPOS[i][0].toUpperCase(),TIPOS[i][2]];}return ['MIXTO','#8A93A6'];}
-function armar(k){var t=[k.tipo,k.color],hoy=diaKey(Date.now()),venc=k.deadline<hoy;
+function armar(k){var t=tipoDe(k.ruta),hoy=diaKey(Date.now()),venc=k.deadline<hoy;
  return Object.assign({},k,{tipo:t[0],color:t[1],entrega:fechaCorta(k.ent),venc:venc,badge:venc?'VENCIDA '+fechaCorta(k.deadline):(k.prio?'URGE':''),st:nuevo()});}
-var S={pantalla:'lista',sel:0,modal:null,fin:'',finErr:'',pendiente:null,zoom:1,tramos:[],resDia:null,cola:[],tReal:{},errores:[],sync:'off',cod:'',conxMsg:'',stK:{},mos:DATA.map(armar)};
+var S={opSel:null,pin:'',pinErr:'',pinChk:false,pantalla:'lista',sel:0,modal:null,fin:'',finErr:'',pendiente:null,zoom:1,tramos:[],resDia:null,cola:[],tReal:{},errores:[],sync:'off',cod:'',conxMsg:'',stK:{},mos:DATA.map(armar)};
 
 function cur(){return S.mos[S.sel];}
+function opAct(){var m=S.pantalla==='detalle'&&cur();return (m&&m.st&&m.st.op)||(PINOPS?'—':OPERADOR);}
 function trab(st){return st.worked+(st.runStart?Date.now()-st.runStart:0);}
 function maquinaHoy(){var hoy=diaKey(Date.now()),t=0;S.tramos.forEach(function(r){if(r.d===hoy)t+=r.trab;});S.mos.forEach(function(m){t+=trab(m.st);});return t;}
 /* horas de máquina reales (29-sep-2026): turno 7:30-18:36 con breaks 9:00-9:15 y 15:45-16:00 y comida 12:00-13:00 */
@@ -97,8 +102,8 @@ function disponible(iso){var fin=new Date(iso+'T14:00:00'),t=new Date(),ms=0;
   VENTANAS.forEach(function(v){var a=hmD(d,v[0]),b=hmD(d,v[1]);if(b>fin)b=fin;if(a<t)a=t;if(b<=a)return;ms+=b-a;
    PAUSAS.forEach(function(p){var x=hmD(d,p[0]),y=hmD(d,p[1]);if(x<a)x=a;if(y>b)y=b;if(y>x)ms-=y-x;});});}
  return ms;}
-/* piezas ya hechas en esta estación: terminadas en Katana + lapsos de la tablet; si las notas de la MO traen un avance mayor (ej. 'Corte: Mario 30/50'; no cuenta 'Corte Laser'), manda ese */
-function notaPz(m){var r=new RegExp('\\bCorte(?!\\s*L[aá]ser)'+'[^\\n]*?(\\d+)\\s*/\\s*\\d+','gi'),x,n=0;var t=m.notas||'';while((x=r.exec(t)))n=+x[1];return n;}
+/* piezas ya hechas en esta estación: terminadas en Katana + lapsos de la tablet; si las notas de la MO traen un avance mayor (ej. 'Doblez: Miguel 155/250'), manda ese */
+function notaPz(m){var t=m.notas||'',n=0;(t.match(new RegExp('^[ \\t]*Corte(?![ \\t]*L[aá]ser)[^\\n]*','gim'))||[]).forEach(function(l){var r=/(\d+)\s*\/\s*(\d+)/g,x;while((x=r.exec(l))){var a=l.charAt(x.index-1),b=l.charAt(r.lastIndex);if(/[\d\/]/.test(a)||/[\d\/]/.test(b))continue;n=+x[1];}});return n;} /* 4-oct-2026: toma el ultimo x/y de la linea de la estacion, sin confundir fechas (02/10/2026) */
 function hz(m){var e=m.entr||0;return Math.min(m.piezas,Math.max(Math.max(0,notaPz(m)-e),Math.max(0,(m.hechas||0)-e)+m.st.done));}
 /* PZ6OCT · 6-oct-2026 (Moisés): Faltan X de total + barra entregadas / listas -> siguiente estación / faltan aquí */
 function fmtN(n){return (+n||0).toLocaleString('en-US');}
@@ -119,6 +124,7 @@ function entrDe(m){if(m.entregadas!=null)return Math.max(0,+m.entregadas||0);var
 function pendEnt(m){if(m.plan==null)m.plan=m.piezas;m.entr=Math.min(m.plan,entrDe(m));m.piezas=Math.max(0,m.plan-m.entr);return m;}
 function leerTV(){fetch('../datos.json?x='+Date.now(),{cache:'no-store'}).then(function(r){return r.json();}).then(function(d){
  ((d&&d.datos&&d.datos.rows)||[]).forEach(function(r){if(r.mo&&r.piezas!=null)TVPZ[r.mo]=+r.piezas;});
+  ((d&&d.datos&&d.datos.avProc)||[]).forEach(function(a){if(String(a.p).toLowerCase()===String(AVPN).toLowerCase())AVP=a;});
  S.mos.forEach(pendEnt);if(!S.modal)render();}).catch(function(){});}
 S.mos.forEach(pendEnt);setTimeout(leerTV,800);setInterval(leerTV,600000);
 function faltanMs(m){return Math.max(0,m.piezas-hz(m))*m.planeado*1000;}
@@ -128,9 +134,8 @@ function estSty(st){var c={none:['#0E1723','#3A4B62','#8FA3BA'],prog:['#3A2A0C',
  return 'background:'+c[0]+';border:1px solid '+c[1]+';color:'+c[2];}
 /* ¿ya puede doblar? = todas las operaciones antes de Doblez terminadas */
 function previa(m){var i=-1;m.ruta.forEach(function(r,j){if(r[2])i=j;});var pend=m.ruta.slice(0,i).filter(function(r){return r[1]!=='done';});
- if(!pend.length)return ['LISTA PARA TRABAJAR','#0E3628','#25C083','#7FE3BC'];
+ if(!pend.length)return ['LISTA PARA CORTAR','#0E3628','#25C083','#7FE3BC'];
  var p=pend[0];return p[1]==='prog'?['EN CURSO: '+p[0].toUpperCase(),'#33250A','#F2A93B','#FFC45C']:['ESPERA: '+p[0].toUpperCase(),'#1A2230','#3A4B62','#8FA3BA'];}
-function cliTag(m,fs){return m.cliente?' <span style="font-size:'+(fs||15)+'px;font-weight:700;color:#9CCBF5;background:#16324D;border:1px solid #2B5A85;border-radius:6px;padding:1px 7px;vertical-align:middle;white-space:nowrap">'+E(m.cliente)+'</span>':'';}
 function badge(m){if(!m.badge)return '';return '<span class="st" style="'+(m.venc?'background:#E5484D;color:#fff':'background:#EAF1F9;color:#0A1018')+'">'+E(m.badge)+'</span>';}
 function act(name,arg){return 'data-a="'+name+'"'+(arg!=null?' data-v="'+E(arg)+'"':'');}
 function cerrarTramo(st,pz,motivo){var n=Date.now();
@@ -153,9 +158,9 @@ function enLinea(){return !!(SRV_URL&&CONX&&CONX.codigo);}
 function api(met,ruta,body){return fetch(SRV_URL.replace(/\/$/,'')+ruta,{method:met,headers:{'X-Tablet':CONX.codigo,'Content-Type':'application/json'},body:body?JSON.stringify(body):undefined,cache:'no-store'})
  .then(function(r){return r.json().catch(function(){return {ok:false,error:'HTTP '+r.status};}).then(function(j){j._status=r.status;return j;});});}
 function katEv(accion,x,ms,pz){if(!enLinea())return;var m=cur();if(!m.rowId)return;
- S.cola.push({rowId:m.rowId,mo:m.mo,accion:accion,operador:OPERADOR,pin:(CONX&&CONX.pin)||'',segundos:Math.round(Math.max(0,ms)/1000),piezas:pz||0,t:Date.now()});S.sync='pend';setTimeout(enviarCola,50);}
+ S.cola.push({rowId:m.rowId,mo:m.mo,accion:accion,operador:(x&&x.op)||OPERADOR,pin:(x&&x.pin)||(CONX&&CONX.pin)||'',segundos:Math.round(Math.max(0,ms)/1000),piezas:pz||0,t:Date.now()});S.sync='pend';setTimeout(enviarCola,50);}
 var enviando=false;
-function reintentar(){if(enLinea())enviarCola();}
+function reintentar(){if(!enLinea())return;cargarCola().then(enviarCola);}
 function enviarCola(){if(!enLinea()||enviando||!S.cola.length){if(!S.cola.length&&S.sync==='pend')S.sync='ok';return;}
  enviando=true;var ev=S.cola[0];
  api('POST','/evento',{rowId:ev.rowId,accion:ev.accion,operador:ev.operador,pin:ev.pin,segundos:ev.segundos,piezas:ev.piezas||0,esperado:S.tReal[ev.rowId]}).then(function(r){enviando=false;
@@ -167,11 +172,42 @@ function enviarCola(){if(!enLinea()||enviando||!S.cola.length){if(!S.cola.length
 function syncTxt(){if(!enLinea())return ['Modo teléfono','#8FA3BA'];
  return {ok:['● Katana al día','#4FE0A6'],pend:['● Enviando ('+S.cola.length+')','#FFC45C'],err:['● Sin red · '+S.cola.length+' por enviar','#FF6369'],off:['● Conectando…','#8FA3BA']}[S.sync]||['','#8FA3BA'];}
 
+
+/* ============ COLA EN VIVO (6-oct-2026): con el teléfono conectado, las MOs se bajan de Katana por el servidor ============ */
+var COLN={'Corte':'Corte','Taladro':'Taladro','CNC':'TM-2P','Doblez':'Doblez','Limpieza & SQA':'Limpieza'};
+function mapaMO(k,dr,idx){var hoy=diaKey(Date.now()),cols=[],ruta=[];
+ (k.ruta||[]).forEach(function(o){var c=COLN[o.nombre]||o.nombre;if(cols.indexOf(c)<0)cols.push(c);});
+ cols.forEach(function(c){var ops=(k.ruta||[]).filter(function(o){return (COLN[o.nombre]||o.nombre)===c;}),
+   s=ops.every(function(o){return o.status==='COMPLETED';})?'done':(ops.some(function(o){return o.status==='IN_PROGRESS'||o.status==='PAUSED';})?'prog':'none'),
+   yo=ops.some(function(o){return o.paso===k.op.paso&&o.recurso===k.op.recurso&&o.status===k.op.status;})&&c===(COLN[(k.ruta.filter(function(o){return o.paso===k.op.paso&&o.recurso===k.op.recurso;})[0]||{}).nombre]||c);
+   ruta.push([c,s,!!yo]);});
+ if(!ruta.some(function(r){return r[2];})){var cm=COLN[MAQ==='Limpieza & SQA'?'Limpieza & SQA':MAQ==='TM-2P'?'CNC':MAQ]||MAQ;ruta.forEach(function(r){if(r[0]===cm)r[2]=true;});}
+ var i=-1;ruta.forEach(function(r,j){if(r[2])i=j;});var antes=ruta.slice(0,Math.max(0,i)).filter(function(r){return r[1]!=='done';});
+ var ing=(k.ingredientes||[])[0]||{};
+ return armar({mo:k.mo,sec:idx>=0?idx+1:'–',nombre:k.nombre,sku:k.sku,piezas:k.piezas,entregadas:k.entregadas,hechas:k.hechas||0,
+  ent:(dr&&dr.entrega)||k.deadline||hoy,deadline:k.deadline||hoy,prio:!!(dr&&(dr.grp==='urge'||dr.prio)),paso:k.op.paso,recurso:k.op.recurso,planeado:k.op.planeado,
+  rowId:k.op.rowId,tiempoReal:k.op.tiempoReal,ruta:ruta,ingSku:ing.sku||'',ingNombre:ing.nombre||'',ingTot:ing.total||0,ingUom:ing.uom||'',
+  notas:k.notas||'Sin notas.',so:(dr&&dr.so)||'',espera:ESPERA&&antes.length?antes[0][0]:''});}
+function cargarCola(){if(!enLinea())return Promise.resolve();
+ return Promise.all([api('GET','/cola'),fetch('../datos.json?x='+Date.now(),{cache:'no-store'}).then(function(r){return r.json();}).catch(function(){return null;}),api('GET','/operadores').catch(function(){return null;})])
+ .then(function(res){var c=res[0],d=res[1],ops=res[2];
+  if(!c||!c.ok){S.sync='err';S.conxMsg=(c&&c.error)||'Sin respuesta del servidor';if(!S.modal)render();return;}
+  if(ops&&ops.ok&&ops.operadores&&ops.operadores.length)OPS=ops.operadores;
+  var rows=(d&&d.datos&&d.datos.rows)||[],pos={};rows.forEach(function(r,i){pos[r.mo]=i;});rows.forEach(function(r){if(r.mo&&r.piezas!=null)TVPZ[r.mo]=+r.piezas;});
+  var selMo=S.mos[S.sel]&&S.mos[S.sel].mo;S.mos.forEach(function(m){S.stK[m.mo]=m.st;});
+  var lista=c.mos.map(function(k){var i=pos[k.mo]!=null?pos[k.mo]:-1,m=mapaMO(k,i>=0?rows[i]:null,i);
+   m.st=Object.assign(nuevo(),S.stK[k.mo]||{});if(S.tReal[m.rowId]==null)S.tReal[m.rowId]=m.tiempoReal;return m;});
+  lista.sort(function(a,b){if(ESPERA&&(!!a.espera)!==(!!b.espera))return a.espera?1:-1;var ia=pos[a.mo]!=null?pos[a.mo]:9999,ib=pos[b.mo]!=null?pos[b.mo]:9999;return ia-ib||(a.ent<b.ent?-1:a.ent>b.ent?1:0);});
+  lista.forEach(pendEnt);if(!lista.length&&S.mos.length&&!c.mos.length){}S.mos=lista;var ni=-1;lista.forEach(function(m,i){if(m.mo===selMo)ni=i;});
+  if(ni<0){S.sel=0;if(S.pantalla==='detalle'&&!S.modal)S.pantalla='lista';}else S.sel=ni;
+  S.katHora=Date.now();S.sync=S.cola.length?'pend':'ok';S.conxMsg='';if(!S.modal)render();guardar();})
+ .catch(function(){S.sync='err';S.conxMsg='Sin conexión';if(!S.modal)render();});}
+
 /* ================================ VISTAS ================================ */
 function vHeader(){var ef=maquinaHoy(),p=Math.min(100,Math.round(100*ef/(CAPDIA*3600000))),c=semaforo(p);
  return '<div class="hdr">'+(LOGO?'<img id="logo" '+act('logo')+' src="'+LOGO+'" alt="DIMACO">':'<div class="logoTxt" '+act('logo')+'>DIMACO</div>')+
- '<div style="flex-grow:1;min-width:0"><div style="font-size:19px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Corte</div>'+
- '<div style="font-size:12px;color:var(--tx2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+OPERADOR+' · <b style="color:'+syncTxt()[1]+'">'+E(syncTxt()[0])+'</b></div></div>'+
+ '<div style="flex-grow:1;min-width:0"><div style="font-size:19px;font-weight:800;white-space:nowrap">Estación Corte</div>'+
+ '<div style="font-size:12px;color:var(--tx2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+E(opAct())+' · <b style="color:'+syncTxt()[1]+'">'+E(syncTxt()[0])+'</b></div></div>'+
  '<div style="text-align:right;flex:none"><div class="mono" id="reloj" style="font-size:24px;line-height:1">'+hm(Date.now())+'</div><div style="font-size:11px;color:var(--tx2)">'+fecha()+'</div></div></div>'+
  '<div class="kpi" style="margin-top:8px;border-color:'+c[1]+';background:'+c[0]+';display:flex;justify-content:space-between;align-items:baseline"><span class="lbl">CORTE HOY · TIEMPO EFECTIVO</span><span><b class="mono" id="efect" style="font-size:19px;color:'+c[2]+'">'+dur(ef)+'</b> <span class="ks">de '+String(CAPDIA).replace('.',',')+' h · <b style="color:'+c[2]+'">'+p+'%</b></span></span>'+
  '<i style="position:absolute;left:0;bottom:0;height:4px;width:'+p+'%;background:'+c[1]+'"></i></div>';}
@@ -187,25 +223,18 @@ function vKpis(){var pend=S.mos.filter(function(m){return m.st.status!=='done';}
  '<div class="kpi"><div class="lbl">TIEMPO ESTIMADO</div><div class="kv">'+durTxt(est)+'</div></div>'+
  '<div class="kpi" style="grid-column:1/-1;display:flex;justify-content:space-between;align-items:baseline"><div class="lbl">DISPONIBLE'+(ult?' AL '+fechaCorta(ult).toUpperCase():'')+'</div><div class="kv">'+durTxt(disp)+'</div></div>'+
  '<div class="kpi" style="grid-column:1/-1;border-color:'+hc[1]+';background:'+hc[0]+'"><div class="lbl">HOLGURA POR ENTREGA (antes de las 14:00)</div>'+chips+'</div></div>';}
-/* grupos = cliente (customer de la orden de venta), del que vence primero al último */
-function grupos(){var g={};S.mos.forEach(function(m){if(!(m.cliente in g)||m.ent<g[m.cliente])g[m.cliente]=m.ent;});return Object.keys(g).sort(function(a,b){return g[a]<g[b]?-1:g[a]>g[b]?1:0;});}
 function vLista(){
- return '<div style="display:flex;justify-content:space-between;align-items:center;margin:4px 0 8px"><span class="lbl">COLA · POR CLIENTE</span>'+
+ return vAvp()+'<div style="display:flex;justify-content:space-between;align-items:center;margin:4px 0 8px"><span class="lbl">COLA DE CORTE · ORDEN DE LA TV</span>'+
  '<button type="button" class="sec" style="min-height:38px;font-size:14px;font-weight:700;border-color:#3E8FD8;color:#9CCBF5" '+act('resumen')+'>📋 Resumen</button></div>'+
- grupos().map(function(g,gi){var idx=[];S.mos.forEach(function(m,i){if(m.cliente===g)idx.push(i);});
-  idx.sort(function(a,b){var x=S.mos[a],y=S.mos[b];return x.ent<y.ent?-1:x.ent>y.ent?1:x.sec-y.sec;});
-  var pen=idx.filter(function(i){return S.mos[i].st.status!=='done';}),pzg=pen.reduce(function(a,i){var m=S.mos[i];return a+Math.max(0,m.piezas-hz(m));},0),col=['#D1663C','#3E8FD8','#7C74D6','#17A67F','#D19A2E'][gi%5];
-  return '<div style="display:flex;justify-content:space-between;align-items:baseline;margin:14px 0 8px;padding:8px 12px;border-radius:10px;background:'+col+'22;border:1px solid '+col+'"><b style="font-size:18px;color:'+col+';letter-spacing:.5px">'+E(g).toUpperCase()+'</b><span class="ks">'+pen.length+' MOs · '+pzg+' pz</span></div>'+
-  (idx.length?'':'<div style="font-size:14px;color:var(--tx2);margin:0 0 10px 4px">Sin MOs pendientes de '+g+'.</div>')+
-  idx.map(function(i){var m=S.mos[i],st=m.st,pv=previa(m);
-  return '<button type="button" class="fila" '+act('abrir',i)+' style="background:'+(m.prio?'#2A2F3A':'#121C29')+';border:'+(m.prio?'2px solid #EAF1F9':'1px solid #22344A')+';border-left:7px solid '+m.color+'">'+
-  '<div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px"><span><span class="mono" style="font-size:24px;font-weight:700">'+m.mo+'</span>'+cliTag(m)+'</span>'+
+ S.mos.map(function(m,i){var st=m.st,pv=previa(m);
+  return (m.espera&&(!i||!S.mos[i-1].espera)?'<div class="lbl" style="margin:14px 0 6px">TODAVÍA EN MÁQUINA · TE VAN A LLEGAR</div>':'')+'<button type="button" class="fila" '+act('abrir',i)+' style="'+(m.espera?'opacity:.55;':'')+'background:'+(m.prio?'#2A2F3A':'#121C29')+';border:'+(m.prio?'2px solid #EAF1F9':'1px solid #22344A')+';border-left:7px solid '+m.color+'">'+
+  '<div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px"><span class="mono" style="font-size:24px;font-weight:700">'+m.mo+'</span>'+
   '<span style="text-align:right"><b style="font-size:17px">'+m.entrega+'</b> '+badge(m)+'</span></div>'+
-  '<div style="font-size:12px;color:var(--tx2);margin:2px 0 4px">#'+m.sec+' <b class="pill" style="background:'+m.color+'">'+m.tipo+'</b></div>'+
+  '<div style="font-size:12px;color:var(--tx2);margin:2px 0 4px">#'+m.sec+' <b class="pill" style="background:'+m.color+'">'+m.tipo+'</b>'+(m.so?' · <b>'+E(m.so)+'</b>':'')+(m.espera?' · <b style="color:#FFC45C">aún en '+E(m.espera)+'</b>':'')+'</div>'+
   '<div style="font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+E(m.nombre)+'</div>'+
   '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;gap:6px"><span class="mono sku">'+m.sku+'</span><span style="text-align:right;white-space:nowrap"><span class="ks">Faltan </span><b style="font-size:22px">'+fmtN(faltaPz(m))+'</b><span class="ks"> de '+fmtN(m.plan)+'</span></span></div>'+barraPz(m)+
   '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:7px"><span class="st" style="'+estStyM(m)+'">'+E(estTxtM(m))+'</span>'+
-  (st.status==='none'?'<span class="st" style="background:'+pv[1]+';border:1px solid '+pv[2]+';color:'+pv[3]+'">'+pv[0]+'</span>':'')+'</div></button>';}).join('');}).join('')+
+  (st.status==='none'?'<span class="st" style="background:'+pv[1]+';border:1px solid '+pv[2]+';color:'+pv[3]+'">'+pv[0]+'</span>':'')+'</div></button>';}).join('')+
  '<div style="font-size:12px;color:var(--tx2);margin:6px 0 10px;line-height:1.4">'+(enLinea()?'CONECTADA A KATANA · la cola se actualiza sola.':'PILOTO · MOs de Katana al 6-oct 14:35. Lo capturado se guarda en este teléfono; todavía no escribe en Katana: el Ing. Moisés lo registra con el Resumen del turno.')+'</div>';}
 function bigBtn(bg,fg,on){return 'background:'+bg+';color:'+fg+';opacity:'+(on?1:.25);}
 function vDetalle(){var m=cur(),st=m.st,falt=Math.max(0,m.piezas-hz(m)),tramo=st.tramoStart?trab(st):0,img=PZ[m.sku],pv=previa(m);
@@ -213,18 +242,18 @@ function vDetalle(){var m=cur(),st=m.st,falt=Math.max(0,m.piezas-hz(m)),tramo=st
  var ruta=m.ruta.map(function(r){var est=r[2]?(st.status==='done'?'done':(st.status==='none'?'none':'prog')):r[1];
   var c={done:['#0E3628','#1B7A56','#7FE3BC','✓ '],prog:['#3A2A0C','#8A6413','#FFD37A','● '],none:['#0E1723','#22344A','#8FA3BA','']}[est];
   return '<div class="rt" style="background:'+c[0]+';border:'+(r[2]?'2px solid #EAF1F9':'1px solid '+c[1])+';color:'+c[2]+'">'+c[3]+E(r[0])+'</div>';}).join('');
- var quien=st.status==='pausa'?'En pausa: '+(st.motivos[st.motivos.length-1]||''):(st.status==='prog'?'Trabajando: '+OPERADOR:'');
+ var quien=st.status==='pausa'?'En pausa: '+(st.motivos[st.motivos.length-1]||''):(st.status==='prog'?'Trabajando: '+(st.op||OPERADOR):'');
  return '<div style="display:flex;align-items:center;gap:10px;margin:10px 0">'+
   '<button type="button" class="sec" style="font-weight:700" '+act('volver')+'>← Regresar</button>'+
   '<div style="flex-grow:1;text-align:right"><b style="font-size:18px">'+m.entrega+'</b> '+badge(m)+'</div></div>'+
  '<div class="card" style="padding:12px;border:'+(m.prio?'2px solid #EAF1F9':'1px solid #22344A')+';border-left:7px solid '+m.color+'">'+
-  '<div style="display:flex;justify-content:space-between;align-items:baseline"><span><span class="mono" style="font-size:30px;font-weight:700">'+m.mo+'</span>'+cliTag(m,17)+'</span><span><span class="ks">Faltan </span><b style="font-size:26px">'+fmtN(faltaPz(m))+'</b><span class="ks"> de '+fmtN(m.plan)+'</span></span></div>'+
+  '<div style="display:flex;justify-content:space-between;align-items:baseline"><span class="mono" style="font-size:30px;font-weight:700">'+m.mo+'</span><span><span class="ks">Faltan </span><b style="font-size:26px">'+fmtN(faltaPz(m))+'</b><span class="ks"> de '+fmtN(m.plan)+'</span></span></div>'+
   '<div style="font-size:12px;color:var(--tx2);margin:2px 0 6px">#'+m.sec+' <b class="pill" style="background:'+m.color+'">'+m.tipo+'</b></div>'+
   '<div style="font-size:17px">'+E(m.nombre)+'</div><div style="margin-top:6px"><span class="mono sku">'+m.sku+'</span></div></div>'+
  '<div class="card" style="padding:12px;margin-top:10px">'+
   '<div style="display:flex;justify-content:space-between;align-items:center"><span class="lbl">TU OPERACIÓN</span><span class="st" style="'+estStyM(m)+'">'+E(estTxtM(m))+'</span></div>'+
-  '<div style="font-size:26px;font-weight:800;margin:4px 0">'+E(m.paso)+'</div>'+
-  '<div style="font-size:13px;color:var(--tx2)">Resource: <b style="color:var(--tx)">'+E(m.recurso)+'</b> · '+(m.fuenteT==='medido'?'TRM medido ':'Planeado Katana ')+m.planeado+' s/pz · Faltan ≈ '+durTxt(faltanMs(m))+'</div>'+
+  '<div style="font-size:26px;font-weight:800;margin:4px 0">'+E(m.paso||MAQ)+'</div>'+
+  '<div style="font-size:13px;color:var(--tx2)">Resource: <b style="color:var(--tx)">'+E(m.recurso||RECURSO)+'</b> · '+(m.fuenteT==='medido'?'TRM medido ':'Planeado Katana ')+m.planeado+' s/pz · Faltan ≈ '+durTxt(faltanMs(m))+'</div>'+
   (m.recursoMal?'<div style="font-size:13px;color:#FFC45C;margin-top:4px">⚠ En Katana esta operación está en otro Resource.</div>':'')+
   (st.status==='none'?'<div style="margin-top:8px"><span class="st" style="background:'+pv[1]+';border:1px solid '+pv[2]+';color:'+pv[3]+'">'+pv[0]+'</span></div>':'')+
   '<div style="display:flex;justify-content:space-between;font-size:16px;margin-top:10px"><span>Listas aquí <b style="font-size:22px">'+fmtN(hz(m))+'</b></span><span>Faltan <b style="font-size:22px">'+fmtN(falt)+'</b> de '+fmtN(m.plan)+'</span></div>'+barraPz(m)+
@@ -236,7 +265,7 @@ function vDetalle(){var m=cur(),st=m.st,falt=Math.max(0,m.piezas-hz(m)),tramo=st
    '<div style="border:1px dashed #22344A;border-radius:8px;margin-top:6px;padding:26px 0;text-align:center;color:var(--tx2)">Sin imagen para este SKU</div>')+'</button>'+
  '<div class="card" style="padding:10px 12px;margin-top:10px"><div class="lbl" style="margin-bottom:4px">INGREDIENTES · solo lectura</div><div class="mono" style="font-size:16px;font-weight:700">'+E(m.ingSku)+'</div>'+
   '<div style="font-size:14px">'+E(m.ingNombre)+' · <b>'+Number(m.ingTot).toLocaleString('en-US',{maximumFractionDigits:3})+' '+E(m.ingUom)+'</b>'+(m.ingUom==='in'?' (≈'+(m.ingTot/144).toFixed(1)+' barras)':'')+'</div></div>'+
- '<div class="card" style="padding:10px 12px;margin-top:10px"><div class="lbl" style="margin-bottom:4px">NOTAS</div><div style="font-size:15px">'+E(m.notas)+'</div></div>'+
+ '<div class="card" style="padding:10px 12px;margin-top:10px"><div class="lbl" style="margin-bottom:4px">NOTAS</div><div style="font-size:15px">'+E(m.notas).replace(/\n/g,'<br>')+'</div></div>'+
  '<div class="card" style="padding:10px 12px;margin-top:10px"><div class="lbl" style="margin-bottom:4px">REGISTRO DE LAPSOS</div>'+
   (st.log.length?st.log.slice(0,5).map(function(l){return '<div style="font-size:13px;padding:3px 0;border-bottom:1px solid #1B2A3D">'+E(l)+'</div>';}).join(''):'<div style="font-size:14px;color:var(--tx2)">Todavía no hay lapsos en esta MO.</div>')+'</div>'+
  '<div class="acc">'+
@@ -260,13 +289,18 @@ function vModal(){if(!S.modal)return '';var m=cur(),st=m.st,falt=Math.max(0,m.pi
    '<button type="button" class="sec" style="font-weight:700" '+act('cerrar')+'>✕</button></div>'+
    '<div style="flex-grow:1;overflow:auto;background:#fff;border-radius:10px;display:flex;'+(imd?'flex-direction:column;align-items:stretch;justify-content:flex-start':'align-items:'+(z>1?'flex-start':'center')+';justify-content:'+(z>1?'flex-start':'center'))+'">'+
    cuerpo+'</div></div></div>';}
- if(S.modal==='pausa'){h='<div class="ttl">¿Por qué se pausa?</div><div class="g2">'+['Comida','Falta material','Falla de máquina','Otro'].map(function(t){return '<button type="button" '+act('motPausa',t)+' style="min-height:70px;border-radius:12px;border:2px solid #F2A93B;background:#3A2A0C;color:#FFD37A;font-size:18px;font-weight:700">'+t+'</button>';}).join('')+'</div><button type="button" class="sec" '+act('cerrar')+'>Cancelar</button>';}
- else if(S.modal==='fin'){h='<div class="ttl">¿Cuántas piezas terminaste en este lapso?</div><div style="font-size:14px;color:var(--tx2)">'+m.mo+' · '+m.paso+' · '+OPERADOR+'</div>'+
+ if(S.modal==='pin'){var listo=!!S.opSel&&S.pin.length===4;
+  h='<div class="ttl">'+(st.status==='pausa'?'¿Quién reanuda?':'¿Quién arranca?')+'</div><div class="g3">'+
+   OPS.map(function(n){var on=S.opSel===n;return '<button type="button" '+act('op',n)+' style="min-height:52px;border-radius:12px;font-size:17px;font-weight:700;'+(on?'background:#0E3628;border:2px solid #25C083;color:#7FE3BC':'background:#18263A;border:1px solid #22344A;color:#EAF1F9')+'">'+E(n)+'</button>';}).join('')+'</div>'+
+   (S.opSel?'<div style="display:flex;align-items:center;gap:12px"><span style="font-size:16px;color:var(--tx2)">PIN (4 dígitos)</span>'+[0,1,2,3].map(function(i){return '<span style="width:20px;height:20px;border-radius:50%;border:2px solid #8FA3BA;background:'+(i<S.pin.length?'#EAF1F9':'transparent')+'"></span>';}).join('')+'</div>'+teclado('pin'):'')+
+   '<div style="min-height:22px;font-size:15px;font-weight:700;color:#FF6369">'+E(S.pinChk?'Revisando PIN…':(S.pinErr||''))+'</div><div style="display:flex;gap:10px"><button type="button" '+act('pinOk')+(listo?'':' disabled')+' style="flex-grow:1;min-height:56px;border-radius:12px;border:0;background:#25C083;color:#07121B;font-size:20px;font-weight:700;opacity:'+(listo?1:.3)+'">Iniciar lapso</button><button type="button" class="sec" '+act('cerrar')+'>Cancelar</button></div>';}
+  else if(S.modal==='pausa'){h='<div class="ttl">¿Por qué se pausa?</div><div class="g2">'+['Comida','Falta material','Falla de máquina','Otro'].map(function(t){return '<button type="button" '+act('motPausa',t)+' style="min-height:70px;border-radius:12px;border:2px solid #F2A93B;background:#3A2A0C;color:#FFD37A;font-size:18px;font-weight:700">'+t+'</button>';}).join('')+'</div><button type="button" class="sec" '+act('cerrar')+'>Cancelar</button>';}
+ else if(S.modal==='fin'){h='<div class="ttl">¿Cuántas piezas cortaste en este lapso?</div><div style="font-size:14px;color:var(--tx2)">'+m.mo+' · '+E(m.paso||MAQ)+' · '+E(st.op||opAct())+'</div>'+
   '<div style="display:flex;gap:10px;align-items:center"><div class="mono" style="flex-grow:1;font-size:44px;font-weight:700;text-align:right;background:#0A1018;border:2px solid #3E8FD8;border-radius:12px;padding:4px 14px">'+(S.fin||'0')+'</div><div style="font-size:15px;line-height:1.5">Listas aquí <b>'+fmtN(hz(m))+'</b><br>Faltan <b>'+fmtN(falt)+'</b> de '+fmtN(m.plan)+'</div></div>'+
   '<div style="min-height:20px;font-size:15px;font-weight:700;color:#FF6369">'+E(S.finErr)+'</div>'+teclado('fin')+
   '<div style="display:flex;gap:10px"><button type="button" '+act('finOk')+' style="flex-grow:1;min-height:56px;border-radius:12px;border:0;background:#3E8FD8;color:#fff;font-size:20px;font-weight:700">Guardar</button><button type="button" class="sec" '+act('cerrar')+'>Cancelar</button></div>';}
  else if(S.modal==='cero'){h='<div class="ttl">No terminaste piezas en este lapso. ¿Por qué?</div><div class="g2">'+['Se acabó el turno','Problema con la pieza','Ajuste de máquina','Otro'].map(function(t){return '<button type="button" '+act('motCero',t)+' style="min-height:70px;border-radius:12px;border:2px solid #22344A;background:#18263A;font-size:17px;font-weight:700">'+t+'</button>';}).join('')+'</div>';}
- else if(S.modal==='confirma'){h='<div class="ttl">¿Terminaste las '+m.piezas+' piezas?</div><div style="font-size:16px;line-height:1.4;color:#C9D6E6">El paso '+E(m.paso)+' de <b>'+m.mo+'</b> se marca <b style="color:#7FE3BC">TERMINADO</b> y aparece en el Resumen del turno para que el Ing. Moisés lo registre en Katana.</div>'+
+ else if(S.modal==='confirma'){h='<div class="ttl">¿Terminaste las '+m.piezas+' piezas?</div><div style="font-size:16px;line-height:1.4;color:#C9D6E6">El paso <b>'+E(m.paso||MAQ)+'</b> de <b>'+m.mo+'</b> se marca <b style="color:#7FE3BC">TERMINADO</b> y aparece en el Resumen del turno para que el Ing. Moisés lo registre en Katana.</div>'+
   '<div style="display:flex;gap:10px"><button type="button" '+act('confSi')+' style="flex-grow:1;min-height:60px;border-radius:12px;border:0;background:#25C083;color:#07121B;font-size:20px;font-weight:700">Sí, terminé</button><button type="button" class="sec" style="flex-grow:1;min-height:60px" '+act('confNo')+'>No, corregir</button></div>';}
  else if(S.modal==='conx'){h='<div class="ttl">Conexión con Katana</div><div style="font-size:14px;color:var(--tx2);line-height:1.4">Estado: <b style="color:'+syncTxt()[1]+'">'+E(syncTxt()[0])+'</b><br>Teclea el código de este teléfono (lo da Moisés).</div>'+
   '<div class="mono" style="font-size:34px;font-weight:700;text-align:center;background:#0A1018;border:2px solid #3E8FD8;border-radius:12px;padding:4px;letter-spacing:5px">'+(S.cod?S.cod.replace(/./g,'•'):'&nbsp;')+'</div>'+
@@ -293,9 +327,9 @@ function vResumen(){var k=S.resDia||diaKey(Date.now()),hoy=diaKey(Date.now()),ro
   (rows.length?rows.map(function(r){return '<div class="card" style="padding:8px 10px;font-size:14px"><div style="display:flex;justify-content:space-between"><b class="mono">'+hm(r.ini)+'–'+(r.fin?hm(r.fin):'…')+'</b><b class="mono">'+r.mo+'</b><b>'+(r.pz==null?'—':r.pz+' pz')+'</b></div>'+
     '<div style="color:var(--tx2)">'+durTxt(r.trab)+' de trabajo'+(r.pausa?' · pausa '+durTxt(r.pausa)+' ('+E(r.motivos.join(', '))+')':'')+(r.vivo?' · <span style="color:#FFD37A">'+(r.vivo==='pausa'?'en pausa':'en proceso')+'</span>':(r.termino?' · Terminó':(r.motivo?' · '+E(r.motivo):'')))+'</div></div>';}).join('')
    :'<div style="color:var(--tx2);text-align:center;padding:20px">No hay lapsos registrados este día.</div>')+'</div></div>';}
-function textoResumen(){var k=S.resDia||diaKey(Date.now()),rows=S.tramos.filter(function(r){return r.d===k;}),tot={},L=['RESUMEN CORTE · '+OPERADOR+' · '+diaTxt(k)];
+function textoResumen(){var k=S.resDia||diaKey(Date.now()),rows=S.tramos.filter(function(r){return r.d===k;}),tot={},L=['RESUMEN CORTE · '+opAct()+' · '+diaTxt(k)];
  rows.forEach(function(r){var t=tot[r.mo]=tot[r.mo]||{pz:0,trab:0,termino:false};t.pz+=r.pz;t.trab+=r.trab;if(r.termino)t.termino=true;});
- Object.keys(tot).forEach(function(mo){var t=tot[mo];L.push(mo+' · '+((S.mos.filter(function(q){return q.mo===mo;})[0]||{}).paso||MAQ)+' · '+t.pz+' pz · '+durTxt(t.trab)+(t.termino?' · TERMINADO':''));});
+ Object.keys(tot).forEach(function(mo){var t=tot[mo];L.push(mo+' · '+MAQ+' · '+t.pz+' pz · '+durTxt(t.trab)+(t.termino?' · TERMINADO':''));});
  L.push('');L.push('Lapsos:');rows.forEach(function(r){L.push(hm(r.ini)+'–'+hm(r.fin)+' '+r.mo+' · '+durTxt(r.trab)+(r.pausa?' · pausa '+durTxt(r.pausa)+' ('+r.motivos.join(', ')+')':'')+' · '+r.pz+' pz'+(r.motivo?' · '+r.motivo:''));});
  if(!rows.length)L.push('Sin lapsos terminados.');return L.join('\n');}
 function render(){var y=window.scrollY,prev=S._pant;
@@ -312,15 +346,25 @@ A.cerrar=function(){S.modal=null;S.finErr='';};
 A.resumen=function(){S.modal='resumen';S.resDia=diaKey(Date.now());};
 A.resDia=function(v){S.resDia=v;};
 A.enviar=function(){var t=textoResumen();
- if(navigator.share){navigator.share({title:'Resumen Corte',text:t}).catch(function(){});}
+ if(navigator.share){navigator.share({title:'Resumen '+MAQ,text:t}).catch(function(){});}
  else if(navigator.clipboard){navigator.clipboard.writeText(t).then(function(){S.copiado=true;render();setTimeout(function(){S.copiado=false;render();},2500);});}};
 A.verPieza=function(){S.modal='pieza';S.zoom=1;};
 A.zoom=function(v){S.zoom=Math.max(1,Math.min(4,S.zoom+(+v)));};
-/* START sin PIN: el teléfono es de la estación Corte */
-A.start=function(){upd(function(x){var t=Date.now();
+/* START: sin PIN cuando el teléfono es de un solo operador; con PIN (elegir operador) donde hay varios (TM-2P) */
+A.start=function(){if(PINOPS){var st0=cur().st;S.pinErr='';S.modal='pin';S.opSel=st0.status==='pausa'?st0.op:null;S.pin='';return;}upd(function(x){var t=Date.now();
  if(x.status==='pausa'){x.paused+=t-x.pauseStart;x.pauseStart=null;}else{x.tramoStart=t;}
  x.op=OPERADOR;x.runStart=t;x.status='prog';katEv('start',x,0);});};
 A.pausa=function(){S.modal='pausa';};
+A.op=function(v){S.opSel=v;S.pin='';S.pinErr='';};
+A.pinOk=function(){if(S.pinChk)return;
+ if(enLinea()){S.pinChk=true;S.pinErr='';api('POST','/pin',{operador:S.opSel,pin:S.pin}).then(function(r){S.pinChk=false;
+   if(r._status===403){S.pinErr='PIN incorrecto. Intenta de nuevo.';S.pin='';render();return;}iniciarTramo();render();guardar();})
+  .catch(function(){S.pinChk=false;iniciarTramo();render();guardar();});return;}
+ iniciarTramo();};
+function iniciarTramo(){var op=S.opSel,pin=S.pin;upd(function(x){var t=Date.now();
+ if(x.status==='pausa'&&x.op===op){x.paused+=t-x.pauseStart;x.pauseStart=null;}
+ else{if(x.tramoStart){katEv('fin',x,x.runStart?t-x.runStart:0);cerrarTramo(x,0,'cambio de operador');}x.tramoStart=t;}
+ x.op=op;x.pin=pin;x.runStart=t;x.status='prog';katEv('start',x,0);});S.modal=null;S.pin='';}
 A.motPausa=function(v){upd(function(x){var n=Date.now();katEv('pausa',x,n-x.runStart);x.worked+=n-x.runStart;x.runStart=null;x.pauseStart=n;x.motivos.push(v);x.status='pausa';});S.modal=null;};
 A.fin=function(){S.modal='fin';S.fin='';S.finErr='';};
 A.tecla=function(v){var p=v.split('|'),c=p[0],t=p[1],x=S[c];
@@ -337,13 +381,13 @@ var toques=[];
 A.logo=function(){var n=Date.now();toques=toques.filter(function(t){return n-t<3000;});toques.push(n);if(toques.length>=5){toques=[];S.modal='conx';S.cod='';S.conxMsg='';}};
 A.codOk=function(){if(S.cod.length<6){S.conxMsg='El código tiene al menos 6 dígitos';return;}CONX={codigo:S.cod};try{localStorage.setItem('dimaco_corte_conx',JSON.stringify(CONX));}catch(e){}
  S.conxMsg=SRV_URL?'Probando…':'Código guardado. El servidor todavía no está configurado en esta versión.';
- if(SRV_URL)api('GET','/estado').then(function(r){S.conxMsg=r.ok?'✓ Conectado a Katana':'✗ '+(r.error||'No autorizado');render();}).catch(function(){S.conxMsg='✗ Sin conexión';render();});};
+ if(SRV_URL)api('GET','/estado').then(function(r){S.conxMsg=r.ok?'✓ Conectado a Katana':'✗ '+(r.error||'No autorizado');render();if(r.ok)cargarCola();}).catch(function(){S.conxMsg='✗ Sin conexión';render();});};
 A.desconectar=function(){CONX=null;try{localStorage.removeItem('dimaco_corte_conx');}catch(e){}S.conxMsg='Teléfono desconectado.';S.sync='off';};
 
 document.getElementById('app').addEventListener('click',function(e){var b=e.target.closest('[data-a]');if(!b||b.disabled)return;
  var f=A[b.getAttribute('data-a')];if(f){f(b.getAttribute('data-v'));render();guardar();}});
 
-/* ============ AVISOS DE MOISÉS (app-doblez/aviso.json, cada 15 s) ============ */
+/* ============ AVISOS DE MOISÉS (app-corte/aviso.json, cada 15 s) ============ */
 var AV={d:null,visto:null,nuevo:false};try{AV.visto=localStorage.getItem('dimaco_corte_aviso_visto');}catch(e){}
 var ACX=null;function tono(f,t0,d,vol){try{ACX=ACX||new (window.AudioContext||window.webkitAudioContext)();var o=ACX.createOscillator(),g=ACX.createGain();o.type='square';o.frequency.value=f;
  g.gain.setValueAtTime(vol||0.25,ACX.currentTime+t0);g.gain.exponentialRampToValueAtTime(0.001,ACX.currentTime+t0+d);o.connect(g);g.connect(ACX.destination);o.start(ACX.currentTime+t0);o.stop(ACX.currentTime+t0+d+0.05);}catch(e){}}
@@ -360,7 +404,7 @@ function leerAviso(){var u=(intAv%2?'aviso.json':'https://raw.githubusercontent.
 
 /* ============ CORTE PARADO: >15 min sin START dentro del turno ============ */
 /* turno 7:30-18:36 L-V; no cuentan breaks 9:00-9:15 y 15:45-16:00 ni comida 12:00-13:00 (VENTANAS/PAUSAS de arriba) */
-var LIM_PARADA=15*60000, WA_URL='https://script.google.com/macros/s/AKfycbxAaapz3Qdb8ZKz65vS_4jeQJW9X_Ujaghla5cX6XFbN_NDDpWruWqbHFSPWPUnLE5v/exec';   /* WA_URL = intermediario que manda el WhatsApp a Moisés */
+var LIM_PARADA=15*60000, WA_URL="https://script.google.com/macros/s/AKfycbxAaapz3Qdb8ZKz65vS_4jeQJW9X_Ujaghla5cX6XFbN_NDDpWruWqbHFSPWPUnLE5v/exec";   /* WA_URL = intermediario que manda el WhatsApp a Moisés */
 var PA={ult:null,ultTxt:'',ep:null,env:null};try{var pj=JSON.parse(localStorage.getItem('dimaco_corte_parada')||'null');if(pj)PA=pj;}catch(e){}
 function guardarPA(){try{localStorage.setItem('dimaco_corte_parada',JSON.stringify(PA));}catch(e){}}
 function laborable(a,b){var ms=0;if(b<=a)return 0;var d0=new Date(a);
@@ -377,9 +421,9 @@ function ultimoTxt(){var p=S.mos.filter(function(m){return m.st.status==='pausa'
 function inicioParada(){var hoy=new Date(),ini=+hmD(hoy,VENTANAS[0][0]);return Math.max(PA.ult||0,ini);}
 function paradaMs(){if(enMarcha())return 0;var n=Date.now();return laborable(inicioParada(),n);}
 function vParada(){var ms=paradaMs();if(ms<LIM_PARADA||!enTurno(Date.now()))return '';
- return '<div class="par"><b>⛔ CORTE PARADO · '+durTxt(ms)+'</b><div>Sin START desde las '+hm(inicioParada())+' (sin contar breaks ni comida). Presiona ▶ START en la MO que estés trabajando.'+(PA.env&&PA.env===PA.ep?' Ya se avisó a Moisés.':'')+'</div></div>';}
+ return '<div class="par"><b>⛔ CORTE PARADO · '+durTxt(ms)+'</b><div>Sin START desde las '+hm(inicioParada())+' (sin contar breaks ni comida). Presiona ▶ START en la MO que estés cortando.'+(PA.env&&PA.env===PA.ep?' Ya se avisó a Moisés.':'')+'</div></div>';}
 function enviarWA(ms){if(!WA_URL)return;var ini=inicioParada();
- var cuerpo=JSON.stringify({estacion:'Corte',tiempo:durTxt(ms)+' (desde las '+hm(ini)+')',ultimo:ultimoTxt()});
+ var cuerpo=JSON.stringify({estacion:"Corte",tiempo:durTxt(ms)+' (desde las '+hm(ini)+')',ultimo:ultimoTxt()});
  try{fetch(WA_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:cuerpo}).catch(function(){PA.env=null;guardarPA();});}catch(e){}}
 var sonoPar=0;
 function vigilar(){var n=Date.now(),m=enMarcha();
@@ -395,6 +439,8 @@ var WL=null;function wake(){try{if(navigator.wakeLock&&document.visibilityState=
 document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible'){wake();leerAviso();vigilar();render();}});
 document.addEventListener('click',function(){try{ACX=ACX||new (window.AudioContext||window.webkitAudioContext)();if(ACX.state==='suspended')ACX.resume();}catch(e){}wake();},true);
 cargar();if(PA.ult==null){PA.ult=Date.now();guardarPA();}render();leerAviso();setInterval(leerAviso,15000);vigilar();setInterval(function(){vigilar();var p=document.querySelector('.par b');if(p)p.textContent='⛔ CORTE PARADO · '+durTxt(paradaMs());},20000);wake();
+if(enLinea()){S.sync=S.cola.length?'pend':'off';cargarCola().then(enviarCola);}
+setInterval(function(){if(enLinea()&&!S.modal){cargarCola();enviarCola();}},180000);
 /* logo: el mismo del tablero de TV */
 fetch('../',{cache:'no-store'}).then(function(r){return r.text();}).then(function(t){var m=t.match(/id="logo"\s+src="(data:image\/[^"]+)"/)||t.match(/src="(data:image\/png;base64,[^"]+)"/);if(m){LOGO=m[1];render();}}).catch(function(){});
 setInterval(function(){var c=document.getElementById('crono'),r=document.getElementById('reloj'),e=document.getElementById('efect');

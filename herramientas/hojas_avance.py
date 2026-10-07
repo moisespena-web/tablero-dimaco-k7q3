@@ -70,7 +70,7 @@ COLS=[('#',18),('MO',48),('SKU',70),('Pieza',122),('Operación',60),('Entrega',4
       ('Inicio',38),('Fin',38),('Piezas',40),('Inicio',38),('Fin',38),('Piezas',40),('Notas',0)]
 def hoja(app,est,proy,out,hoy,hora):
     t=open('%s/%s/index.html'%(REPO,app)).read()
-    mos=arr(t[t.index('mos:[{'):],'mos:[') if app=='app-tm2p' else arr(t,'var DATA=[')
+    mos=arr(t,'var DATA=[') if 'var DATA=[' in t else arr(t[t.index('mos:[{'):],'mos:[')
     c=canvas.Canvas(out,pagesize=(W,H)); c.setTitle('Hoja de avance · '+est)
     x0=30; TW=W-60; fixed=sum(w for _,w in COLS); ws=[w or (TW-fixed) for _,w in COLS]
     RH=26; pag=[0]
