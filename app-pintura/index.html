@@ -55,7 +55,7 @@ button:disabled{cursor:not-allowed}
 @keyframes avp{50%{box-shadow:0 0 0 6px rgba(242,169,59,.45)}}
 .par{margin-top:8px;border-radius:12px;padding:10px 12px;background:#E5484D;color:#fff;animation:avp 1.2s ease-in-out infinite}
 .par b{font-size:20px;letter-spacing:.5px}.par div{font-size:13px;margin-top:2px}
-</style>
+.bpz{margin-top:7px}.bpzb{display:flex;height:9px;border-radius:5px;overflow:hidden;background:#2E3D52}.bpzb i{display:block;height:100%}.bpzl{display:flex;flex-wrap:wrap;gap:4px 14px;margin-top:5px;font-size:13px;color:#C9D6E6}.bpzl i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}</style>
 </head>
 <body>
 <div id="app"></div>
@@ -99,6 +99,16 @@ function disponible(iso){var fin=new Date(iso+'T14:00:00'),t=new Date(),ms=0;
 /* piezas ya hechas en esta estación: terminadas en Katana + lapsos de la tablet; si las notas de la MO traen un avance mayor (ej. 'Corte: Mario 30/50'; no cuenta 'Corte Laser'), manda ese */
 function notaPz(m){var r=new RegExp('\\bPintura'+'[^\\n]*?(\\d+)\\s*/\\s*\\d+','gi'),x,n=0;var t=m.notas||'';while((x=r.exec(t)))n=+x[1];return n;}
 function hz(m){var e=m.entr||0;return Math.min(m.piezas,Math.max(Math.max(0,notaPz(m)-e),Math.max(0,(m.hechas||0)-e)+m.st.done));}
+/* PZ6OCT · 6-oct-2026 (Moisés): Faltan X de total + barra entregadas / listas -> siguiente estación / faltan aquí */
+function fmtN(n){return (+n||0).toLocaleString('en-US');}
+function faltaPz(m){return Math.max(0,m.piezas-hz(m));}
+function sigEst(m){var r=m.ruta||[],i=-1;r.forEach(function(x,k){if(x&&(x[2]===true||(i<0&&/TM-2P/i.test(x[0]))))i=k;});
+ if(i<0)return '';for(var k=i+1;k<r.length;k++){if(r[k]&&r[k][1]!==null&&r[k][1]!==undefined)return String(r[k][0]).replace(/ Sierra$/,'');}return '';}
+function barraPz(m){var T=m.plan||m.piezas||1,e=m.entr||0,h=hz(m),f=faltaPz(m),s=sigEst(m),w=function(n){return (100*n/T).toFixed(2)+'%';};
+ return '<div class="bpz"><div class="bpzb"><i style="width:'+w(e)+';background:#25A35A"></i><i style="width:'+w(h)+';background:#3E8FD8"></i><i style="width:'+w(f)+';background:#2E3D52"></i></div>'+
+ (e+h>0?'<div class="bpzl">'+(e>0?'<span><i style="background:#25A35A"></i>'+fmtN(e)+' entregadas</span>':'')+(h>0?'<span><i style="background:#3E8FD8"></i>'+fmtN(h)+(s?' listas → '+E(s):' listas para entregar')+'</span>':'')+'<span><i style="background:#2E3D52"></i>'+fmtN(f)+' faltan aquí</span></div>':'')+'</div>';}
+function estTxtM(m){return (m.st.status==='none'&&hz(m)>0)?'EN PROCESO':estTxt(m.st);}
+function estStyM(m){return (m.st.status==='none'&&hz(m)>0)?estSty({status:'prog',op:''}):estSty(m.st);}
 /* 5-oct-2026 (Moisés): MOs con entregas parciales en Katana (Partially completed) — la estación muestra solo lo PENDIENTE.
    En los datos, piezas = planeadas y entregadas = completed_quantity de Katana; si no viene, se toma del tablero de TV
    (datos.json trae piezas = remaining_quantity): entregadas = planeadas − piezas de la TV. Las notas (x/y) cuentan sobre
@@ -192,8 +202,8 @@ function vLista(){
   '<span style="text-align:right"><b style="font-size:17px">'+m.entrega+'</b> '+badge(m)+'</span></div>'+
   '<div style="font-size:12px;color:var(--tx2);margin:2px 0 4px">#'+m.sec+' <b class="pill" style="background:'+m.color+'">'+m.tipo+'</b></div>'+
   '<div style="font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+E(m.nombre)+'</div>'+
-  '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;gap:6px"><span class="mono sku">'+m.sku+'</span><b style="font-size:19px">'+hz(m)+'/'+m.piezas+' <span class="ks" style="font-weight:400">pz</span></b></div>'+
-  '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:7px"><span class="st" style="'+estSty(st)+'">'+E(estTxt(st))+'</span>'+
+  '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;gap:6px"><span class="mono sku">'+m.sku+'</span><span style="text-align:right;white-space:nowrap"><span class="ks">Faltan </span><b style="font-size:22px">'+fmtN(faltaPz(m))+'</b><span class="ks"> de '+fmtN(m.plan)+'</span></span></div>'+barraPz(m)+
+  '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:7px"><span class="st" style="'+estStyM(m)+'">'+E(estTxtM(m))+'</span>'+
   (st.status==='none'?'<span class="st" style="background:'+pv[1]+';border:1px solid '+pv[2]+';color:'+pv[3]+'">'+pv[0]+'</span>':'')+'</div></button>';}).join('');}).join('')+
  '<div style="font-size:12px;color:var(--tx2);margin:6px 0 10px;line-height:1.4">'+(enLinea()?'CONECTADA A KATANA · la cola se actualiza sola.':'PILOTO · MOs de Katana al 3-oct 23:11. Lo capturado se guarda en este teléfono; todavía no escribe en Katana: el Ing. Moisés lo registra con el Resumen del turno.')+'</div>';}
 function bigBtn(bg,fg,on){return 'background:'+bg+';color:'+fg+';opacity:'+(on?1:.25);}
@@ -207,17 +217,16 @@ function vDetalle(){var m=cur(),st=m.st,falt=Math.max(0,m.piezas-hz(m)),tramo=st
   '<button type="button" class="sec" style="font-weight:700" '+act('volver')+'>← Regresar</button>'+
   '<div style="flex-grow:1;text-align:right"><b style="font-size:18px">'+m.entrega+'</b> '+badge(m)+'</div></div>'+
  '<div class="card" style="padding:12px;border:'+(m.prio?'2px solid #EAF1F9':'1px solid #22344A')+';border-left:7px solid '+m.color+'">'+
-  '<div style="display:flex;justify-content:space-between;align-items:baseline"><span><span class="mono" style="font-size:30px;font-weight:700">'+m.mo+'</span>'+cliTag(m,17)+'</span><span><b style="font-size:26px">'+m.piezas+'</b><span class="ks"> pz</span></span></div>'+
+  '<div style="display:flex;justify-content:space-between;align-items:baseline"><span><span class="mono" style="font-size:30px;font-weight:700">'+m.mo+'</span>'+cliTag(m,17)+'</span><span><span class="ks">Faltan </span><b style="font-size:26px">'+fmtN(faltaPz(m))+'</b><span class="ks"> de '+fmtN(m.plan)+'</span></span></div>'+
   '<div style="font-size:12px;color:var(--tx2);margin:2px 0 6px">#'+m.sec+' <b class="pill" style="background:'+m.color+'">'+m.tipo+'</b></div>'+
   '<div style="font-size:17px">'+E(m.nombre)+'</div><div style="margin-top:6px"><span class="mono sku">'+m.sku+'</span></div></div>'+
  '<div class="card" style="padding:12px;margin-top:10px">'+
-  '<div style="display:flex;justify-content:space-between;align-items:center"><span class="lbl">TU OPERACIÓN</span><span class="st" style="'+estSty(st)+'">'+E(estTxt(st))+'</span></div>'+
+  '<div style="display:flex;justify-content:space-between;align-items:center"><span class="lbl">TU OPERACIÓN</span><span class="st" style="'+estStyM(m)+'">'+E(estTxtM(m))+'</span></div>'+
   '<div style="font-size:26px;font-weight:800;margin:4px 0">'+E(m.paso)+'</div>'+
   '<div style="font-size:13px;color:var(--tx2)">Resource: <b style="color:var(--tx)">'+E(m.recurso)+'</b> · '+(m.fuenteT==='medido'?'TRM medido ':'Planeado Katana ')+m.planeado+' s/pz · Faltan ≈ '+durTxt(faltanMs(m))+'</div>'+
   (m.recursoMal?'<div style="font-size:13px;color:#FFC45C;margin-top:4px">⚠ En Katana esta operación está en otro Resource.</div>':'')+
   (st.status==='none'?'<div style="margin-top:8px"><span class="st" style="background:'+pv[1]+';border:1px solid '+pv[2]+';color:'+pv[3]+'">'+pv[0]+'</span></div>':'')+
-  '<div style="display:flex;justify-content:space-between;font-size:16px;margin-top:10px"><span>Llevas <b style="font-size:22px">'+hz(m)+'</b> de '+m.piezas+'</span><span>Faltan <b style="font-size:22px">'+falt+'</b></span></div>'+
-  '<div style="height:10px;background:#0E1723;border:1px solid #22344A;border-radius:6px;overflow:hidden;margin-top:6px"><div style="height:100%;background:#25C083;width:'+Math.round(100*hz(m)/m.piezas)+'%"></div></div>'+
+  '<div style="display:flex;justify-content:space-between;font-size:16px;margin-top:10px"><span>Listas aquí <b style="font-size:22px">'+fmtN(hz(m))+'</b></span><span>Faltan <b style="font-size:22px">'+fmtN(falt)+'</b> de '+fmtN(m.plan)+'</span></div>'+barraPz(m)+
   '<div style="display:flex;justify-content:space-between;font-size:14px;color:var(--tx2);margin-top:8px"><span>Lapso actual: <b class="mono" id="crono" style="color:var(--tx);font-size:18px">'+dur(tramo)+'</b></span><span>'+E(quien)+'</span></div></div>'+
  '<div class="card" style="padding:10px 12px;margin-top:10px"><div class="lbl" style="margin-bottom:6px">OPERACIONES DE LA MO</div><div class="ruta">'+ruta+'</div></div>'+
  '<button type="button" class="card" '+act('verPieza')+' style="display:block;width:100%;padding:10px 12px;margin-top:10px;text-align:left">'+
@@ -252,7 +261,7 @@ function vModal(){if(!S.modal)return '';var m=cur(),st=m.st,falt=Math.max(0,m.pi
    cuerpo+'</div></div></div>';}
  if(S.modal==='pausa'){h='<div class="ttl">¿Por qué se pausa?</div><div class="g2">'+['Comida','Falta material','Falla de máquina','Otro'].map(function(t){return '<button type="button" '+act('motPausa',t)+' style="min-height:70px;border-radius:12px;border:2px solid #F2A93B;background:#3A2A0C;color:#FFD37A;font-size:18px;font-weight:700">'+t+'</button>';}).join('')+'</div><button type="button" class="sec" '+act('cerrar')+'>Cancelar</button>';}
  else if(S.modal==='fin'){h='<div class="ttl">¿Cuántas piezas terminaste en este lapso?</div><div style="font-size:14px;color:var(--tx2)">'+m.mo+' · '+m.paso+' · '+OPERADOR+'</div>'+
-  '<div style="display:flex;gap:10px;align-items:center"><div class="mono" style="flex-grow:1;font-size:44px;font-weight:700;text-align:right;background:#0A1018;border:2px solid #3E8FD8;border-radius:12px;padding:4px 14px">'+(S.fin||'0')+'</div><div style="font-size:15px;line-height:1.5">Llevas <b>'+hz(m)+'</b> de '+m.piezas+'<br>Faltan <b>'+falt+'</b></div></div>'+
+  '<div style="display:flex;gap:10px;align-items:center"><div class="mono" style="flex-grow:1;font-size:44px;font-weight:700;text-align:right;background:#0A1018;border:2px solid #3E8FD8;border-radius:12px;padding:4px 14px">'+(S.fin||'0')+'</div><div style="font-size:15px;line-height:1.5">Listas aquí <b>'+fmtN(hz(m))+'</b><br>Faltan <b>'+fmtN(falt)+'</b> de '+fmtN(m.plan)+'</div></div>'+
   '<div style="min-height:20px;font-size:15px;font-weight:700;color:#FF6369">'+E(S.finErr)+'</div>'+teclado('fin')+
   '<div style="display:flex;gap:10px"><button type="button" '+act('finOk')+' style="flex-grow:1;min-height:56px;border-radius:12px;border:0;background:#3E8FD8;color:#fff;font-size:20px;font-weight:700">Guardar</button><button type="button" class="sec" '+act('cerrar')+'>Cancelar</button></div>';}
  else if(S.modal==='cero'){h='<div class="ttl">No terminaste piezas en este lapso. ¿Por qué?</div><div class="g2">'+['Se acabó el turno','Problema con la pieza','Ajuste de máquina','Otro'].map(function(t){return '<button type="button" '+act('motCero',t)+' style="min-height:70px;border-radius:12px;border:2px solid #22344A;background:#18263A;font-size:17px;font-weight:700">'+t+'</button>';}).join('')+'</div>';}
