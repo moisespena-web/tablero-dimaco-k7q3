@@ -87,7 +87,9 @@ for m in mos:
     ddl=(dt.datetime.fromisoformat(ddl.replace('Z','+00:00'))-dt.timedelta(hours=6)).date().isoformat() if ddl else ''
     so_dd=(s.get('delivery_date') or '')[:10]
     tv.append(dict(mo=m['order_no'],id=m['id'],sku=v.get('sku') or '',nombre=pm.get('name','?'),
-        piezas=int(m['remaining_quantity'] or m['planned_quantity'] or 0),deadline=ddl,entrega=ddl,prio=prio,ops=o,
+        piezas=int(m['remaining_quantity'] or m['planned_quantity'] or 0),
+        plan=int(m.get('planned_quantity') or 0),entr=int(m.get('completed_quantity') or 0),   # 6-oct: FALTAN X de total + barra
+        deadline=ddl,entrega=ddl,prio=prio,ops=o,
         av=avance(m.get('additional_info')),cliente=cli,color=CCOL.get(cli,'#8A93A6'),
         so=s['order_no']+' · '+cli,grp='urge' if prio else 'sig',nota='',
         _g=0 if prio else (1 if ini else 2),_old=s['order_created_date'],

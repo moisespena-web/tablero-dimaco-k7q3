@@ -313,13 +313,13 @@ padding:20px 34px;box-shadow:0 0 70px rgba(229,72,77,.95);animation:alimpP 1s st
 .chip u{text-decoration:none;font-size:14px;font-weight:700;color:#FFD37A;line-height:1.1}
 .chip.tarde u{color:#fff;background:#E5484D;border-radius:4px;padding:0 5px}
 #pages.compacto .tipo.soc{font-size:17px;color:#C9D6E6;font-weight:700;letter-spacing:.3px}
-
+.row{position:relative}.row.head .pz{text-align:right}.pz b{display:block;line-height:1}.pz span{display:block;margin:1px 0 0;font-size:15px}.lg{white-space:nowrap}.pzbar{position:absolute;left:14px;right:14px;bottom:0;height:4px;border-radius:3px;overflow:hidden;display:flex;background:#2E3D52;opacity:.95}.pzbar i{display:block;height:100%}
 /* ---- RACKS: 7 estaciones ---- */
 :root{--nops:7}
 .ops{width:880px;grid-template-columns:repeat(var(--nops),minmax(0,1fr));gap:6px}
 .ests{grid-template-columns:repeat(var(--nops),minmax(0,1fr))}
 .apl{grid-template-columns:repeat(var(--nops),minmax(0,1fr))}
-.pz{width:100px}#pages.compacto .mo{width:240px}.dl{width:170px}
+.pz{width:130px}.pz b{display:inline}.pz span{display:inline;margin-left:4px}#pages.compacto .mo{width:240px}.dl{width:170px}
 .row.head .op{font-size:15px;letter-spacing:0}
 #pages.compacto .op{font-size:14px;letter-spacing:0}
 .app{font-size:27px}.apn{font-size:13px;letter-spacing:0}
@@ -341,11 +341,11 @@ padding:20px 34px;box-shadow:0 0 70px rgba(229,72,77,.95);animation:alimpP 1s st
   <div class="legend">
    <span class="lg"><i style="background:var(--done)"></i>Terminada</span>
    <span class="lg"><i style="background:var(--prog)"></i>En proceso</span>
-   <span class="lg"><i style="background:var(--none)"></i>No iniciada</span>
+   <span class="lg"><i style="background:var(--none)"></i>No iniciada</span><span class="lg" style="margin-left:18px"><i style="background:#25A35A;border-radius:2px"></i>Entregadas</span><span class="lg"><i style="background:#3E8FD8;border-radius:2px"></i>Listas → sig.</span><span class="lg"><i style="background:#2E3D52;border-radius:2px"></i>Faltan</span>
   </div>
   <div class="msg"></div>
   <span id="sndIco">🔇</span>
-  <div id="stamp"></div><span class="build">r2026-10-06a</span><div class="bar"><i id="pb"></i></div>
+  <div id="stamp"></div><span class="build">r2026-10-06b</span><div class="bar"><i id="pb"></i></div>
  </footer>
  <div id="alimp" hidden></div>
  <div id="toasts"></div>
@@ -466,13 +466,25 @@ function estacion(r){for(var i=0;i<r.ops.length;i++){if(r.ops[i][1]!=="COMPLETED
 function vencida(r){return !!r.deadline&&r.deadline<hoyISO()&&fase(r)!=="listo";}
 function fmtF(iso){if(!iso)return "";var p=iso.split("-");return p[2]+"-"+MESES[+p[1]-1];}
 
+/* PZ6OCT · 6-oct-2026 (Moisés): FALTAN X de total + barra entregadas / listas -> siguiente / faltan en la estación actual.
+   plan = planeadas de la MO; entr = entregadas (completed_quantity); el av "x/y" de las notas cuenta sobre la MO completa. */
+function avN(s){var m=/(\d+)\s*\/\s*(\d+)/.exec(s||"");return m?[+m[1],+m[2]]:null;}
+function pzMO(r){var y=0;for(var k in (r.av||{})){var a=avN(r.av[k]);if(a)y=Math.max(y,a[1]);}
+  var plan=r.plan||y||r.piezas,entr=r.entr!=null?+r.entr:Math.max(0,plan-r.piezas),pend=Math.max(0,plan-entr);
+  var est=estacion(r),i=-1,sig="";r.ops.forEach(function(o,k){if(o[0]===est)i=k;});
+  for(var k=i+1;i>=0&&k<r.ops.length;k++){sig=LBL[r.ops[k][0]]||r.ops[k][0];break;}
+  var a=est&&r.av?avN(r.av[est]):null,h=est?Math.min(pend,a?Math.max(0,a[0]-entr):0):pend;
+  return {plan:plan,entr:entr,listas:h,faltan:Math.max(0,pend-h),est:est?(LBL[est]||est):"",sig:sig};}
+function listasOp(r,op){var a=avN(r.av&&r.av[op]);if(!a)return "";var p=pzMO(r);var n=Math.max(0,a[0]-p.entr);return nf(n)+(n===1?" lista":" listas");}
+function barraTV(p){var T=p.plan||1,w=function(n){return (100*n/T).toFixed(2)+"%";};
+  return '<div class="pzbar"><i style="width:'+w(p.entr)+';background:#25A35A"></i><i style="width:'+w(p.listas)+';background:#3E8FD8"></i><i style="width:'+w(p.faltan)+';background:#2E3D52"></i></div>';}
 function celda(r,op){
   var m={},p={},f=false,u=-1;r.ops.forEach(function(o,i){m[o[0]]=o[1];p[o[0]]=i+1;var q=ORD[o[0]];if(q!=null){if(q<u)f=true;u=Math.max(u,q);}});
   var st=m[op];if(!st)return '<div class="op empty"></div>';
   var c={COMPLETED:"done",IN_PROGRESS:"prog",PAUSED:"prog",NOT_STARTED:"none"}[st]||"none";
   var k={done:"&#10003;",prog:"&#9679;",none:""}[c];
   var a=c!=="done"&&r.av&&r.av[op];
-  return '<div class="op '+c+'">'+(f?'<span class="ord">'+p[op]+'</span>':'')+'<span class="dot">'+k+'</span><span class="oplbl'+(a?' avn':'')+'">'+(a?esc(a):LBL[op])+'</span></div>';
+  return '<div class="op '+c+'">'+(f?'<span class="ord">'+p[op]+'</span>':'')+'<span class="dot">'+k+'</span><span class="oplbl'+(a?' avn':'')+'">'+(a?esc(listasOp(r,op)||a):LBL[op])+'</span></div>';
 }
 function fila(r){
   var t=tipoDe(r),v=r.entrega?false:vencida(r),l=fase(r)==="listo";
@@ -485,9 +497,9 @@ function fila(r){
   return '<div class="'+cls+'"><div class="stripe" style="background:'+t[1]+'"></div>'+
    '<div class="mo"><span class="mono">'+esc(r.mo)+'</span><span class="tipo soc">'+esc(r.so||'')+'</span></div>'+
    '<div class="desc"><span class="nom">'+esc(r.nombre)+'</span><span class="sku mono">'+esc(r.sku)+'</span></div>'+
-   '<div class="pz"><b>'+r.piezas+'</b><span>pz</span></div>'+
+   '<div class="pz" title="'+esc(pzMO(r).entr+' entregadas · '+pzMO(r).listas+' listas'+(pzMO(r).sig?' → '+pzMO(r).sig:'')+' · '+pzMO(r).faltan+' faltan'+(pzMO(r).est?' en '+pzMO(r).est:''))+'"><b>'+nf(pzMO(r).faltan)+'</b><span>de '+nf(pzMO(r).plan)+'</span></div>'+
    '<div class="ops">'+OPS.map(function(o){return celda(r,o);}).join("")+'</div>'+
-   '<div class="dl"><b>'+fmtF(r.entrega||r.deadline)+'</b>'+b+'</div></div>';
+   '<div class="dl"><b>'+fmtF(r.entrega||r.deadline)+'</b>'+b+'</div>'+barraTV(pzMO(r))+'</div>';
 }
 function partir(xs){
   if(!xs.length)return [];
@@ -496,7 +508,7 @@ function partir(xs){
   return out;
 }
 function HEADF(){return '<div class="row head"><div class="stripe"></div><div class="mo">ORDEN</div><div class="desc">PRODUCTO</div>'+
- '<div class="pz">CANT.</div><div class="ops">'+OPS.map(function(o){return '<div class="op empty">'+LBL[o]+'</div>';}).join("")+
+ '<div class="pz">FALTAN</div><div class="ops">'+OPS.map(function(o){return '<div class="op empty">'+LBL[o]+'</div>';}).join("")+
  '</div><div class="dl">LÍMITE</div></div>';}
 
 var datos=null, pagina=0, t0=Date.now();

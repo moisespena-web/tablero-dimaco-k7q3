@@ -39,7 +39,7 @@ rep('''pedir([BUZON+"/tablero","datos.json",RAWG+"datos.json"],function(j){''','
 rep('''pedir([BUZON+"/tablero/aviso","aviso.json",RAWG+"aviso.json"],''','''pedir([BUZON+"/tablero/aviso","../aviso.json",RAWG+"aviso.json"],''')
 rep('<title>','<title>',1)
 src=re.sub(r'<title>[^<]*</title>','<title>MO en proceso · Racks</title>',src,1)
-src=re.sub(r'<span class="build">v[^<]*</span>','<span class="build">r2026-10-06a</span>',src,1)
+src=re.sub(r'<span class="build">v[^<]*</span>','<span class="build">r2026-10-06b</span>',src,1)
 # CSS para N columnas (7 en racks)
 css='''
 /* ---- RACKS: 7 estaciones ---- */
@@ -47,7 +47,7 @@ css='''
 .ops{width:880px;grid-template-columns:repeat(var(--nops),minmax(0,1fr));gap:6px}
 .ests{grid-template-columns:repeat(var(--nops),minmax(0,1fr))}
 .apl{grid-template-columns:repeat(var(--nops),minmax(0,1fr))}
-.pz{width:100px}#pages.compacto .mo{width:240px}.dl{width:170px}
+.pz{width:130px}.pz b{display:inline}.pz span{display:inline;margin-left:4px}#pages.compacto .mo{width:240px}.dl{width:170px}
 .row.head .op{font-size:15px;letter-spacing:0}
 #pages.compacto .op{font-size:14px;letter-spacing:0}
 .app{font-size:27px}.apn{font-size:13px;letter-spacing:0}

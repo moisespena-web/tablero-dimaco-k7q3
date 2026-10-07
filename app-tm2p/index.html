@@ -97,7 +97,7 @@ function sigEst(m){var r=m.ruta||[],i=-1;r.forEach(function(x,k){if(x&&(x[2]===t
  if(i<0)return '';for(var k=i+1;k<r.length;k++){if(r[k]&&r[k][1]!==null&&r[k][1]!==undefined)return String(r[k][0]).replace(/ Sierra$/,'');}return '';}
 function barraPz(m){var T=m.plan||m.piezas||1,e=m.entr||0,h=hz(m),f=faltaPz(m),s=sigEst(m),w=function(n){return (100*n/T).toFixed(2)+'%';};
  return '<div class="bpz"><div class="bpzb"><i style="width:'+w(e)+';background:#25A35A"></i><i style="width:'+w(h)+';background:#3E8FD8"></i><i style="width:'+w(f)+';background:#2E3D52"></i></div>'+
- (e+h>0?'<div class="bpzl">'+(e>0?'<span><i style="background:#25A35A"></i>'+fmtN(e)+' entregadas</span>':'')+(h>0?'<span><i style="background:#3E8FD8"></i>'+fmtN(h)+(s?' listas → '+E(s):' listas para entregar')+'</span>':'')+'<span><i style="background:#2E3D52"></i>'+fmtN(f)+' faltan aquí</span></div>':'')+'</div>';}
+ (e+h>0?'<div class="bpzl">'+(e>0?'<span><i style="background:#25A35A"></i>'+fmtN(e)+' entregadas</span>':'')+(h>0?'<span><i style="background:#3E8FD8"></i>'+fmtN(h)+(h===1?' lista':' listas')+(s?' → '+E(s):' para entregar')+'</span>':'')+'<span><i style="background:#2E3D52"></i>'+fmtN(f)+' faltan aquí</span></div>':'')+'</div>';}
 function estTxtM(m){return (m.st.status==='none'&&hz(m)>0)?'EN PROCESO':estTxt(m.st);}
 function estStyM(m){return (m.st.status==='none'&&hz(m)>0)?estSty({status:'prog',op:''}):estSty(m.st);}
 /* 5-oct-2026 (Moisés): MOs con entregas parciales en Katana (Partially completed) — la estación muestra solo lo PENDIENTE.
