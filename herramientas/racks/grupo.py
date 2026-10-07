@@ -6,13 +6,13 @@ def rep(old,new):
     assert s.count(old)==1,('NO ENCONTRADO/UNICO',old[:70]); s=s.replace(old,new)
 rep('paginar(items,"PROGRAMA DE ENTREGAS","");',r'''function paginarCli(xs){
       if(!xs.length)return;
-      var SEPH=36,cabPx=hDisp-CAB,tot={},pages=[],cur=[],used=0,last=null;
+      ROWH_=ROWH+5;var SEPH=44,cabPx=hDisp-CAB,tot={},pages=[],cur=[],used=0,last=null;
       xs.forEach(function(r){var c=r.cliente||"";tot[c]=tot[c]||{n:0,pz:0};tot[c].n++;tot[c].pz+=r.piezas;});
       function cab(c,cont,col){var t=tot[c];return {sep:c.toUpperCase()+" · "+t.n+" MO"+(t.n>1?"s":"")+" · "+t.pz.toLocaleString("en-US")+" pz"+(cont?"  (continúa)":""),color:col};}
       xs.forEach(function(r){var c=r.cliente||"",nuevo=c!==last;
-        if(cur.length&&used+ROWH+(nuevo?SEPH:0)>cabPx){pages.push(cur);cur=[];used=0;nuevo=true;}
+        if(cur.length&&used+altoR(r)+(nuevo?SEPH:0)>cabPx){pages.push(cur);cur=[];used=0;nuevo=true;}
         if(nuevo){cur.push(cab(c,c===last,r.color));used+=SEPH;}
-        cur.push(r);used+=ROWH;last=c;});
+        cur.push(r);used+=altoR(r);last=c;});
       if(cur.length)pages.push(cur);
       pages.forEach(function(pg,i){bloques.push(["PROGRAMA DE ENTREGAS"+(pages.length>1?" · "+(i+1)+"/"+pages.length:""),pg,null,""]);});
     }

@@ -313,7 +313,7 @@ padding:20px 34px;box-shadow:0 0 70px rgba(229,72,77,.95);animation:alimpP 1s st
 .chip u{text-decoration:none;font-size:14px;font-weight:700;color:#FFD37A;line-height:1.1}
 .chip.tarde u{color:#fff;background:#E5484D;border-radius:4px;padding:0 5px}
 #pages.compacto .tipo.soc{font-size:17px;color:#C9D6E6;font-weight:700;letter-spacing:.3px}
-.row{position:relative}.row.head .pz{text-align:right}.pz b{display:block;line-height:1}.pz span{display:block;margin:1px 0 0;font-size:15px}.lg{white-space:nowrap}.pzbar{position:absolute;left:14px;right:14px;bottom:0;height:4px;border-radius:3px;overflow:hidden;display:flex;background:#2E3D52;opacity:.95}.pzbar i{display:block;height:100%}
+.row{position:relative}.row.head .pz{text-align:right}.pz b{display:block;line-height:1}.pz span{display:block;margin:1px 0 0;font-size:15px}.lg{white-space:nowrap}.pzbar{position:absolute;left:14px;right:14px;bottom:0;height:4px;border-radius:3px;overflow:hidden;display:flex;background:#2E3D52;opacity:.95}.pzbar i{display:block;height:100%}.row{flex-wrap:wrap;row-gap:3px;align-content:center}.pzw{flex-basis:100%;padding:0 0 3px 22px}.pzw .pzbar{position:static;height:9px;border-radius:5px}.pzbar.pzabs{position:absolute;left:14px;right:14px;bottom:0;height:4px}.pzl{display:flex;gap:4px 22px;margin-top:4px;font-size:17px;color:#C9D6E6;white-space:nowrap}.pzl i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px}#pages.compacto .row{max-height:120px;padding-top:4px;flex:1 0 auto}#pages.compacto .row:has(.pzw){max-height:170px}#pages.compacto .row.head{flex:none}
 /* ---- RACKS: 7 estaciones ---- */
 :root{--nops:7}
 .ops{width:880px;grid-template-columns:repeat(var(--nops),minmax(0,1fr));gap:6px}
@@ -345,7 +345,7 @@ padding:20px 34px;box-shadow:0 0 70px rgba(229,72,77,.95);animation:alimpP 1s st
   </div>
   <div class="msg"></div>
   <span id="sndIco">🔇</span>
-  <div id="stamp"></div><span class="build">r2026-10-06b</span><div class="bar"><i id="pb"></i></div>
+  <div id="stamp"></div><span class="build">r2026-10-06c</span><div class="bar"><i id="pb"></i></div>
  </footer>
  <div id="alimp" hidden></div>
  <div id="toasts"></div>
@@ -472,12 +472,22 @@ function avN(s){var m=/(\d+)\s*\/\s*(\d+)/.exec(s||"");return m?[+m[1],+m[2]]:nu
 function pzMO(r){var y=0;for(var k in (r.av||{})){var a=avN(r.av[k]);if(a)y=Math.max(y,a[1]);}
   var plan=r.plan||y||r.piezas,entr=r.entr!=null?+r.entr:Math.max(0,plan-r.piezas),pend=Math.max(0,plan-entr);
   var est=estacion(r),i=-1,sig="";r.ops.forEach(function(o,k){if(o[0]===est)i=k;});
-  for(var k=i+1;i>=0&&k<r.ops.length;k++){sig=LBL[r.ops[k][0]]||r.ops[k][0];break;}
+  for(var k=i+1;i>=0&&k<r.ops.length;k++){sig=NOMEST[r.ops[k][0]]||r.ops[k][0];break;}
   var a=est&&r.av?avN(r.av[est]):null,h=est?Math.min(pend,a?Math.max(0,a[0]-entr):0):pend;
-  return {plan:plan,entr:entr,listas:h,faltan:Math.max(0,pend-h),est:est?(LBL[est]||est):"",sig:sig};}
+  return {plan:plan,entr:entr,listas:h,faltan:Math.max(0,pend-h),est:est?(NOMEST[est]||est):"",sig:sig};}
 function listasOp(r,op){var a=avN(r.av&&r.av[op]);if(!a)return "";var p=pzMO(r);var n=Math.max(0,a[0]-p.entr);return nf(n)+(n===1?" lista":" listas");}
+/* PZ6OCT2 · barra gruesa + leyenda como en las estaciones */
+var NOMEST={"Corte":"Corte","Taladro":"Taladro","CNC":"TM-2P","Doblez":"Doblez","Limpieza & SQA":"Limpieza","Laser":"Láser","Router":"Router","Armado":"Armado","Pintura":"Pintura","Vestido":"Vestido"};
 function barraTV(p){var T=p.plan||1,w=function(n){return (100*n/T).toFixed(2)+"%";};
-  return '<div class="pzbar"><i style="width:'+w(p.entr)+';background:#25A35A"></i><i style="width:'+w(p.listas)+';background:#3E8FD8"></i><i style="width:'+w(p.faltan)+';background:#2E3D52"></i></div>';}
+  if(p.entr+p.listas<=0)return '<div class="pzbar pzabs"><i style="width:100%;background:#2E3D52"></i></div>';
+  var b='<div class="pzw"><div class="pzbar"><i style="width:'+w(p.entr)+';background:#25A35A"></i><i style="width:'+w(p.listas)+';background:#3E8FD8"></i><i style="width:'+w(p.faltan)+';background:#2E3D52"></i></div>';
+  if(p.entr+p.listas>0)b+='<div class="pzl">'+(p.entr?'<span><i style="background:#25A35A"></i>'+nf(p.entr)+' entregadas</span>':'')+
+    (p.listas?'<span><i style="background:#3E8FD8"></i>'+nf(p.listas)+(p.listas===1?' lista':' listas')+(p.sig?' → '+esc(p.sig):' para entregar')+'</span>':'')+
+    '<span><i style="background:#2E3D52"></i>'+nf(p.faltan)+' faltan'+(p.est?' en '+esc(p.est):'')+'</span></div>';
+  return b+'</div>';}
+function altoR(r){var p=pzMO(r);return ROWH_+(p.entr+p.listas>0?ALTO_LEY:0);}
+var ALTO_LEY=52;
+var ROWH_=53;
 function celda(r,op){
   var m={},p={},f=false,u=-1;r.ops.forEach(function(o,i){m[o[0]]=o[1];p[o[0]]=i+1;var q=ORD[o[0]];if(q!=null){if(q<u)f=true;u=Math.max(u,q);}});
   var st=m[op];if(!st)return '<div class="op empty"></div>';
@@ -602,18 +612,20 @@ function render0(D){
     var hDisp=$("pages").clientHeight||600, ROWH=53, CAB=26+28+10;
     function paginar(xs,tit,cls){
       if(!xs.length)return;
-      var cab=Math.max(1,Math.floor((hDisp-CAB)/ROWH)),np=Math.ceil(xs.length/cab),per=Math.ceil(xs.length/np);
-      for(var z=0,i=0;z<xs.length;z+=per,i++)bloques.push([tit+(np>1?" · "+(i+1)+"/"+np:""),xs.slice(z,z+per),null,cls]);
+      ROWH_=ROWH+5;var cap=hDisp-CAB,pg=[],cur=[],h=0;
+      xs.forEach(function(r){var a=altoR(r);if(cur.length&&h+a>cap){pg.push(cur);cur=[];h=0;}cur.push(r);h+=a;});
+      if(cur.length)pg.push(cur);
+      pg.forEach(function(p,i){bloques.push([tit+(pg.length>1?" · "+(i+1)+"/"+pg.length:""),p,null,cls]);});
     }
     function paginarCli(xs){
       if(!xs.length)return;
-      var SEPH=36,cabPx=hDisp-CAB,tot={},pages=[],cur=[],used=0,last=null;
+      ROWH_=ROWH+5;var SEPH=44,cabPx=hDisp-CAB,tot={},pages=[],cur=[],used=0,last=null;
       xs.forEach(function(r){var c=r.cliente||"";tot[c]=tot[c]||{n:0,pz:0};tot[c].n++;tot[c].pz+=r.piezas;});
       function cab(c,cont,col){var t=tot[c];return {sep:c.toUpperCase()+" · "+t.n+" MO"+(t.n>1?"s":"")+" · "+t.pz.toLocaleString("en-US")+" pz"+(cont?"  (continúa)":""),color:col};}
       xs.forEach(function(r){var c=r.cliente||"",nuevo=c!==last;
-        if(cur.length&&used+ROWH+(nuevo?SEPH:0)>cabPx){pages.push(cur);cur=[];used=0;nuevo=true;}
+        if(cur.length&&used+altoR(r)+(nuevo?SEPH:0)>cabPx){pages.push(cur);cur=[];used=0;nuevo=true;}
         if(nuevo){cur.push(cab(c,c===last,r.color));used+=SEPH;}
-        cur.push(r);used+=ROWH;last=c;});
+        cur.push(r);used+=altoR(r);last=c;});
       if(cur.length)pages.push(cur);
       pages.forEach(function(pg,i){bloques.push(["PROGRAMA DE ENTREGAS"+(pages.length>1?" · "+(i+1)+"/"+pages.length:""),pg,null,""]);});
     }
