@@ -2,7 +2,7 @@
 El número grande es FALTAN = remaining de Katana (planeadas − entregadas) de TOTAL (planeadas).
 La barra explica dónde están las que faltan: entregadas · ya <hechas> → siguiente · por <hacer> aquí.
 Aplica a index.html (TV MAFESA) y racks/index.html. Idempotente. Uso: python3 patch_tv.py REPO [BUILD]"""
-import sys,re
+import sys,re,os
 R=sys.argv[1]; BUILD=sys.argv[2] if len(sys.argv)>2 else None
 VB='''/* PZ7OCT · 6-oct-2026 23:06 (Moisés): el número grande es el Remaining de Katana (FALTAN = planeadas − entregadas). */
 var HECHO={"Corte":"cortadas","Taladro":"taladradas","TM-2P":"maquinadas","Doblez":"dobladas","Limpieza":"limpias","Láser":"cortadas en láser","Router":"ruteadas","Armado":"armadas","Pintura":"pintadas","Vestido":"vestidas"};
@@ -10,7 +10,9 @@ var PORH={"Corte":"por cortar","Taladro":"por taladrar","TM-2P":"por maquinar","
 function hechoDe(e){return HECHO[e]||"hechas";}function porDe(e){return PORH[e]||"por hacer";}
 '''
 for f in ['index.html','racks/index.html']:
-    p=f'{R}/{f}'; s=open(p,encoding='utf-8').read()
+    p=f'{R}/{f}'
+    if not os.path.exists(p): print('no está',f); continue
+    s=open(p,encoding='utf-8').read()
     if 'PZ7OCT' not in s:
         s=s.replace('/* PZ6OCT2 · barra gruesa',VB+'/* PZ6OCT2 · barra gruesa',1)
         s=s.replace('return {plan:plan,entr:entr,listas:h,faltan:Math.max(0,pend-h),est:est?(NOMEST[est]||est):"",sig:sig};}',
@@ -30,7 +32,9 @@ for f in ['index.html','racks/index.html']:
     open(p,'w',encoding='utf-8').write(s); print('ok',f)
 # 2) EN PAUSA en la TV (Katana PAUSED) — celda roja con Ⅱ
 for f in ['index.html','racks/index.html']:
-    p=f'{R}/{f}'; s=open(p,encoding='utf-8').read()
+    p=f'{R}/{f}'
+    if not os.path.exists(p): print('no está',f); continue
+    s=open(p,encoding='utf-8').read()
     if 'op.pausa' not in s:
         s=s.replace('.op.prog .oplbl{color:#FFD37A}','.op.prog .oplbl{color:#FFD37A}\n.op.pausa{background:#2A1418;border-color:#7A2A2E}\n.op.pausa .dot{background:#E5484D;color:#fff;font-size:13px;display:flex;align-items:center;justify-content:center}\n.op.pausa .oplbl{color:#FFB3B6}',1)
         a='var c={COMPLETED:"done",IN_PROGRESS:"prog",PAUSED:"prog",NOT_STARTED:"none"}[st]||"none";\n  var k={done:"&#10003;",prog:"&#9679;",none:""}[c];'
