@@ -152,3 +152,10 @@ def barra_xl(x,N=20):
     return CellRichText(*parts)
 H=[''',1))
 print('listo 2a')
+
+# ===== 3a parte (Moisés, 7-oct-2026 · MSURT7OCT): cada MO pide su material UNA sola vez =====
+# Ver herramientas/material_surtido/parche_surtido.py. Imprime "listo 3 (surtido)".
+import runpy as _rp
+_bk=sys.argv[:]; sys.argv=[_bk[0],D]
+_rp.run_path(os.path.join(os.path.dirname(os.path.abspath(__file__)),'..','material_surtido','parche_surtido.py'),run_name='__main__')
+sys.argv=_bk
