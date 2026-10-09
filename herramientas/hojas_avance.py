@@ -70,7 +70,7 @@ def ell(c,t,f,s,w):
 INK=colors.HexColor('#111111'); MUT=colors.HexColor('#666666'); RULE=colors.HexColor('#9AA0A6')
 W,H=landscape(letter)
 COLS0=[('#',18),('MO',48),('SKU',70),('Pieza',122),('Operación',60),('Entrega',40),('Faltan',62),
-      ('Inicio',38),('Fin',38),('Piezas',40),('Inicio',38),('Fin',38),('Piezas',40),('Notas',0)]
+      ('',58),('',58),('',58),('Notas',0)]   # HOJ9OCT: 3 cuadros sin leyenda + Notas con renglón libre
 # SOL9OCT (Moisés, 9-oct-2026): la hoja de Corte lleva SIEMPRE las soleras a pedir a almacén.
 # Por MO: material + soleras redondeadas hacia arriba (1 solera = 144 in; lámina u otra UOM: unidades completas).
 # Si la MO ya está en material_surtido/surtido.json, se marca "surtida <fecha>" (regla MSURT7OCT: una sola vez).
@@ -108,14 +108,9 @@ def hoja(app,est,proy,out,hoy,hora):
         c.drawRightString(x0+TW,y-6,'Fecha: ____ / ____ / ______'); c.drawRightString(x0+TW,y-22,'Operador: ______________________')
         y-=44
         c.setFont('Helvetica',7.6); c.setFillColor(MUT)
-        c.drawString(x0,y,'Por cada lapso de trabajo anota la hora de inicio, la hora de fin y cuántas piezas terminaste. "Faltan X de Y" = lo que falta entregar de la MO, igual que en Katana, la TV y la estación.')
+        c.drawString(x0,y,'"Faltan X de Y" = lo que falta entregar de la MO, igual que en Katana, la TV y la estación.')
         y-=8
-        # encabezado de grupos
         xs=x0
-        gx=[x0+sum(ws[:7]),x0+sum(ws[:10]),x0+sum(ws[:13])]
-        c.setFillColor(colors.HexColor('#E6E9EE')); c.rect(gx[0],y-12,gx[1]-gx[0],12,stroke=0,fill=1); c.rect(gx[1],y-12,gx[2]-gx[1],12,stroke=0,fill=1)
-        c.setFillColor(INK); c.setFont('Helvetica-Bold',7.5); c.drawCentredString((gx[0]+gx[1])/2,y-9,'LAPSO 1'); c.drawCentredString((gx[1]+gx[2])/2,y-9,'LAPSO 2')
-        y-=12
         c.setFillColor(colors.HexColor('#1F2A37')); c.rect(x0,y-15,TW,15,stroke=0,fill=1); c.setFillColor(colors.white); c.setFont('Helvetica-Bold',7.6)
         for (h,_),w in zip(COLS,ws): c.drawCentredString(xs+w/2,y-10.5,h); xs+=w
         return y-15
@@ -161,18 +156,11 @@ def hoja(app,est,proy,out,hoy,hora):
         # casillas para escribir
         c.setStrokeColor(RULE); c.setLineWidth(.5)
         for k in range(7,len(ws)):
-            c.rect(xs+2,y-RH+3,ws[k]-4,RH-6,stroke=1,fill=0); xs+=ws[k]
+            if COLS[k][0]=='Notas': c.line(xs+4,y-RH+6,xs+ws[k]-4,y-RH+6)
+            else: c.rect(xs+2,y-RH+3,ws[k]-4,RH-6,stroke=1,fill=0)
+            xs+=ws[k]
         c.setStrokeColor(colors.HexColor('#C9CED4')); c.line(x0,y-RH,x0+TW,y-RH); y-=RH
-    # renglones libres para MOs que lleguen después
-    c.setFont('Helvetica-Bold',8); c.setFillColor(INK)
-    if y-RH*3-14<40: c.showPage(); y=cab()
-    y-=6; c.drawString(x0,y-8,'MOs que lleguen después (anota MO y pieza):'); y-=12
-    for _ in range(3):
-        xs=x0; c.setStrokeColor(RULE)
-        for k,w in enumerate(ws):
-            if k in (1,2,3) or k>=7: c.rect(xs+2,y-RH+3,w-4,RH-6,stroke=1,fill=0)
-            xs+=w
-        y-=RH
+    # HOJ9OCT: sin renglones libres para MOs que lleguen después (Moisés, 9-oct-2026)
     if est=='Corte':
         y-=8; filas=sorted(ped.items()); hh=16+12*max(1,len(filas))
         if y-hh<40: c.showPage(); y=cab()-6
