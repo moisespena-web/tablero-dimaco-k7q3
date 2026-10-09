@@ -69,9 +69,28 @@ def ell(c,t,f,s,w):
     return t
 INK=colors.HexColor('#111111'); MUT=colors.HexColor('#666666'); RULE=colors.HexColor('#9AA0A6')
 W,H=landscape(letter)
-COLS=[('#',18),('MO',48),('SKU',70),('Pieza',122),('Operación',60),('Entrega',40),('Faltan',62),
+COLS0=[('#',18),('MO',48),('SKU',70),('Pieza',122),('Operación',60),('Entrega',40),('Faltan',62),
       ('Inicio',38),('Fin',38),('Piezas',40),('Inicio',38),('Fin',38),('Piezas',40),('Notas',0)]
+# SOL9OCT (Moisés, 9-oct-2026): la hoja de Corte lleva SIEMPRE las soleras a pedir a almacén.
+# Por MO: material + soleras redondeadas hacia arriba (1 solera = 144 in; lámina u otra UOM: unidades completas).
+# Si la MO ya está en material_surtido/surtido.json, se marca "surtida <fecha>" (regla MSURT7OCT: una sola vez).
+# Abajo, recuadro "Pedir a almacén" consolidado por material, solo de las MOs aún no surtidas.
+import math
+SOL_IN=144.0
+def surtido():
+    try: return json.load(open(REPO+'/herramientas/material_surtido/surtido.json')).get('mos',{})
+    except Exception: return {}
+def sol(m):
+    tot=float(m.get('ingTot') or 0); uom=(m.get('ingUom') or '').lower(); sku=m.get('ingSku') or ''
+    if not sku or tot<=0: return sku,0,0,''
+    if uom in ('in','pulg','"'): return sku,math.ceil(tot/SOL_IN-1e-9),tot,'in'
+    return sku,math.ceil(tot-1e-9),tot,uom
+def unidad(uom,n):
+    if uom=='in': return 'solera' if n==1 else 'soleras'
+    return {'hoja':'hoja','hojas':'hoja'}.get(uom,uom or 'pz')+('' if n==1 or not uom else ('s' if not (uom or '').endswith('s') else ''))
 def hoja(app,est,proy,out,hoy,hora):
+    COLS=COLS0 if est!='Corte' else [x if x[0]!='Operación' else ('Solera a pedir',112) for x in COLS0]
+    SURT=surtido() if est=='Corte' else {}; ped={}
     t=open('%s/%s/index.html'%(REPO,app)).read()
     mos=arr(t,'var DATA=[') if 'var DATA=[' in t else arr(t[t.index('mos:[{'):],'mos:[')
     _pie=re.search(r'MOs de Katana al ([0-9]{1,2}-[a-z]{3}) ([0-9]{1,2}:[0-9]{2})',t)   # la hora del corte de datos, no la de impresión
@@ -110,6 +129,19 @@ def hoja(app,est,proy,out,hoy,hora):
         vals=[str(i),m['mo'],m.get('sku') or '—',m.get('nombre',''),m.get('paso') or m.get('opName') or '',fd(m.get('ent') or m.get('deadline') or '')]
         fonts=[('Helvetica',8),('Helvetica-Bold',8.4),('Courier-Bold',7.6),('Helvetica',7.8),('Helvetica',7.4),('Helvetica-Bold',8)]
         for k,(v,(fn,fs)) in enumerate(zip(vals,fonts)):
+            if est=='Corte' and k==4:
+                sku,n,tot,uom=sol(m); c.setFillColor(INK)
+                if not sku: c.setFont('Helvetica',7.4); c.drawString(xs+3,ty,'— sin material en Katana')
+                else:
+                    c.setFont('Courier-Bold',7.2); c.drawString(xs+3,ty,ell(c,sku,'Courier-Bold',7.2,ws[k]-6))
+                    s=SURT.get(m['mo'])
+                    if s:
+                        c.setFont('Helvetica',6.6); c.setFillColor(MUT); c.drawString(xs+3,y-21,ell(c,'%d %s · ya surtida %s'%(n,unidad(uom,n),fd(s)),'Helvetica',6.6,ws[k]-6)); c.setFillColor(INK)
+                    else:
+                        a_='%d %s'%(n,unidad(uom,n)); c.setFont('Helvetica-Bold',8.4); c.drawString(xs+3,y-21,a_)
+                        c.setFont('Helvetica',6.2); c.setFillColor(MUT); c.drawString(xs+5+pdfmetrics.stringWidth(a_,'Helvetica-Bold',8.4),y-21,ell(c,'(%s %s)'%(f"{tot:,.1f}".rstrip('0').rstrip('.'),uom),'Helvetica',6.2,40)); c.setFillColor(INK)
+                        q=ped.setdefault(sku,[0.0,uom,[]]); q[0]+=tot; q[2].append(m['mo'])
+                xs+=ws[k]; continue
             c.setFillColor(INK); c.setFont(fn,fs); c.drawString(xs+3,ty,ell(c,v,fn,fs,ws[k]-6)); xs+=ws[k]
         if m.get('prio'): c.setFont('Helvetica-Bold',6.4); c.drawString(x0+sum(ws[:1])+3,y-21,'URGE')
         # Faltan X de Y + mini barra
@@ -141,6 +173,19 @@ def hoja(app,est,proy,out,hoy,hora):
             if k in (1,2,3) or k>=7: c.rect(xs+2,y-RH+3,w-4,RH-6,stroke=1,fill=0)
             xs+=w
         y-=RH
+    if est=='Corte':
+        y-=8; filas=sorted(ped.items()); hh=16+12*max(1,len(filas))
+        if y-hh<40: c.showPage(); y=cab()-6
+        c.setStrokeColor(INK); c.setLineWidth(.8); c.rect(x0,y-hh,TW,hh,stroke=1,fill=0)
+        c.setFillColor(INK); c.setFont('Helvetica-Bold',8.6); c.drawString(x0+6,y-11,'PEDIR A ALMACÉN — soleras de las MOs que aún no se surten (consolidado por material, 1 solera = 144 in, redondeado hacia arriba)')
+        yy=y-24
+        if not filas: c.setFont('Helvetica',8); c.drawString(x0+10,yy,'Nada que pedir: todas las MOs de esta hoja ya tienen su material surtido.')
+        for sku,(tot,uom,mlist) in filas:
+            n=math.ceil(tot/SOL_IN-1e-9) if uom=='in' else math.ceil(tot-1e-9)
+            c.setFont('Helvetica-Bold',9); c.drawString(x0+10,yy,'%d %s'%(n,unidad(uom,n)))
+            c.setFont('Courier-Bold',8); c.drawString(x0+80,yy,sku)
+            c.setFont('Helvetica',7.4); c.setFillColor(MUT); c.drawString(x0+190,yy,'%s %s · %s'%(f"{tot:,.1f}".rstrip('0').rstrip('.'),uom,', '.join(mlist))); c.setFillColor(INK); yy-=12
+        y-=hh
     c.setFont('Helvetica',7); c.setFillColor(MUT)
     c.drawString(x0,24,'DIMACO METALMECANICA · Hoja temporal mientras se aprende a usar la estación en la tablet. Lo anotado aquí se captura en Katana.')
     c.save(); return len(mos)
