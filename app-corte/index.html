@@ -158,10 +158,11 @@ function cargar(){try{var j=JSON.parse(localStorage.getItem(KEY)||'null');if(!j)
 /* ============ CONEXIÓN CON KATANA (apagada mientras SRV_URL esté vacío) ============ */
 var SRV_URL='https://dimaco-estaciones.moises-pena.workers.dev';
 var CONX=null;try{CONX=JSON.parse(localStorage.getItem('dimaco_corte_conx')||'null');}catch(e){}
-function enLinea(){return !!(SRV_URL&&CONX&&CONX.codigo);}
+var PAUSA_KATANA=true;   /* PAUSA 8-oct-2026 (Moisés): las estaciones NO se conectan a Katana; solo capturan en la iPad (resumen). Poner false para reactivar. */
+function enLinea(){return !PAUSA_KATANA&&!!(SRV_URL&&CONX&&CONX.codigo);}
 function api(met,ruta,body){return fetch(SRV_URL.replace(/\/$/,'')+ruta,{method:met,headers:{'X-Tablet':CONX.codigo,'Content-Type':'application/json'},body:body?JSON.stringify(body):undefined,cache:'no-store'})
  .then(function(r){return r.json().catch(function(){return {ok:false,error:'HTTP '+r.status};}).then(function(j){j._status=r.status;return j;});});}
-function katEv(accion,x,ms,pz){var m=cur();   /* SINCON 8-oct-2026: se guarda aunque la estación no esté conectada; se manda al conectar */
+function katEv(accion,x,ms,pz){if(PAUSA_KATANA)return;var m=cur();   /* SINCON 8-oct-2026: se guarda aunque la estación no esté conectada; se manda al conectar */
 if(!m.rowId)return;
  S.cola.push({rowId:m.rowId,mo:m.mo,accion:accion,operador:(x&&x.op)||OPERADOR,pin:(x&&x.pin)||(CONX&&CONX.pin)||'',segundos:Math.round(Math.max(0,ms)/1000),piezas:pz||0,t:Date.now()});S.sync='pend';setTimeout(enviarCola,50);}
 var enviando=false,ESPERA=30000;   // KAT429 (8-oct-2026): si Katana está saturado, esperar cada vez más (30 s → 5 min) sin volver a pedir la cola
@@ -175,7 +176,7 @@ function enviarCola(){if(!enLinea()||enviando||!S.cola.length){if(!S.cola.length
   else{S.sync='err';guardar();render();otraVez();return;}
   S.sync=S.cola.length?'pend':'ok';guardar();if(!S.modal)render();if(S.cola.length)setTimeout(enviarCola,300);})
  .catch(function(){enviando=false;S.sync='err';if(!S.modal)render();otraVez();});}
-function syncTxt(){if(!enLinea())return S.cola.length?['⚠ SIN CONECTAR · '+S.cola.length+' por enviar a Katana','#FF6369']:['Modo teléfono','#8FA3BA'];
+function syncTxt(){if(PAUSA_KATANA)return ['Katana en pausa · solo captura en iPad','#8FA3BA'];if(!enLinea())return S.cola.length?['⚠ SIN CONECTAR · '+S.cola.length+' por enviar a Katana','#FF6369']:['Modo teléfono','#8FA3BA'];
  return {ok:['● Katana al día','#4FE0A6'],pend:['● Enviando ('+S.cola.length+')','#FFC45C'],err:['● Sin red · '+S.cola.length+' por enviar','#FF6369'],off:['● Conectando…','#8FA3BA']}[S.sync]||['','#8FA3BA'];}
 
 
