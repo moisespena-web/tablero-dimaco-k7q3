@@ -348,7 +348,7 @@ padding:20px 34px;box-shadow:0 0 70px rgba(229,72,77,.95);animation:alimpP 1s st
   </div>
   <div class="msg"></div>
   <span id="sndIco">🔇</span>
-  <div id="stamp"></div><span class="build">r2026-10-06d</span><div class="bar"><i id="pb"></i></div>
+  <div id="stamp"></div><span class="build">r2026-10-09</span><div class="bar"><i id="pb"></i></div>
  </footer>
  <div id="alimp" hidden></div>
  <div id="toasts"></div>
@@ -852,7 +852,7 @@ render(window.__DATOS__);
   }
   /* --- el aviso se relee cada 15 s (buzón primero, luego aviso.json de GitHub) --- */
   function cargarAviso(){
-    pedir([BUZON+"/tablero/aviso","../aviso.json",RAWG+"aviso.json"],function(a){avisoPropio=true;aviso(a);});
+    pedir(["aviso.json",RAWG+"racks/aviso.json"],function(a){avisoPropio=true;aviso(a);});
   }
   cargarAviso();setInterval(cargarAviso,15000);              // el aviso, cada 15 s
   cargar();setInterval(cargar,60000);                        // los datos, cada minuto

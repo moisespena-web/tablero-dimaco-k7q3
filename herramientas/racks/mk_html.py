@@ -34,12 +34,13 @@ function render(D){try{setOps(D);LEYT=leyCli(D);}catch(e){}try{renderMat(D);}'''
 rep('''HEAD.replace("LÍMITE","ENTREGA"):HEAD)''','''HEADF().replace("LÍMITE","ENTREGA"):HEADF())''')
 # sin recuadro de material en racks
 rep('''function renderMat(D){var m=$('mat');''','''function renderMat(D){var m=$('mat');if(D&&D.proyecto==='racks'){m.hidden=true;return;}''')
-# datos: racks/datos.json (sin buzón de MAFESA); avisos: los mismos de la planta
+# datos: racks/datos.json (sin buzón de MAFESA)
+# avisos (9-oct-2026, Moisés): Racks tiene SUS PROPIOS avisos en racks/aviso.json; ya NO lee el aviso de MAFESA
 rep('''pedir([BUZON+"/tablero","datos.json",RAWG+"datos.json"],function(j){''','''pedir(["datos.json",RAWG+"racks/datos.json"],function(j){''')
-rep('''pedir([BUZON+"/tablero/aviso","aviso.json",RAWG+"aviso.json"],''','''pedir([BUZON+"/tablero/aviso","../aviso.json",RAWG+"aviso.json"],''')
+rep('''pedir([BUZON+"/tablero/aviso","aviso.json",RAWG+"aviso.json"],''','''pedir(["aviso.json",RAWG+"racks/aviso.json"],''')
 rep('<title>','<title>',1)
 src=re.sub(r'<title>[^<]*</title>','<title>MO en proceso · Racks</title>',src,1)
-src=re.sub(r'<span class="build">v[^<]*</span>','<span class="build">r2026-10-06d</span>',src,1)
+src=re.sub(r'<span class="build">v[^<]*</span>','<span class="build">r2026-10-09</span>',src,1)
 # CSS para N columnas (7 en racks)
 css='''
 /* ---- RACKS: 7 estaciones ---- */
