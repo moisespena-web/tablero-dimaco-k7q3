@@ -82,6 +82,7 @@ def surtido():
     except Exception: return {}
 def sol(m):
     tot=float(m.get('ingTot') or 0); uom=(m.get('ingUom') or '').lower(); sku=m.get('ingSku') or ''
+    if sku.upper().startswith('LAM') or 'LAMINA' in (m.get('ingNombre') or '').upper(): uom='hoja'   # las estaciones mandan ingUom 'in' aunque sea lámina
     if not sku or tot<=0: return sku,0,0,''
     if uom in ('in','pulg','"'): return sku,math.ceil(tot/SOL_IN-1e-9),tot,'in'
     return sku,math.ceil(tot-1e-9),tot,uom
