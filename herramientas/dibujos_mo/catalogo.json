@@ -1,0 +1,239 @@
+{
+ "37A14322-0002": {
+  "desc": "HV BUS .250 x 2.000 x 35.750",
+  "plano": "4 barrenos · sin doblez",
+  "ref": "37A14322 · P.2",
+  "nota": "",
+  "imgs": [
+   "37A14322-0002-1.png"
+  ]
+ },
+ "37A14276-0002": {
+  "desc": "HV TERMINAL .375 x 2.000 x 9.938",
+  "plano": "4 barrenos · 2 dobleces",
+  "ref": "37A14276 · P.2",
+  "nota": "",
+  "imgs": [
+   "37A14276-0002-1.png"
+  ]
+ },
+ "37A5683-0001": {
+  "desc": "TERMINAL .125 x .750 x 3.500",
+  "plano": "2 barrenos · 1 doblez a 90°",
+  "ref": "37A5683 · P.1 + vista doblada",
+  "nota": "",
+  "imgs": [
+   "37A5683-0001-1.png",
+   "37A5683-0001-2.png"
+  ]
+ },
+ "37A14323-0001": {
+  "desc": "LV BUS .500 x 4.000 x 29.000",
+  "plano": "10 barrenos + 6 ranuras · sin doblez",
+  "ref": "37A14323 · P.1",
+  "nota": "",
+  "imgs": [
+   "37A14323-0001-1.png"
+  ]
+ },
+ "37A14325-0001": {
+  "desc": "LV LINK .250 x 4.000 x 6.443",
+  "plano": "4 ranuras · 2 dobleces (escalón)",
+  "ref": "37A14325 · P.1",
+  "nota": "",
+  "imgs": [
+   "37A14325-0001-1.png"
+  ]
+ },
+ "37A14278-0003": {
+  "desc": "LV BUS .250 x 4.000 x 5.500",
+  "plano": "4 ranuras · sin doblez",
+  "ref": "37A14278-REV1 · P.3",
+  "nota": "",
+  "imgs": [
+   "37A14278-0003-1.png"
+  ]
+ },
+ "37A10786A-0002": {
+  "desc": "TERMINAL .250 x .750 x 7.000",
+  "plano": "3 barrenos · marca F.S.",
+  "ref": "37A10786A · P.2",
+  "nota": "El diagrama de doblez del plano dice \"P. 3, 6-9\", pero la vista P.2 trae marca F.S.: confirmar si esta pieza dobla.",
+  "imgs": [
+   "37A10786A-0002-1.png"
+  ]
+ },
+ "37A5683-0002": {
+  "desc": "TERMINAL .250 x 1.000 x 3.563",
+  "plano": "2 barrenos · 1 doblez a 90°",
+  "ref": "37A5683 · P.2 + vista doblada",
+  "nota": "",
+  "imgs": [
+   "37A5683-0002-1.png",
+   "37A5683-0002-2.png"
+  ]
+ },
+ "36B3480-0020": {
+  "desc": "TAP PAD .250 x 1.000 x 2.812",
+  "plano": "FIG. 2 (A 1.625 · B 1.250 · C .438): barrenos + ranura · 1 doblez",
+  "ref": "36B3480 · FIG. 2, parte 20",
+  "nota": "",
+  "imgs": [
+   "36B3480-0020-1.png"
+  ]
+ },
+ "37A11432-0001": {
+  "desc": "LINK .250 x 1.000 x 5.000",
+  "plano": "1 barreno + 1 ranura cuadrada",
+  "ref": "37A11432 · P.1-P.4",
+  "nota": "",
+  "imgs": [
+   "37A11432-0001-1.png"
+  ]
+ },
+ "37A11432-0003": {
+  "desc": "LINK .250 x 2.000 x 7.000",
+  "plano": "1 barreno + 1 ranura cuadrada",
+  "ref": "37A11432 · P.1-P.4",
+  "nota": "",
+  "imgs": [
+   "37A11432-0003-1.png"
+  ]
+ },
+ "37A10685-0001": {
+  "desc": "TAP .250 x 1.000 x 2.188",
+  "plano": "1 barreno · 1 doblez (línea N.S.)",
+  "ref": "37A10685 · P.1&2",
+  "nota": "",
+  "imgs": [
+   "37A10685-0001-1.png"
+  ]
+ },
+ "37A12254-0003": {
+  "desc": "TERMINAL .375 x 2.000 x 7.875",
+  "plano": "2 barrenos · 1 doblez (línea NS)",
+  "ref": "37A12254 · P.3",
+  "nota": "",
+  "imgs": [
+   "37A12254-0003-1.png"
+  ]
+ },
+ "37A7850-0003": {
+  "desc": "112 TERMINAL .250 x 1.500 x 3.938",
+  "plano": "2 barrenos · 1 doblez (línea N.S.)",
+  "ref": "37A7850 · P.3",
+  "nota": "",
+  "imgs": [
+   "37A7850-0003-1.png"
+  ]
+ },
+ "37A7851-0001": {
+  "desc": "PICK-UP .250 x 1.000 x 10.500",
+  "plano": "Barra lisa · sin doblez",
+  "ref": "37A7851 · P.1",
+  "nota": "",
+  "imgs": [
+   "37A7851-0001-1.png"
+  ]
+ },
+ "37A9935-0005": {
+  "desc": "NEUTRAL BAR .375 x 2.000 x 21.000",
+  "plano": "2 barrenos · sin doblez",
+  "ref": "37A9935 · P.3-6",
+  "nota": "El plano en Dropbox se llama \"37A9935-OLD\": confirmar que sea la revisión vigente.",
+  "imgs": [
+   "37A9935-0005-1.png"
+  ]
+ },
+ "37A9935-0003": {
+  "desc": "NEUTRAL BAR .500 x 3.000 x 21.000",
+  "plano": "2 barrenos · sin doblez",
+  "ref": "37A9935 · P.3-6",
+  "nota": "El plano en Dropbox se llama \"37A9935-OLD\": confirmar que sea la revisión vigente.",
+  "imgs": [
+   "37A9935-0003-1.png"
+  ]
+ },
+ "37A10685A-0006": {
+  "desc": "LINK .250 x 1.000 x 3.750",
+  "plano": "El plano no dibuja la parte 6 (solo viene en la lista): barra lisa",
+  "ref": "37A10685A · renglón 6",
+  "nota": "",
+  "imgs": [
+   "37A10685A-0006-1.png"
+  ]
+ },
+ "37A14277-0002": {
+  "desc": "LV TERMINAL .375 x 3.000 x 12.125",
+  "plano": "4 barrenos · 2 dobleces",
+  "ref": "37A14277 · P.2",
+  "nota": "",
+  "imgs": [
+   "37A14277-0002-1.png"
+  ]
+ },
+ "37A14254-0002": {
+  "desc": "TERMINAL .250 x 1.500 x 7.750",
+  "plano": "3 barrenos · 1 doblez",
+  "ref": "37A14254-REV2 · P.2",
+  "nota": "",
+  "imgs": [
+   "37A14254-0002-1.png"
+  ]
+ },
+ "37A7525-0005": {
+  "desc": "TERMINAL .500 x 4.000 x 7.250",
+  "plano": "3 barrenos · sin doblez",
+  "ref": "37A7525 · P.5",
+  "nota": "",
+  "imgs": [
+   "37A7525-0005-1.png"
+  ]
+ },
+ "37A7524-0001": {
+  "desc": "PICK UP .375 x 2.000 x 34.750",
+  "plano": "6 barrenos · sin doblez",
+  "ref": "37A7524 · P.1",
+  "nota": "",
+  "imgs": [
+   "37A7524-0001-1.png"
+  ]
+ },
+ "37A10685A-0002": {
+  "desc": "TAP .250 x 1.500 x 3.938",
+  "plano": "1 barreno · 1 doblez (línea N.S.)",
+  "ref": "37A10685A · P.1&2",
+  "nota": "",
+  "imgs": [
+   "37A10685A-0002-1.png"
+  ]
+ },
+ "37A10786A-0008": {
+  "desc": "LINK .250 x 1.000 x 23.750",
+  "plano": "Sin barrenos · 4 dobleces",
+  "ref": "37A10786A · P.8 + diagrama de doblez",
+  "nota": "",
+  "imgs": [
+   "37A10786A-0008-1.png",
+   "37A10786A-0008-2.png"
+  ]
+ },
+ "37A1498-0002": {
+  "desc": "XO BAR .250 x 2.000 x 20.000",
+  "plano": "3 barrenos · sin doblez",
+  "ref": "37A1498 · P.2 & 3",
+  "nota": "",
+  "imgs": [
+   "37A1498-0002-1.png"
+  ]
+ },
+ "36B9157-0021": {
+  "desc": "TAP PAD .375 x 2.000 x 4.375",
+  "plano": "FIG. 1 (A 2.500 · B 2.000 · C .500): 1 barreno + 1 ranura · 1 doblez",
+  "ref": "36B9157 · FIG. 1, parte 21",
+  "nota": "",
+  "imgs": [
+   "36B9157-0021-1.png"
+  ]
+ }
+}
