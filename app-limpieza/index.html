@@ -161,20 +161,21 @@ var CONX=null;try{CONX=JSON.parse(localStorage.getItem('dimaco_limpieza_conx')||
 function enLinea(){return !!(SRV_URL&&CONX&&CONX.codigo);}
 function api(met,ruta,body){return fetch(SRV_URL.replace(/\/$/,'')+ruta,{method:met,headers:{'X-Tablet':CONX.codigo,'Content-Type':'application/json'},body:body?JSON.stringify(body):undefined,cache:'no-store'})
  .then(function(r){return r.json().catch(function(){return {ok:false,error:'HTTP '+r.status};}).then(function(j){j._status=r.status;return j;});});}
-function katEv(accion,x,ms,pz){if(!enLinea())return;var m=cur();if(!m.rowId)return;
+function katEv(accion,x,ms,pz){var m=cur();   /* SINCON 8-oct-2026: se guarda aunque la estación no esté conectada; se manda al conectar */
+if(!m.rowId)return;
  S.cola.push({rowId:m.rowId,mo:m.mo,accion:accion,operador:(x&&x.op)||OPERADOR,pin:(x&&x.pin)||(CONX&&CONX.pin)||'',segundos:Math.round(Math.max(0,ms)/1000),piezas:pz||0,t:Date.now()});S.sync='pend';setTimeout(enviarCola,50);}
 var enviando=false,ESPERA=30000;   // KAT429 (8-oct-2026): si Katana está saturado, esperar cada vez más (30 s → 5 min) sin volver a pedir la cola
 function reintentar(){if(!enLinea())return;enviarCola();}
 function otraVez(){var w=ESPERA;ESPERA=Math.min(300000,ESPERA*2);setTimeout(reintentar,w);}
 function enviarCola(){if(!enLinea()||enviando||!S.cola.length){if(!S.cola.length&&S.sync==='pend')S.sync='ok';return;}
  enviando=true;var ev=S.cola[0];
- api('POST','/evento',{rowId:ev.rowId,accion:ev.accion,operador:ev.operador,pin:ev.pin,segundos:ev.segundos,piezas:ev.piezas||0,esperado:S.tReal[ev.rowId]}).then(function(r){enviando=false;
+ api('POST','/evento',{rowId:ev.rowId,accion:ev.accion,operador:ev.operador,pin:ev.pin||(CONX&&CONX.pin)||'',segundos:ev.segundos,piezas:ev.piezas||0,esperado:S.tReal[ev.rowId]}).then(function(r){enviando=false;
   if(r.ok){S.cola.shift();S.tReal[ev.rowId]=r.op.tiempoReal;ESPERA=30000;}
   else if(r._status>=400&&r._status<500){S.cola.shift();S.errores.push({t:Date.now(),mo:ev.mo,accion:ev.accion,error:r.error||('HTTP '+r._status)});}
   else{S.sync='err';guardar();render();otraVez();return;}
   S.sync=S.cola.length?'pend':'ok';guardar();if(!S.modal)render();if(S.cola.length)setTimeout(enviarCola,300);})
  .catch(function(){enviando=false;S.sync='err';if(!S.modal)render();otraVez();});}
-function syncTxt(){if(!enLinea())return ['Modo teléfono','#8FA3BA'];
+function syncTxt(){if(!enLinea())return S.cola.length?['⚠ SIN CONECTAR · '+S.cola.length+' por enviar a Katana','#FF6369']:['Modo teléfono','#8FA3BA'];
  return {ok:['● Katana al día','#4FE0A6'],pend:['● Enviando ('+S.cola.length+')','#FFC45C'],err:['● Sin red · '+S.cola.length+' por enviar','#FF6369'],off:['● Conectando…','#8FA3BA']}[S.sync]||['','#8FA3BA'];}
 
 
@@ -386,7 +387,7 @@ var toques=[];
 A.logo=function(){var n=Date.now();toques=toques.filter(function(t){return n-t<3000;});toques.push(n);if(toques.length>=5){toques=[];S.modal='conx';S.cod='';S.conxMsg='';}};
 A.codOk=function(){if(S.cod.length<6){S.conxMsg='El código tiene al menos 6 dígitos';return;}CONX={codigo:S.cod};try{localStorage.setItem('dimaco_limpieza_conx',JSON.stringify(CONX));}catch(e){}
  S.conxMsg=SRV_URL?'Probando…':'Código guardado. El servidor todavía no está configurado en esta versión.';
- if(SRV_URL)api('GET','/estado').then(function(r){S.conxMsg=r.ok?'✓ Conectado a Katana':'✗ '+(r.error||'No autorizado');render();if(r.ok)cargarCola();}).catch(function(){S.conxMsg='✗ Sin conexión';render();});};
+ if(SRV_URL)api('GET','/estado').then(function(r){S.conxMsg=r.ok?'✓ Conectado a Katana':'✗ '+(r.error||'No autorizado');render();if(r.ok)cargarCola().then(enviarCola);}).catch(function(){S.conxMsg='✗ Sin conexión';render();});};
 A.desconectar=function(){CONX=null;try{localStorage.removeItem('dimaco_limpieza_conx');}catch(e){}S.conxMsg='Teléfono desconectado.';S.sync='off';};
 
 document.getElementById('app').addEventListener('click',function(e){var b=e.target.closest('[data-a]');if(!b||b.disabled)return;
