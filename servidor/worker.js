@@ -30,6 +30,14 @@
  *                (Katana solo acepta total_actual_time cuando la operación está COMPLETED)
  *   completar  → COMPLETED + total_actual_time (tiempo acumulado) + completed_by
  *   Nunca cierra la MO ni mueve inventario (eso es de Cynthia). Solo toca SU renglón de las notas.
+ *
+ * 8-oct-2026 (Moisés · "KAT429"): Katana estaba rechazando al servidor por exceso de solicitudes (429) y los botones
+ * dejaban las piezas en las notas pero la operación sin cerrar. Cambios:
+ *   1) Evento: primero el estatus de la operación y después las notas (si algo falla a medias, nunca quedan las
+ *      piezas adelantadas al estatus). Un reintento de "completar" ya aplicado termina de escribir las notas.
+ *   2) Cola: UNA foto de Katana compartida por todas las estaciones (se renueva cada 60 s, ~10 llamadas),
+ *      en vez de ~60 llamadas por estación en cada consulta. Si Katana no responde, se sirve la última foto (hasta 15 min).
+ *   3) Katana saturado → 503 + Retry-After (5xx: el iPad conserva el aviso y lo reintenta; nunca 4xx, que lo descarta).
  */
 
 const KATANA = 'https://api.katanamrp.com/v1';
@@ -113,7 +121,10 @@ export default {
       }
       return json({ ok: false, error: 'Ruta no encontrada' }, 404);
     } catch (e) {
-      return json({ ok: false, error: String(e && e.message || e) }, 502);
+      const st = e && e.status === 503 ? 503 : 502;
+      const r = json({ ok: false, saturado: !!(e && e.saturado), error: String(e && e.message || e) }, st);
+      if (st === 503) r.headers.set('Retry-After', '60');
+      return r;
     }
   },
 };
@@ -127,13 +138,17 @@ function pinOk(est, env, b) {
 /* ---------------- Katana ---------------- */
 function katana(key) {
   async function call(method, path, body) {
-    for (let intento = 0; intento < 3; intento++) {
+    for (let intento = 0; intento < 2; intento++) {
       const r = await fetch(KATANA + path, {
         method,
         headers: { Authorization: 'Bearer ' + key, Accept: 'application/json', ...(body ? { 'Content-Type': 'application/json' } : {}) },
         body: body ? JSON.stringify(body) : undefined,
       });
-      if (r.status === 429) { await dormir(1500 * (intento + 1)); continue; }
+      if (r.status === 429) {   // KAT429: una espera corta como máximo; si sigue saturado, que el dispositivo reintente después
+        if (intento === 0) { await dormir(2000); continue; }
+        const e = new Error('Katana está saturado (demasiadas solicitudes); se reintenta solo en un minuto');
+        e.status = 503; e.saturado = true; throw e;
+      }
       const txt = await r.text();
       let data = null;
       try { data = txt ? JSON.parse(txt) : null; } catch (e) { data = txt; }
@@ -144,7 +159,8 @@ function katana(key) {
       }
       return data;
     }
-    throw new Error('Katana: demasiadas solicitudes, intenta en un minuto');
+    const e = new Error('Katana está saturado (demasiadas solicitudes); se reintenta solo en un minuto');
+    e.status = 503; e.saturado = true; throw e;
   }
   async function getCache(path, ttlMs) {
     const hit = MEM.get(path);
@@ -176,34 +192,70 @@ function normop(row) {
   return n;
 }
 
+// KAT429 · Foto compartida de Katana: una sola lectura sirve a todas las estaciones durante FOTO_TTL.
+const FOTO_TTL = 60e3, FOTO_VIEJA = 15 * 60e3;
+let FOTO = null, FOTO_PROM = null;
+function fotoVencida() { if (FOTO) FOTO = { ...FOTO, vencida: true }; }   // tras un evento: renovar en la próxima consulta
+async function foto(k) {
+  if (FOTO && !FOTO.vencida && Date.now() - FOTO.t < FOTO_TTL) return FOTO;
+  if (FOTO_PROM) return FOTO_PROM;
+  FOTO_PROM = (async () => {
+    try {
+      const mos = [];
+      for (const st of ['NOT_STARTED', 'IN_PROGRESS', 'PARTIALLY_COMPLETED', 'BLOCKED'])
+        mos.push(...(await k.todas('/manufacturing_orders?status=' + st)).filter(m => !m.deleted_at));
+      const moMap = new Map(mos.map(m => [m.id, m]));
+      // operaciones y recetas solo desde que se creó la MO abierta más vieja (no toda la historia)
+      const min = mos.reduce((a, m) => (m.created_at && m.created_at < a ? m.created_at : a), new Date().toISOString());
+      const desde = new Date(Date.parse(min) - 864e5).toISOString();
+      const ops = (await k.todas('/manufacturing_order_operation_rows?created_at_min=' + encodeURIComponent(desde)))
+        .filter(o => !o.deleted_at && moMap.has(o.manufacturing_order_id));
+      const rec = (await k.todas('/manufacturing_order_recipe_rows?created_at_min=' + encodeURIComponent(desde)))
+        .filter(r => !r.deleted_at && moMap.has(r.manufacturing_order_id));
+      const opsPor = new Map(), recPor = new Map();
+      for (const o of ops) { if (!opsPor.has(o.manufacturing_order_id)) opsPor.set(o.manufacturing_order_id, []); opsPor.get(o.manufacturing_order_id).push(o); }
+      for (const r of rec) { if (!recPor.has(r.manufacturing_order_id)) recPor.set(r.manufacturing_order_id, []); recPor.get(r.manufacturing_order_id).push(r); }
+      for (const l of opsPor.values()) l.sort((a, b) => (a.rank || 0) - (b.rank || 0));
+      // variantes: un solo llamado por lote para las que no están en caché (6 h)
+      const faltan = [...new Set([...mos.map(m => m.variant_id), ...rec.map(r => r.variant_id)])].filter(v => !VARS.has(v));
+      for (let i = 0; i < faltan.length; i += 80) {
+        const lote = faltan.slice(i, i + 80);
+        const d = await k.get('/variants?limit=250&extend[]=product_or_material&' + lote.map(v => 'ids[]=' + v).join('&'));
+        for (const v of (d && d.data) || []) VARS.set(v.id, { t: Date.now(), v });
+      }
+      FOTO = { t: Date.now(), mos: moMap, ops: opsPor, rec: recPor };
+      return FOTO;
+    } catch (e) {
+      if (FOTO && Date.now() - FOTO.t < FOTO_VIEJA && e && e.saturado) return FOTO;   // mejor la foto de hace unos minutos que nada
+      throw e;
+    } finally { FOTO_PROM = null; }
+  })();
+  return FOTO_PROM;
+}
+const VARS = new Map();
+function variante(id) { const h = VARS.get(id); return h && Date.now() - h.t < 6 * 3600e3 ? h.v : (h ? h.v : null); }
+
 async function cola(k, est) {
-  const abiertas = [];
-  for (const st of ABIERTOS) abiertas.push(...await k.todas('/manufacturing_order_operation_rows?status=' + st));
-  const mias = abiertas.filter(r => !r.deleted_at && esDeEst(r, est));
-  const moIds = [...new Set(mias.map(r => r.manufacturing_order_id))];
+  const F = await foto(k);
   const mos = [];
-  for (const id of moIds) {
-    const mo = await k.get('/manufacturing_orders/' + id);
-    if (!mo || mo.deleted_at || mo.status === 'DONE') continue;
-    const [opsD, recD, variante] = await Promise.all([
-      k.get('/manufacturing_order_operation_rows?manufacturing_order_id=' + id + '&limit=250'),
-      k.get('/manufacturing_order_recipe_rows?manufacturing_order_id=' + id + '&limit=250'),
-      k.getCache('/variants/' + mo.variant_id + '?extend=product_or_material', 6 * 3600e3),
-    ]);
-    const ops = ((opsD && opsD.data) || []).filter(o => !o.deleted_at).sort((a, b) => (a.rank || 0) - (b.rank || 0));
-    const fila = ops.find(o => esDeEst(o, est) && o.status !== 'COMPLETED') || mias.find(o => o.manufacturing_order_id === id);
+  for (const [id, mo] of F.mos) {
+    if (mo.status === 'DONE') continue;
+    const ops = F.ops.get(id) || [];
+    const mias = ops.filter(o => esDeEst(o, est) && ABIERTOS.includes(o.status));
+    if (!mias.length) continue;
+    const fila = ops.find(o => esDeEst(o, est) && o.status !== 'COMPLETED') || mias[0];
     const ingredientes = [];
-    for (const rr of ((recD && recD.data) || []).filter(x => !x.deleted_at)) {
-      let v = null;
-      try { v = await k.getCache('/variants/' + rr.variant_id + '?extend=product_or_material', 6 * 3600e3); } catch (e) {}
+    for (const rr of F.rec.get(id) || []) {
+      const v = variante(rr.variant_id);
       const pm = v && v.product_or_material || {};
       const porUnidad = num(rr.planned_quantity_per_unit);
       ingredientes.push({ sku: v && v.sku || '', nombre: pm.name || '', uom: pm.uom || '', porUnidad, total: +(porUnidad * num(mo.planned_quantity)).toFixed(3) });
     }
-    const pm = variante && variante.product_or_material || {};
+    const va = variante(mo.variant_id);
+    const pm = va && va.product_or_material || {};
     const av = leerAvance(mo.additional_info, est.etiqueta(fila));
     mos.push({
-      id: mo.id, mo: mo.order_no, sku: variante && variante.sku || '', nombre: pm.name || '',
+      id: mo.id, mo: mo.order_no, sku: va && va.sku || '', nombre: pm.name || '',
       piezas: num(mo.planned_quantity), entregadas: num(mo.completed_quantity), hechas: av ? av.pz : 0,   // 5-oct-2026: la estación muestra piezas − entregadas
       deadline: (mo.production_deadline_date || '').slice(0, 10), estadoMO: mo.status,
       notas: mo.additional_info || '',
@@ -214,6 +266,7 @@ async function cola(k, est) {
       ingredientes,
     });
   }
+  mos.sort((a, b) => (a.id < b.id ? 1 : -1));
   return mos;
 }
 
@@ -269,16 +322,24 @@ async function evento(k, est, env, b) {
   if (!esDeEst(row, est)) return { ok: false, status: 403, error: 'Esa operación no es de la Estación ' + est.nombre };
   const mo = await k.get('/manufacturing_orders/' + row.manufacturing_order_id);
   if (mo.status === 'DONE') return { ok: false, status: 409, error: mo.order_no + ' ya está cerrada en Katana' };
-  if (row.status === 'COMPLETED') {
-    if (b.accion === 'completar') return { ok: true, repetido: true, mo: mo.order_no, op: resumen(row, null) };
-    return { ok: false, status: 409, error: 'La operación ya está completada en Katana' };
-  }
-
   const etq = est.etiqueta(row);
   // 5-oct-2026: si la estación aún no tiene renglón y la MO ya tiene entregas parciales, el avance arranca en lo entregado
   // (las notas cuentan sobre la MO completa: x/planeadas)
   const prev = leerAvance(mo.additional_info, etq) || { ops: [], pz: num(mo.completed_quantity), total: num(mo.planned_quantity), fecha: '', seg: 0 };
   const suma = b.accion !== 'start';
+  const total = num(mo.planned_quantity);
+
+  if (row.status === 'COMPLETED') {
+    if (b.accion !== 'completar') return { ok: false, status: 409, error: 'La operación ya está completada en Katana' };
+    // KAT429: reintento de un "completar" cuyo estatus sí entró pero las notas no → terminar de escribirlas
+    if (prev.pz < total) {
+      const nv = { ops: prev.ops.includes(operador) ? prev.ops : prev.ops.concat(operador), pz: total, total, fecha: fechaMX(new Date()), seg: Math.max(prev.seg, num(row.total_actual_time)) };
+      await k.patch('/manufacturing_orders/' + mo.id, { additional_info: escribirAvance(mo.additional_info, etq, nv) });
+      fotoVencida();
+      return { ok: true, repetido: true, mo: mo.order_no, op: resumen(row, nv) };
+    }
+    return { ok: true, repetido: true, mo: mo.order_no, op: resumen(row, null) };
+  }
 
   // reintento de un evento ya aplicado (el dispositivo perdió la respuesta): no sumar dos veces
   if (suma && b.esperado != null && seg > 0 && row.status === status && Math.abs(prev.seg - (num(b.esperado) + seg)) < 2) {
@@ -290,7 +351,7 @@ async function evento(k, est, env, b) {
     const ops = await k.getCache('/operators?limit=250', 3600e3);
     const hit = ((ops && ops.data) || []).find(o => (o.operator_name || o.name || '').trim().toLowerCase() === operador.trim().toLowerCase());
     if (hit) opId = hit.id;
-  } catch (e) {}
+  } catch (e) { if (e && e.saturado) throw e; }
   const conOp = lista => {
     const out = (lista || []).map(o => ({ operator_id: o.operator_id }));
     const ya = (lista || []).some(o => (opId && o.operator_id === opId) || (o.name || '').toLowerCase() === operador.toLowerCase());
@@ -298,22 +359,17 @@ async function evento(k, est, env, b) {
     return out;
   };
 
-  // 1) avance en las notas (pausa / fin / completar)
+  // avance nuevo (pausa / fin / completar)
   let nuevo = prev;
   if (suma) {
-    const total = num(mo.planned_quantity);
     nuevo = {
       ops: prev.ops.includes(operador) ? prev.ops : prev.ops.concat(operador),
       pz: b.accion === 'completar' ? total : Math.min(total, prev.pz + pzLapso),
       total, fecha: fechaMX(new Date()), seg: prev.seg + seg,
     };
-    if (seg > 0 || pzLapso > 0 || b.accion === 'completar') {
-      const moAhora = await k.get('/manufacturing_orders/' + mo.id);   // releer: Cynthia pudo editar las notas
-      await k.patch('/manufacturing_orders/' + mo.id, { additional_info: escribirAvance(moAhora.additional_info, etq, nuevo) });
-    }
   }
 
-  // 2) la operación: se reenvían sus campos tal como están (sin manufacturing_order_id)
+  // 1) PRIMERO la operación (KAT429): se reenvían sus campos tal como están (sin manufacturing_order_id)
   const cuerpo = {
     status,
     operation_id: row.operation_id,
@@ -326,15 +382,21 @@ async function evento(k, est, env, b) {
   if (status === 'COMPLETED') cuerpo.total_actual_time = Math.round(nuevo.seg);
   if (row.cost_parameter != null) cuerpo.cost_parameter = num(row.cost_parameter);
   if (row.custom_fields) cuerpo.custom_fields = row.custom_fields;
+  let despues = row;
   if (status !== row.status || status === 'COMPLETED' || b.accion === 'start') {
-    await k.patch('/manufacturing_order_operation_rows/' + rowId, cuerpo);
+    const r = await k.patch('/manufacturing_order_operation_rows/' + rowId, cuerpo);
+    despues = (r && r.id) ? r : await k.get('/manufacturing_order_operation_rows/' + rowId);
+    fotoVencida();
   }
-
-  const despues = await k.get('/manufacturing_order_operation_rows/' + rowId);
   const bien = despues.status === status && (status !== 'COMPLETED' || Math.abs(num(despues.total_actual_time) - nuevo.seg) < 2);
-  return bien
-    ? { ok: true, mo: mo.order_no, op: resumen(despues, nuevo) }
-    : { ok: false, status: 502, error: 'Katana no guardó el cambio como se esperaba', op: resumen(despues, nuevo) };
+  if (!bien) return { ok: false, status: 502, error: 'Katana no guardó el cambio como se esperaba', op: resumen(despues, nuevo) };
+
+  // 2) DESPUÉS las piezas en las notas (con las notas recién leídas de la MO)
+  if (suma && (seg > 0 || pzLapso > 0 || b.accion === 'completar')) {
+    await k.patch('/manufacturing_orders/' + mo.id, { additional_info: escribirAvance(mo.additional_info, etq, nuevo) });
+    fotoVencida();
+  }
+  return { ok: true, mo: mo.order_no, op: resumen(despues, nuevo) };
 }
 
 function resumen(r, av) {
