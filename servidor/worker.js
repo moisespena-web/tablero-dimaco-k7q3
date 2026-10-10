@@ -21,7 +21,7 @@
  *   DROPBOX_URL     (secreto)  link compartido de la carpeta Dropbox "Dimaco/Tablero TV" (el mismo que usa GitHub)
  *
  * Rutas:  GET /estado · GET /operadores · GET /cola · POST /pin · POST /evento
- *         GET /tablero (público: {datos, aviso} más recientes de Dropbox) · GET /tablero/aviso
+ *         GET /tablero (público: programa + estado real de Katana) · GET /tablero/aviso
  *
  * Qué escribe en Katana (solo en la operación cuyo Resource es el de la estación):
  *   start      → IN_PROGRESS + operador asignado
@@ -30,6 +30,16 @@
  *                (Katana solo acepta total_actual_time cuando la operación está COMPLETED)
  *   completar  → COMPLETED + total_actual_time (tiempo acumulado) + completed_by
  *   Nunca cierra la MO ni mueve inventario (eso es de Cynthia). Solo toca SU renglón de las notas.
+ *
+ * 10-oct-2026 (Moisés · "TVVIVO"): la TV y las estaciones beben del MISMO lugar.
+ *   GET /tablero ya no entrega solo el programa que dejó la última corrida: le pone encima el estado real de Katana
+ *   (operaciones, piezas, avance de las notas, MOs cerradas o nuevas). Se recalcula:
+ *     · cada 15 min (Cron Trigger del Worker, L-S 6:00-20:59 hora de México),
+ *     · en cuanto una estación manda START/PAUSA/FIN (máximo una vez por minuto),
+ *     · cuando la corrida de 7/12/17 publica un programa nuevo (orden, Laura, cobre, fechas de entrega).
+ *   El ORDEN y las fechas de entrega siguen saliendo de la corrida (skill tablero-entregas-mafesa); aquí solo se
+ *   reacomoda lo que cambia en el día (Laura, solo-Limpieza, MOs nuevas) con la misma regla del skill.
+ *   Necesita un KV namespace con binding  TV  (sin él, /tablero sirve el programa tal cual, como antes).
  *
  * 8-oct-2026 (Moisés · "KAT429"): Katana estaba rechazando al servidor por exceso de solicitudes (429) y los botones
  * dejaban las piezas en las notas pero la operación sin cerrar. Cambios:
@@ -57,7 +67,8 @@ const ESTACIONES = {
 };
 
 export default {
-  async fetch(req, env) {
+  async scheduled(event, env, ctx) { return cron(event, env, ctx); },   // TVVIVO
+  async fetch(req, env, ctx) {
     const origen = env.ORIGEN || 'https://moisespena-web.github.io';
     const cors = {
       'Access-Control-Allow-Origin': origen,
@@ -78,7 +89,10 @@ export default {
       try {
         const t = await tablero(env);
         if (!t) return json({ ok: false, error: 'Falta DROPBOX_URL o la carpeta no tiene datos' }, 503);
-        return json(ruta === '/tablero' ? t : (t.aviso || {}));
+        if (ruta === '/tablero/aviso') return json(t.aviso || {});
+        let v = null;
+        try { v = await tableroVivo(env, t, false); } catch (e) { v = null; }   // si Katana falla, el programa tal cual
+        return json(v || t);
       } catch (e) { return json({ ok: false, error: String(e && e.message || e) }, 502); }
     }
 
@@ -117,6 +131,7 @@ export default {
         let body;
         try { body = await req.json(); } catch (e) { return json({ ok: false, error: 'JSON inválido' }, 400); }
         const r = await evento(k, est, env, body);
+        if (r.ok && !r.repetido && ctx && env.TV) ctx.waitUntil(marcarSucio(env));   // TVVIVO: la TV se entera en el siguiente minuto
         return json(r, r.ok ? 200 : (r.status || 400));
       }
       return json({ ok: false, error: 'Ruta no encontrada' }, 404);
@@ -128,6 +143,16 @@ export default {
     }
   },
 };
+
+/* ---------------- TVVIVO: cron cada 15 min ---------------- */
+async function cron(event, env, ctx) {
+  ctx.waitUntil((async () => {
+    const h = horaMX(new Date());
+    if (h.dia === 0 || h.h < 6 || h.h > 20) return;   // L-S 6:00-20:59
+    const t = await tablero(env);
+    if (t) await tableroVivo(env, t, true);
+  })());
+}
 
 function pinOk(est, env, b) {
   if (!est.conPin) return true;
@@ -468,4 +493,120 @@ async function leerZip(b, quiero) {
     out[nombre] = td.decode(datos);
   }
   return out;
+}
+
+
+/* ======================= TVVIVO (10-oct-2026) =======================
+   Programa de la última corrida (orden, Laura, cobre, fechas de entrega, material) + estado real de Katana.
+   Misma lógica que build_entregas.py del skill tablero-entregas-mafesa para lo que cambia durante el día. */
+const VIVO_TTL = 15 * 60e3, VIVO_MIN = 60e3;
+const MAF_REC = new Set(['Corte Mafesa', 'Taladro Mafesa', 'TM-2P', 'Cuadrado Mafesa', 'Doblez Mafesa', 'Limpieza & SQA']);
+const ORDOPS = ['Corte', 'Taladro', 'CNC', 'Doblez', 'Limpieza & SQA'];
+const TIPOS_TV = { 'Corte': 1, 'Corte|Taladro': 2, 'Corte|Doblez|Taladro': 3, 'CNC|Corte': 4, 'CNC|Corte|Doblez': 5 };
+
+function horaMX(d) {
+  const p = {}; new Intl.DateTimeFormat('en-GB', { timeZone: 'America/Mexico_City', year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', weekday: 'short', hourCycle: 'h23' }).formatToParts(d).forEach(x => p[x.type] = x.value);
+  const dias = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
+  return { dia: dias[p.weekday], h: +p.hour, m: +p.minute, iso: p.year + '-' + p.month + '-' + p.day,
+           stamp: p.year + '-' + p.month + '-' + p.day + 'T' + p.hour + ':' + p.minute + ':00-06:00' };
+}
+function enHorario(d) { const h = horaMX(d); return h.dia !== 0 && h.h >= 6 && h.h <= 20; }
+
+async function marcarSucio(env) { try { await env.TV.put('sucio', String(Date.now())); } catch (e) {} }
+
+async function tableroVivo(env, t, forzar) {
+  if (!env.TV || !env.KATANA_API_KEY || !t || !t.datos) return null;
+  const prev = await env.TV.get('vivo', 'json');
+  const sucio = await env.TV.get('sucio');
+  const edad = prev ? Date.now() - prev.calc : Infinity;
+  const nuevoPrograma = !prev || prev.fuente !== t.fuente;
+  const toca = forzar || nuevoPrograma || (sucio && edad > VIVO_MIN) || (edad > VIVO_TTL + 5 * 60e3 && enHorario(new Date()));
+  if (!toca) return prev.out;
+  if (sucio) fotoVencida();   // que la foto de Katana traiga lo que la estación acaba de escribir
+  const F = await foto(katana(env.KATANA_API_KEY));
+  const datos = armarVivo(t.datos, F, new Date());
+  if (!datos) return prev ? prev.out : null;
+  const out = { datos, aviso: t.aviso || {}, fuente: t.fuente, leido: new Date().toISOString(), vivo: true };
+  await env.TV.put('vivo', JSON.stringify({ calc: Date.now(), fuente: t.fuente, out }));
+  if (sucio) { try { await env.TV.delete('sucio'); } catch (e) {} }
+  return out;
+}
+
+function tipoTV(names) { const s = [...new Set(names.filter(n => n !== 'Limpieza & SQA'))].sort().join('|'); const t = TIPOS_TV[s]; return t ? 'Tipo ' + t : 'Mixto'; }
+function opsTV(ops) {   // igual que opsof() de build_entregas.py: columnas de la TV, dos pasos en la misma columna se fusionan
+  const out = new Map();
+  for (const o of ops) {
+    const n = normop(o); if (!ORDOPS.includes(n)) continue;
+    if (!out.has(n)) { out.set(n, o.status); continue; }
+    const ss = new Set([out.get(n), o.status]);
+    out.set(n, ss.size === 1 && ss.has('COMPLETED') ? 'COMPLETED' : (ss.size === 1 && ss.has('NOT_STARTED') ? 'NOT_STARTED' : 'IN_PROGRESS'));
+  }
+  return [...out.entries()];
+}
+function avanceTV(info) {   // igual que avance() de build_entregas.py: {columna: 'x/y'} leído de las notas
+  const av = {};
+  for (const ln of String(info || '').split('\n')) {
+    const mh = ln.match(/^\s*([^:\n]+):(.*)$/); if (!mh) continue;
+    const fr = [...mh[2].matchAll(/(?<![\d/])(\d+)\s*\/\s*(\d+)(?![\d/])/g)]; if (!fr.length) continue;
+    const mm = fr[fr.length - 1], et = mh[1].trim().toLowerCase();
+    const col = et.startsWith('tm-2p') ? 'CNC' : et.startsWith('doblez') ? 'Doblez' : et.startsWith('taladro') ? 'Taladro'
+      : et.startsWith('corte') ? 'Corte' : et.startsWith('limpieza') ? 'Limpieza & SQA' : null;
+    if (col) av[col] = mm[1] + '/' + mm[2];
+  }
+  return av;
+}
+
+function armarVivo(D0, F, ahora) {
+  if (!F || !F.mos || !F.mos.size) return null;   // Katana vacío o caído: no borrar la TV
+  const H = horaMX(ahora), D = JSON.parse(JSON.stringify(D0));
+  const base = D.rows || [], idx = new Map(), rows = [];
+  const llenar = (r, mo, ops) => {
+    if (ops.length) r.ops = opsTV(ops);
+    r.av = avanceTV(mo.additional_info);
+    r.plan = Math.round(num(mo.planned_quantity)); r.entr = Math.round(num(mo.completed_quantity));
+    r.piezas = Math.round(num(mo.remaining_quantity) || num(mo.planned_quantity));   // FALTAN = Remaining de Katana (PZ7OCT)
+    r.deadline = (mo.production_deadline_date || r.deadline || '').slice(0, 10);
+    r.prio = /prioridad/i.test(mo.additional_info || '');
+    if (r.cu == null) r.cu = /\bCU\b/.test(String(r.nombre || '').toUpperCase());
+    const pend = (r.ops || []).filter(x => x[1] !== 'COMPLETED').map(x => x[0]);
+    if (pend.every(n => n === 'Limpieza & SQA')) r.grp = 'limp';                         // regla 3-oct: solo falta Limpieza & SQA
+    else if (r.prio) r.grp = 'urge';                                                      // Laura primero
+    else if (r.grp === 'limp' || r.grp === 'urge') r.grp = r.entrega === H.iso ? 'hoy' : 'sig';
+    return r;
+  };
+  base.forEach((r, i) => {
+    const mo = F.mos.get(r.id); if (!mo || mo.status === 'DONE') return;   // Cynthia ya la liberó
+    idx.set(r.id, i); rows.push(llenar(r, mo, F.ops.get(r.id) || []));
+  });
+  // MOs que nacieron después de la corrida (reposición, Cynthia, Lupita): solo MAFESA (todas sus operaciones en recursos MAFESA)
+  for (const [id, mo] of F.mos) {
+    if (idx.has(id) || mo.status === 'DONE') continue;
+    const ops = F.ops.get(id) || [];
+    const rec = ops.map(o => (o.resource_name || '').trim());
+    if (!ops.length || !rec.every(x => MAF_REC.has(x)) || !rec.some(x => x !== 'Limpieza & SQA')) continue;
+    const va = variante(mo.variant_id), pm = va && va.product_or_material || {};
+    const r = { mo: mo.order_no, id, sku: va && va.sku || '', nombre: pm.name || '', so: '', sos: [], nota: '', ocCob: [], nuevo: true,
+                entrega: (mo.production_deadline_date || H.iso).slice(0, 10) };
+    llenar(r, mo, ops); r.tipo = tipoTV(r.ops.map(x => x[0]));
+    if (!r.grp) r.grp = r.entrega === H.iso ? 'hoy' : 'sig';
+    rows.push(r);
+  }
+  // mismo orden del skill: limpieza al final · Laura · fecha de entrega · cobre · y lo demás como lo dejó la corrida
+  const key = r => [r.grp === 'limp' ? 1 : 0, r.prio && r.grp !== 'limp' ? 0 : 1, r.entrega || '9999', r.cu ? 0 : 1, idx.has(r.id) ? idx.get(r.id) : 1e6];
+  rows.sort((a, b) => { const x = key(a), y = key(b); for (let i = 0; i < x.length; i++) if (x[i] !== y[i]) return x[i] < y[i] ? -1 : 1; return 0; });
+  D.rows = rows;
+  // avance por proceso en piezas (mismo cálculo del skill, regla 4-oct)
+  const COLP = { 'CNC': 'TM-2P', 'Limpieza & SQA': 'Limpieza' }, T = {}, Hh = {};
+  for (const r of rows) for (const [op, st] of r.ops || []) {
+    const k = COLP[op] || op, q = r.piezas, av = (r.av || {})[op];
+    T[k] = (T[k] || 0) + q; Hh[k] = (Hh[k] || 0) + (st === 'COMPLETED' ? q : (av ? Math.min(q, parseInt(av, 10)) : 0));
+  }
+  D.avProc = ['Corte', 'Taladro', 'TM-2P', 'Doblez', 'Limpieza'].filter(k => T[k]).map(k => ({ p: k, h: Hh[k], t: T[k], pct: Math.round(100 * Hh[k] / T[k]) }));
+  const limp = rows.filter(r => r.grp === 'limp'), skAll = new Set(rows.map(r => r.sku)), skL = new Set(limp.map(r => r.sku));
+  D.alertaLimpieza = limp.length ? { n: limp.length, skus: skL.size, total: skAll.size, pct: Math.round(100 * skL.size / Math.max(1, skAll.size)) } : null;
+  D.programa = D0.stamp || '';   // hora de la corrida que dejó el orden
+  D.stamp = H.stamp;             // hora de esta lectura de Katana
+  D.vivo = true;
+  return D;
 }

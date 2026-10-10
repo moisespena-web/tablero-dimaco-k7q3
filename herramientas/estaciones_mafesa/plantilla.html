@@ -124,13 +124,16 @@ function estStyM(m){return estSty({status:stK(m),op:''});}
    (datos.json trae piezas = remaining_quantity): entregadas = planeadas − piezas de la TV. Las notas (x/y) cuentan sobre
    la MO completa, por eso a lo hecho se le restan las entregadas. */
 var TVPZ={};
+/* TVVIVO 10-oct-2026: la estación lee el MISMO tablero que la TV (servidor = programa + Katana en vivo); si falla, datos.json */
+function tvJSON(){return fetch(SRV_URL.replace(/\/$/,'')+'/tablero?x='+Date.now(),{cache:'no-store'}).then(function(r){if(!r.ok)throw 0;return r.json();}).catch(function(){return fetch('../datos.json?x='+Date.now(),{cache:'no-store'}).then(function(r){return r.json();});});}
+
 function entrDe(m){if(m.entregadas!=null)return Math.max(0,+m.entregadas||0);var t=(TVPZ||{})[m.mo];return (t!=null&&t<m.plan)?m.plan-t:0;}
 function pendEnt(m){if(m.plan==null)m.plan=m.piezas;m.entr=Math.min(m.plan,entrDe(m));m.piezas=Math.max(0,m.plan-m.entr);return m;}
-function leerTV(){fetch('../datos.json?x='+Date.now(),{cache:'no-store'}).then(function(r){return r.json();}).then(function(d){
+function leerTV(){tvJSON().then(function(d){
  ((d&&d.datos&&d.datos.rows)||[]).forEach(function(r){if(r.mo&&r.piezas!=null)TVPZ[r.mo]=+r.piezas;});
   ((d&&d.datos&&d.datos.avProc)||[]).forEach(function(a){if(String(a.p).toLowerCase()===String(AVPN).toLowerCase())AVP=a;});
  S.mos.forEach(pendEnt);if(!S.modal)render();}).catch(function(){});}
-S.mos.forEach(pendEnt);setTimeout(leerTV,800);setInterval(leerTV,600000);
+S.mos.forEach(pendEnt);setTimeout(leerTV,800);setInterval(leerTV,120000);   /* TVVIVO: cada 2 min */
 function faltanMs(m){return Math.max(0,m.piezas-hz(m))*m.planeado*1000;}
 function semaforo(p){return p<=40?['#2A1418','#E5484D','#FF6369']:(p<=70?['#33250A','#F2A93B','#FFC45C']:['#0C3024','#25C083','#4FE0A6']);}
 function estTxt(st){return {none:'NO INICIADA',prog:'EN PROCESO',pausa:'EN PAUSA',done:'TERMINADA ✓'}[st.status];}
@@ -196,7 +199,7 @@ function mapaMO(k,dr,idx){var hoy=diaKey(Date.now()),cols=[],ruta=[];
   rowId:k.op.rowId,tiempoReal:k.op.tiempoReal,ruta:ruta,ingSku:ing.sku||'',ingNombre:ing.nombre||'',ingTot:ing.total||0,ingUom:ing.uom||'',
   notas:k.notas||'Sin notas.',so:(dr&&dr.so)||'',espera:ESPERA&&antes.length?antes[0][0]:''});}
 function cargarCola(){if(!enLinea())return Promise.resolve();
- return Promise.all([api('GET','/cola'),fetch('../datos.json?x='+Date.now(),{cache:'no-store'}).then(function(r){return r.json();}).catch(function(){return null;}),api('GET','/operadores').catch(function(){return null;})])
+ return Promise.all([api('GET','/cola'),tvJSON().catch(function(){return null;}),api('GET','/operadores').catch(function(){return null;})])
  .then(function(res){var c=res[0],d=res[1],ops=res[2];
   if(!c||!c.ok){S.sync='err';S.conxMsg=(c&&c.error)||'Sin respuesta del servidor';if(!S.modal)render();return;}
   if(ops&&ops.ok&&ops.operadores&&ops.operadores.length)OPS=ops.operadores;
