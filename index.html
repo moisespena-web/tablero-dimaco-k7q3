@@ -52,7 +52,7 @@ padding:7px 16px;display:flex;align-items:baseline;gap:12px}
 .eu{font-size:15px;color:var(--tx2)}
 .ests:has(.fl){display:block}
 .fl{display:flex;align-items:stretch;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:6px 10px}
-.fc{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:2px;padding:4px 14px;border-radius:10px}
+.fc{flex:1;min-width:0;border-top:3px solid transparent;display:flex;flex-direction:column;justify-content:center;gap:2px;padding:4px 14px;border-radius:10px}
 .ft{display:flex;align-items:baseline;gap:10px}.fn{font-size:18px;color:var(--tx2);letter-spacing:1.5px;flex:1;white-space:nowrap}
 .fb{font-size:34px;font-weight:700;line-height:1}.fu{font-size:15px;color:var(--tx2)}
 .fs{display:flex;justify-content:space-between;align-items:baseline;font-size:16px;color:var(--tx2)}.fs b{color:var(--tx)}
@@ -437,6 +437,9 @@ function crearSonidos(getCtx){
 "use strict";
 var OPS=["Corte","Taladro","CNC","Doblez","Limpieza & SQA"];
 var LBL={"Corte":"CORTE","Taladro":"TALADRO","CNC":"TM-2P","Doblez":"DOBLEZ","Limpieza & SQA":"LIMPIEZA"};
+/* Color fijo por estación (Moisés, 11-oct-2026): el nombre de cada proceso siempre en su color, en toda la TV */
+var CEST={"Corte":"#5AB0FF","Taladro":"#B79CFF","CNC":"#FF7EB6","Doblez":"#C9E24F","Limpieza & SQA":"#3FD9D9"};
+function lblc(o){return '<span style="color:'+CEST[o]+'">'+LBL[o]+'</span>';}
 var ORD={"Corte":0,"Taladro":1,"CNC":2,"Doblez":3,"Limpieza & SQA":4};
 var TIPOS=[["Tipo 1",["Corte","Limpieza & SQA"],"#17A67F"],
  ["Tipo 2",["Corte","Taladro","Limpieza & SQA"],"#3E8FD8"],
@@ -501,7 +504,7 @@ function celda(r,op){
   var c={COMPLETED:"done",IN_PROGRESS:"prog",PAUSED:"pausa",NOT_STARTED:"none"}[st]||"none";
   var k={done:"&#10003;",prog:"&#9679;",pausa:"&#10074;&#10074;",none:""}[c];
   var a=c!=="done"&&r.av&&r.av[op];
-  return '<div class="op '+c+'">'+(f?'<span class="ord">'+p[op]+'</span>':'')+'<span class="dot">'+k+'</span><span class="oplbl'+(a?' avn':'')+'">'+(a?esc(listasOp(r,op)||a):LBL[op])+'</span></div>';
+  return '<div class="op '+c+'">'+(f?'<span class="ord">'+p[op]+'</span>':'')+'<span class="dot">'+k+'</span><span class="oplbl'+(a?' avn':'')+'">'+(a?esc(listasOp(r,op)||a):lblc(op))+'</span></div>';
 }
 function esCu(r){return r.cu!=null?!!r.cu:/\bCU\b/i.test(r.nombre||"");}
 function fila(r){
@@ -526,7 +529,7 @@ function partir(xs){
   return out;
 }
 var HEAD='<div class="row head"><div class="stripe"></div><div class="mo">ORDEN</div><div class="desc">PRODUCTO</div>'+
- '<div class="pz">FALTAN</div><div class="ops">'+OPS.map(function(o){return '<div class="op empty">'+LBL[o]+'</div>';}).join("")+
+ '<div class="pz">FALTAN</div><div class="ops">'+OPS.map(function(o){return '<div class="op empty">'+lblc(o)+'</div>';}).join("")+
  '</div><div class="dl">LÍMITE</div></div>';
 
 var datos=null, pagina=0, t0=Date.now();
@@ -592,8 +595,8 @@ function flujoHTML(D,abiertas,carga){
   var peor=null;OPS.forEach(function(o){if(AV[o]!=null&&(peor===null||AV[o]<AV[peor]))peor=o;});
   return '<div class="fl">'+OPS.map(function(o,i){var x=st[o],a=AV[o],c=a==null?'':(a>=70?'verde':(a>=50?'ambar':'rojo')),mal=(o===peor&&a<70);
     var al=(x.venc?'<i class="v">'+x.venc+' vencida'+(x.venc>1?'s':'')+'</i>':'')+(x.cu?'<i class="c">'+x.cu+' CU</i>':'');
-    return (i?'<div class="ar">▶</div>':'')+'<div class="fc '+c+(mal?' peor':'')+'">'+
-     '<div class="ft"><span class="fn">'+LBL[o]+(mal?'<span class="tag">MÁS ATRASADA</span>':'')+'</span><span class="fb">'+x.mo+'</span><span class="fu">MO</span></div>'+
+    return (i?'<div class="ar">▶</div>':'')+'<div class="fc '+c+(mal?' peor':'')+'" style="border-top-color:'+CEST[o]+'">'+
+     '<div class="ft"><span class="fn" style="font-weight:700">'+lblc(o)+(mal?'<span class="tag">MÁS ATRASADA</span>':'')+'</span><span class="fb">'+x.mo+'</span><span class="fu">MO</span></div>'+
      '<div class="fs"><span><b>'+carga[o].toLocaleString("en-US")+'</b> pz en espera</span>'+(a!=null?'<span class="fp">'+a+'%</span>':'')+'</div>'+
      (a!=null?'<div class="apb"><i style="width:'+Math.max(2,a)+'%"></i></div>':'')+
      '<div class="al">'+(al||'<i class="ok">sin alertas</i>')+'</div></div>';}).join('')+'</div>';}
