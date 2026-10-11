@@ -14,6 +14,11 @@ Lapsos:
 ```
 El resumen es ACUMULADO del día: por estación usa solo el correo más nuevo de cada fecha. N = piezas del día de esa MO en esa estación.
 
+## Qué correos buscar (Moisés, 11-oct-2026)
+Busca con Gmail `RESUMEN Lapsos newer_than:4d` (últimos 4 días, NO solo 24 h): así entra lo que llegó en sábado, domingo o puente, cuando no corre ninguna tarea.
+El ledger evita duplicar (delta = N − aplicado). Ignora resúmenes con fecha anterior al 08/10/2026.
+Un resumen capturado después (fecha del correo ≠ día real) se aplica con el día que fije Moisés y se registra en el ledger bajo la fecha que trae el correo, para que no se vuelva a aplicar.
+
 ## Ledger `aplicado.json`
 `{"AAAA-MM-DD": {"MO-xxx|Estación": piezas_ya_aplicadas_ese_día}}` — Estación = Corte | Taladro | TM-2P | Doblez | Limpieza.
 Delta = N − aplicado. Si delta ≤ 0 → no se escribe nada. Después de aplicar, guarda N y haz commit ("Resúmenes aplicados <FS>"). Así el resumen de cierre (que trae todo el día) solo aplica lo que falta, y repetir un correo no duplica nada.
