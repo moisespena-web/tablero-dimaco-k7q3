@@ -582,6 +582,8 @@ function armarVivo(D0, F, ahora) {
   // MOs que nacieron después de la corrida (reposición, Cynthia, Lupita): solo MAFESA (todas sus operaciones en recursos MAFESA)
   for (const [id, mo] of F.mos) {
     if (idx.has(id) || mo.status === 'DONE') continue;
+    // solo las que nacieron DESPUÉS de la corrida (las viejas que el programa no trae, las dejó fuera a propósito: sin demanda MAFESA)
+    if (!D0.stamp || !mo.created_at || Date.parse(mo.created_at) <= Date.parse(D0.stamp)) continue;
     const ops = F.ops.get(id) || [];
     const rec = ops.map(o => (o.resource_name || '').trim());
     if (!ops.length || !rec.every(x => MAF_REC.has(x)) || !rec.some(x => x !== 'Limpieza & SQA')) continue;
