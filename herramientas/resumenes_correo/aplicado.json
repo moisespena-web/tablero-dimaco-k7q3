@@ -48,6 +48,11 @@
   "MO-402|Corte": 20,
   "MO-403|Corte": 20,
   "MO-404|Corte": 15,
-  "MO-405|Corte": 15
+  "MO-405|Corte": 15,
+  "MO-398|Taladro": 40,
+  "MO-404|Taladro": 15,
+  "MO-402|TM-2P": 20,
+  "MO-392|TM-2P": 1,
+  "MO-392|Limpieza": 1
  }
 }
