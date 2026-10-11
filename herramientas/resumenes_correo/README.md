@@ -31,6 +31,7 @@ Operación = renglón de la MO cuyo resource es: Corte Mafesa · Taladro Mafesa 
    - Con avance de días anteriores: `Corte: Operador 48 (07/10/2026) · 4 min 47 s + 2 (08/10/2026) = 50/50`
    - Ya hay segmento de HOY (de una corrida anterior): se REEMPLAZA su número por N (nunca se agrega otro segmento del mismo día).
    - Etiquetas: `Corte`, `Taladro`, `TM-2P (<operation_name>)` (ej. `TM-2P (CNC SLT)`), `Doblez`, `Limpieza`. Operador = el del encabezado del correo (si viene "—", usa "Operador").
+   - **TM-2P SIN OPERADOR (Moisés, 11-oct-2026, fase de pruebas hasta el 11-nov-2026):** el renglón de TM-2P va sin nombre: `TM-2P (CNC Ø): 20/20 (10/10/2026)`. Las demás estaciones siguen con operador. Moisés decide el 11-nov si se regresan.
    - Tiempo (` · 1 h 25 min`) SOLO si los lapsos de esa MO no se traslapan con lapsos de otra MO en la misma estación; si se traslapan, sin tiempo.
 3. **Verifica** cada escritura con api-read. Si una falla, detente con esa MO y repórtala.
 
