@@ -53,6 +53,11 @@
   "MO-404|Taladro": 15,
   "MO-402|TM-2P": 20,
   "MO-392|TM-2P": 1,
-  "MO-392|Limpieza": 1
+  "MO-392|Limpieza": 1,
+  "MO-395|Doblez": 22,
+  "MO-400|Doblez": 21,
+  "MO-400|TM-2P": 21,
+  "MO-400|Taladro": 21,
+  "MO-400|Limpieza": 21
  }
 }
