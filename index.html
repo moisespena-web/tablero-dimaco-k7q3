@@ -50,6 +50,26 @@ padding:7px 16px;display:flex;align-items:baseline;gap:12px}
 .en{font-size:18px;color:var(--tx2);letter-spacing:1.5px;flex:1}
 .ev{font-size:34px;font-weight:700}
 .eu{font-size:15px;color:var(--tx2)}
+.ests:has(.fl){display:block}
+.fl{display:flex;align-items:stretch;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:6px 10px}
+.fc{flex:1;min-width:0;border-top:3px solid transparent;display:flex;flex-direction:column;justify-content:center;gap:2px;padding:4px 14px;border-radius:10px}
+.ft{display:flex;align-items:baseline;gap:10px}.fn{font-size:18px;color:var(--tx2);letter-spacing:1.5px;flex:1;white-space:nowrap}
+.fb{font-size:34px;font-weight:700;line-height:1}.fu{font-size:15px;color:var(--tx2)}
+.fs{display:flex;justify-content:space-between;align-items:baseline;font-size:16px;color:var(--tx2)}.fs b{color:var(--tx)}
+.fp{font-size:24px;font-weight:800;font-variant-numeric:tabular-nums}
+.fc .apb{margin-top:1px}
+.fc.verde .apb i{background:#25C083}.fc.verde .fp{color:#4FE0A6}
+.fc.ambar .apb i{background:#F2A93B}.fc.ambar .fp{color:#FFC45C}
+.fc.rojo .apb i{background:#E5484D}.fc.rojo .fp{color:#FF6369}
+.fc.peor{outline:2px solid #E5484D;background:#3A1216;animation:pulso 1.6s ease-in-out infinite}
+.fc .tag{font-size:12px;font-weight:800;letter-spacing:1px;color:#fff;background:#E5484D;border-radius:5px;padding:1px 6px;margin-left:8px}
+.ar{display:flex;align-items:center;color:#3E5674;font-size:24px;padding:0 2px}
+.al{display:flex;gap:6px}.al i{font-style:normal;font-size:13px;font-weight:700;border-radius:5px;padding:1px 7px}
+.al .v{background:#5A1D22;color:#FFB3B6}.al .c{background:#D9773F;color:#1a0e05}.al .ok{color:#4D6580;font-weight:400}
+.pctl{display:flex;gap:6px;flex:none}.pctl button{background:#16263A;border:1px solid #2E4A6B;color:#C9D6E6;border-radius:8px;font-size:18px;min-width:44px;height:34px;cursor:pointer}
+.pctl #btnPausa.on{background:#F2A93B;border-color:#F2A93B;color:#1a1200;font-weight:800}
+body.pausado .bar i{background:#F2A93B!important}
+body.pausado .build::after{content:" · EN PAUSA";color:#F2A93B;font-weight:800}
 .page{flex:1;display:none;flex-direction:column;gap:7px;overflow:hidden}
 .page.on{display:flex}
 .ptitle{flex:none;font-size:22px;letter-spacing:3px;color:var(--tx2)}
@@ -335,8 +355,9 @@ padding:20px 34px;box-shadow:0 0 70px rgba(229,72,77,.95);animation:alimpP 1s st
    <span class="lg"><i style="background:var(--none)"></i>No iniciada</span><span class="lg" style="margin-left:18px"><i style="background:#25A35A;border-radius:2px"></i>Entregadas</span><span class="lg"><i style="background:#3E8FD8;border-radius:2px"></i>Ya hechas → sig.</span><span class="lg"><i style="background:#2E3D52;border-radius:2px"></i>Por hacer</span>
   </div>
   <div class="msg"></div>
+  <span class="pctl"><button id="btnPrev" title="Página anterior">◀</button><button id="btnPausa" title="Pausar">⏸</button><button id="btnNext" title="Página siguiente">▶</button></span>
   <span id="sndIco">🔇</span>
-  <div id="stamp"></div><span class="build">v2026-10-10a</span><div class="bar"><i id="pb"></i></div>
+  <div id="stamp"></div><span class="build">v2026-10-11a</span><div class="bar"><i id="pb"></i></div>
  </footer>
  <div id="alimp" hidden></div>
  <div id="toasts"></div>
@@ -421,6 +442,9 @@ function crearSonidos(getCtx){
 "use strict";
 var OPS=["Corte","Taladro","CNC","Doblez","Limpieza & SQA"];
 var LBL={"Corte":"CORTE","Taladro":"TALADRO","CNC":"TM-2P","Doblez":"DOBLEZ","Limpieza & SQA":"LIMPIEZA"};
+/* Color fijo por estación (Moisés, 11-oct-2026): el nombre de cada proceso siempre en su color, en toda la TV */
+var CEST={"Corte":"#5AB0FF","Taladro":"#B79CFF","CNC":"#FF7EB6","Doblez":"#C9E24F","Limpieza & SQA":"#3FD9D9"};
+function lblc(o){return '<span style="color:'+CEST[o]+'">'+LBL[o]+'</span>';}
 var ORD={"Corte":0,"Taladro":1,"CNC":2,"Doblez":3,"Limpieza & SQA":4};
 var TIPOS=[["Tipo 1",["Corte","Limpieza & SQA"],"#17A67F"],
  ["Tipo 2",["Corte","Taladro","Limpieza & SQA"],"#3E8FD8"],
@@ -485,7 +509,7 @@ function celda(r,op){
   var c={COMPLETED:"done",IN_PROGRESS:"prog",PAUSED:"pausa",NOT_STARTED:"none"}[st]||"none";
   var k={done:"&#10003;",prog:"&#9679;",pausa:"&#10074;&#10074;",none:""}[c];
   var a=c!=="done"&&r.av&&r.av[op];
-  return '<div class="op '+c+'">'+(f?'<span class="ord">'+p[op]+'</span>':'')+'<span class="dot">'+k+'</span><span class="oplbl'+(a?' avn':'')+'">'+(a?esc(listasOp(r,op)||a):LBL[op])+'</span></div>';
+  return '<div class="op '+c+'">'+(f?'<span class="ord">'+p[op]+'</span>':'')+'<span class="dot">'+k+'</span><span class="oplbl'+(a?' avn':'')+'">'+(a?esc(listasOp(r,op)||a):lblc(op))+'</span></div>';
 }
 function esCu(r){return r.cu!=null?!!r.cu:/\bCU\b/i.test(r.nombre||"");}
 function fila(r){
@@ -496,7 +520,8 @@ function fila(r){
   if(v)b+='<span class="badge late">VENCIDA</span>';
   if(r.nota)b+='<span class="badge urge">'+esc(r.nota)+'</span>';
   else if(l)b+='<span class="badge urge">CERRAR MO</span>';
-  return '<div class="'+cls+'"><div class="stripe" style="background:'+t[1]+'"></div>'+
+  var ea=estacion(r);   /* Moisés 11-oct-2026: la rayita va del color de la estación donde está la MO (verde si ya terminó todo) */
+  return '<div class="'+cls+'"><div class="stripe" style="background:'+(ea?CEST[ea]:'#25C083')+'"></div>'+
    '<div class="mo"><span class="mono">'+esc(r.mo)+'</span><span class="tipo soc">'+esc(r.so||'')+'</span></div>'+
    '<div class="desc"><span class="nom">'+esc(r.nombre)+'</span><span class="sku mono">'+esc(r.sku)+'</span></div>'+
    '<div class="pz" title="'+esc('Katana: '+pzMO(r).plan+' planeadas · '+pzMO(r).entr+' entregadas · '+pzMO(r).pend+' faltan')+'"><b>'+nf(pzMO(r).pend)+'</b><span>de '+nf(pzMO(r).plan)+'</span></div>'+
@@ -510,11 +535,12 @@ function partir(xs){
   return out;
 }
 var HEAD='<div class="row head"><div class="stripe"></div><div class="mo">ORDEN</div><div class="desc">PRODUCTO</div>'+
- '<div class="pz">FALTAN</div><div class="ops">'+OPS.map(function(o){return '<div class="op empty">'+LBL[o]+'</div>';}).join("")+
+ '<div class="pz">FALTAN</div><div class="ops">'+OPS.map(function(o){return '<div class="op empty" style="border-bottom:3px solid '+CEST[o]+';border-radius:0">'+lblc(o)+'</div>';}).join("")+
  '</div><div class="dl">LÍMITE</div></div>';
 
 var datos=null, pagina=0, t0=Date.now();
-var LEYT='<span class="leyt">'+TIPOS.map(function(t){return '<span><b class="tpill" style="background:'+t[2]+'">'+t[0].toUpperCase()+'</b> '+t[1].filter(function(o){return o!=="Limpieza & SQA";}).map(function(o){return {"Corte":"Corte","Taladro":"Taladro","CNC":"TM-2P","Doblez":"Doblez"}[o];}).join(" + ")+'</span>';}).join("")+'<span><b class="tpill" style="background:#8A93A6">MIXTO</b> Ruta especial</span><span style="color:#8FA3BA;font-style:italic">· Todas terminan en Limpieza &amp; SQA</span><span><b class="tpill cu">COBRE</b> va primero en su entrega</span></span>';
+/* Moisés 11-oct-2026: se quitó la leyenda de TIPOS (todos saben que va Corte → estaciones → Limpieza & SQA); solo queda la de cobre */
+var LEYT='<span class="leyt"><span><b class="tpill cu">COBRE</b> va primero en su entrega</span></span>';
 var MESL=["ENERO","FEBRERO","MARZO","ABRIL","MAYO","JUNIO","JULIO","AGOSTO","SEPTIEMBRE","OCTUBRE","NOVIEMBRE","DICIEMBRE"];
 var CU="#D9773F",AL="#8FA6BA";
 function nf(n){return Math.round(n).toLocaleString("en-US");}
@@ -566,6 +592,21 @@ function avProcHTML(A){
   return '<div class="kpi avp"><div class="kl">AVANCE POR PROCESO · PIEZAS</div><div class="apl">'+xs.map(function(x,i){
     var c=x.pct>=70?'verde':(x.pct>=50?'ambar':'rojo');
     return '<div class="apr '+c+(i===xs.length-1?' peor':'')+'"><span class="apn">'+esc(x.p).toUpperCase()+'</span><span class="app">'+x.pct+'%</span><span class="apb"><i style="width:'+Math.max(2,x.pct)+'%"></i></span></div>';}).join('')+'</div></div>';}
+/* Franja de flujo (Moisés, 11-oct-2026 · opción C): por estación MOs, piezas en espera, avance por proceso
+   (el que antes iba arriba), alertas de vencidas y cobre; la de menor avance se marca como la más atrasada. */
+function flujoHTML(D,abiertas,carga){
+  var AV={},PN={"Corte":"Corte","Taladro":"Taladro","TM-2P":"CNC","Doblez":"Doblez","Limpieza":"Limpieza & SQA"};
+  (D.avProc||[]).forEach(function(x){if(PN[x.p])AV[PN[x.p]]=x.pct;});
+  var st={};OPS.forEach(function(o){st[o]={mo:0,venc:0,cu:0};});
+  abiertas.forEach(function(r){var e=estacion(r);if(!e||!st[e])return;st[e].mo++;if(vencida(r))st[e].venc++;if(esCu(r))st[e].cu++;});
+  var peor=null;OPS.forEach(function(o){if(AV[o]!=null&&(peor===null||AV[o]<AV[peor]))peor=o;});
+  return '<div class="fl">'+OPS.map(function(o,i){var x=st[o],a=AV[o],c=a==null?'':(a>=70?'verde':(a>=50?'ambar':'rojo')),mal=(o===peor&&a<70);
+    var al=(x.venc?'<i class="v">'+x.venc+' vencida'+(x.venc>1?'s':'')+'</i>':'')+(x.cu?'<i class="c">'+x.cu+' CU</i>':'');
+    return (i?'<div class="ar">▶</div>':'')+'<div class="fc '+c+(mal?' peor':'')+'" style="border-top-color:'+CEST[o]+'">'+
+     '<div class="ft"><span class="fn" style="font-weight:700">'+lblc(o)+(mal?'<span class="tag">MÁS ATRASADA</span>':'')+'</span><span class="fb">'+x.mo+'</span><span class="fu">MO</span></div>'+
+     '<div class="fs"><span><b>'+carga[o].toLocaleString("en-US")+'</b> pz en espera</span>'+(a!=null?'<span class="fp">'+a+'%</span>':'')+'</div>'+
+     (a!=null?'<div class="apb"><i style="width:'+Math.max(2,a)+'%"></i></div>':'')+
+     '<div class="al">'+(al||'<i class="ok">sin alertas</i>')+'</div></div>';}).join('')+'</div>';}
 function render(D){try{renderMat(D);}catch(e){}try{render0(D);}catch(e){}try{checarLimp();}catch(e){}}
 function render0(D){
   var D0=D;D={};for(var kk in D0)D[kk]=D0[kk];
@@ -586,10 +627,10 @@ function render0(D){
   $("kpis").innerHTML=
    '<div class="kpi"><div class="kl">PIEZAS ABIERTAS</div><div class="kv">'+pz.toLocaleString("en-US")+'</div><div class="ks"></div></div>'+
    '<div class="kpi"><div class="kl">MOs ABIERTAS</div><div class="kv">'+rows.length+'</div><div class="ks">'+(D.faltaPz!=null?'<span class="falta">Faltan <b>'+nf(D.faltaPz)+'</b> pz</span>':'')+'</div></div>'+
-   (D.avProc?avProcHTML(D.avProc):'<div class="kpi '+sem+'"><div class="kl">AVANCE OPERACIONES</div><div class="kv">'+pct+'%</div><div class="ks">'+hech+' de '+tot+'</div><div class="kbar"><i style="width:'+pct+'%"></i></div></div>')+
+   (D.avProc?'':'<div class="kpi '+sem+'"><div class="kl">AVANCE OPERACIONES</div><div class="kv">'+pct+'%</div><div class="ks">'+hech+' de '+tot+'</div><div class="kbar"><i style="width:'+pct+'%"></i></div></div>')+
    '<div class="kpi'+(venc?" alarm":"")+'"><div class="kl">VENCIDAS</div><div class="kv">'+venc+'</div><div class="ks">revisar con supervisión</div></div>';
-  $("ests").innerHTML=OPS.map(function(o){
-    return '<div class="est"><div class="en">'+LBL[o]+'</div><div class="ev">'+carga[o].toLocaleString("en-US")+'</div><div class="eu">pz en espera</div></div>';}).join("");
+  $("kpis").style.gridTemplateColumns=D.avProc?"1fr 1fr .8fr":"";
+  $("ests").innerHTML=flujoHTML(D,piso.concat(cola),carga);
   var bloques=[];
   if(D.modo==="entregas"){
     var n=0;rows.forEach(function(r){r.sec=++n;});
@@ -687,12 +728,18 @@ fitTitle();
 function reloj(){var d=mx();$("clock").textContent=pad(d.h)+":"+pad(d.m);
   $("cdate").textContent=d.d+" de "+["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"][d.mes]+", "+d.a;}
 reloj();setInterval(reloj,10000);
-setInterval(function(){$("pb").style.width=Math.min(100,(Date.now()-t0)/DUR*100)+"%";},200);
-setInterval(function(){
-  var ps=document.querySelectorAll("#pages .page");if(!ps.length)return;
-  if(ps[pagina])ps[pagina].classList.remove("on");
-  pagina=(pagina+1)%ps.length;ps[pagina].classList.add("on");t0=Date.now();
-},DUR);
+/* Pausa (Moisés, 11-oct-2026): botón ⏸ para detener el cambio de página y ver un detalle; ◀ ▶ para moverse.
+   Teclado: espacio = pausa, flechas = página. Se reanuda sola a los 5 min para que la TV de planta nunca quede detenida. */
+var PAUSA=false,PAUSA_T=null;
+function irPag(d){var ps=document.querySelectorAll("#pages .page");if(!ps.length)return;
+  if(ps[pagina])ps[pagina].classList.remove("on");pagina=(pagina+d+ps.length)%ps.length;ps[pagina].classList.add("on");t0=Date.now();}
+function pausa(on){PAUSA=on===undefined?!PAUSA:on;var b=$("btnPausa");if(b){b.textContent=PAUSA?"▶":"⏸";b.classList.toggle("on",PAUSA);b.title=PAUSA?"Reanudar":"Pausar";}
+  document.body.classList.toggle("pausado",PAUSA);clearTimeout(PAUSA_T);if(PAUSA)PAUSA_T=setTimeout(function(){pausa(false);},300000);t0=Date.now();}
+$("btnPausa").onclick=function(){pausa();};$("btnPrev").onclick=function(){irPag(-1);};$("btnNext").onclick=function(){irPag(1);};
+window.__pausa=function(){return [PAUSA,pagina];};
+document.addEventListener("keydown",function(e){if(e.key===" "){e.preventDefault();pausa();}else if(e.key==="ArrowRight"){irPag(1);}else if(e.key==="ArrowLeft"){irPag(-1);}});
+setInterval(function(){$("pb").style.width=PAUSA?"100%":Math.min(100,(Date.now()-t0)/DUR*100)+"%";},200);
+setInterval(function(){if(!PAUSA&&Date.now()-t0>=DUR-250)irPag(1);},500);
 setInterval(edad,60000);
 
 var LS={get:function(k){try{return localStorage.getItem(k);}catch(e){return null;}},

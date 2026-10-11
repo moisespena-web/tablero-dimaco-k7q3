@@ -73,6 +73,7 @@ function vAvp(){if(!AVP||!AVP.t)return '';var p=AVP.pct,c=p>=70?['#0C3024','#25C
 function nuevo(){return {status:'none',done:0,worked:0,runStart:null,pauseStart:null,paused:0,motivos:[],op:null,tramoStart:null,log:[]};}
 var TIPOS=[["Tipo 1",["Corte","Limpieza & SQA"],"#17A67F"],["Tipo 2",["Corte","Taladro","Limpieza & SQA"],"#3E8FD8"],["Tipo 3",["Corte","Taladro","Doblez","Limpieza & SQA"],"#7C74D6"],["Tipo 4",["Corte","CNC","Limpieza & SQA"],"#D1663C"],["Tipo 5",["Corte","CNC","Doblez","Limpieza & SQA"],"#D19A2E"]];
 var DATA=@@DATA@@;
+var MICOL={'Corte':'#5AB0FF','Taladro':'#B79CFF','TM-2P':'#FF7EB6','Doblez':'#C9E24F','Limpieza & SQA':'#3FD9D9'}[MAQ]||'#8A93A6';
 var DIAS=['domingo','lunes','martes','miércoles','jueves','viernes','sábado'],MESES=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'],MES3=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
 function E(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
 function pad(n){return (n<10?'0':'')+n;}
@@ -85,12 +86,16 @@ function diaTxt(k){var p=k.split('-'),d=new Date(+p[0],+p[1]-1,+p[2]);return DIA
 function fechaCorta(iso){var p=iso.split('-');return (+p[2])+'-'+MES3[+p[1]-1];}
 function tipoDe(ruta){var n=ruta.map(function(r){return {'TM-2P':'CNC','Limpieza':'Limpieza & SQA'}[r[0]]||r[0];}).sort().join('|');
  for(var i=0;i<TIPOS.length;i++){if(TIPOS[i][1].slice().sort().join('|')===n)return [TIPOS[i][0].toUpperCase(),TIPOS[i][2]];}return ['MIXTO','#8A93A6'];}
+/* Color fijo por estación (Moisés, 11-oct-2026; los mismos de la TV) */
+var CEST={'Corte':'#5AB0FF','Taladro':'#B79CFF','TM-2P':'#FF7EB6','Doblez':'#C9E24F','Limpieza':'#3FD9D9'};
+function cest(n){return CEST[n]||'#8A93A6';}
 function esCu(k){return k.cu!=null?!!k.cu:/\bCU\b/i.test(k.nombre||'');}
 function fondo(m){return m.prio?'#2A2F3A':(m.cu?'#3B2516':'#121C29');}
 function borde(m){return m.prio?'2px solid #EAF1F9':(m.cu?'2px solid #D9773F':'1px solid #22344A');}
 function cuPill(m){return m.cu&&!m.prio?' <b class="pill" style="background:#D9773F">CU</b>':'';}
 function armar(k){var t=tipoDe(k.ruta),hoy=diaKey(Date.now()),venc=k.deadline<hoy;
- return Object.assign({},k,{cu:esCu(k),tipo:t[0],color:t[1],entrega:fechaCorta(k.ent),venc:venc,badge:venc?'VENCIDA '+fechaCorta(k.deadline):(k.prio?'URGE':''),st:nuevo()});}
+ var ea=(k.ruta.filter(function(r){return r[1]!=='done';})[0]||[null])[0];
+ return Object.assign({},k,{cu:esCu(k),tipo:t[0],color:ea?cest(ea):'#25C083',estAct:ea,entrega:fechaCorta(k.ent),venc:venc,badge:venc?'VENCIDA '+fechaCorta(k.deadline):(k.prio?'URGE':''),st:nuevo()});}
 var S={opSel:null,pin:'',pinErr:'',pinChk:false,pantalla:'lista',sel:0,modal:null,fin:'',finErr:'',pendiente:null,zoom:1,tramos:[],resDia:null,cola:[],tReal:{},errores:[],sync:'off',cod:'',conxMsg:'',stK:{},mos:DATA.map(armar)};
 
 function cur(){return S.mos[S.sel];}
@@ -220,7 +225,7 @@ function cargarCola(){if(!enLinea())return Promise.resolve();
 /* ================================ VISTAS ================================ */
 function vHeader(){var ef=maquinaHoy(),p=Math.min(100,Math.round(100*ef/(CAPDIA*3600000))),c=semaforo(p);
  return '<div class="hdr">'+(LOGO?'<img id="logo" '+act('logo')+' src="'+LOGO+'" alt="DIMACO">':'<div class="logoTxt" '+act('logo')+'>DIMACO</div>')+
- '<div style="flex-grow:1;min-width:0"><div style="font-size:19px;font-weight:800;white-space:nowrap">Estación @@TITH@@</div>'+
+ '<div style="flex-grow:1;min-width:0;border-left:6px solid '+MICOL+';padding-left:10px"><div style="font-size:19px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Estación <span style="color:'+MICOL+'">@@TITH@@</span></div>'+
  '<div style="font-size:12px;color:var(--tx2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+E(opAct())+' · <b style="color:'+syncTxt()[1]+'">'+E(syncTxt()[0])+'</b></div></div>'+
  '<div style="text-align:right;flex:none"><div class="mono" id="reloj" style="font-size:24px;line-height:1">'+hm(Date.now())+'</div><div style="font-size:11px;color:var(--tx2)">'+fecha()+'</div></div></div>'+
  '<div class="kpi" style="margin-top:8px;border-color:'+c[1]+';background:'+c[0]+';display:flex;justify-content:space-between;align-items:baseline"><span class="lbl">@@KPI@@ HOY · TIEMPO EFECTIVO</span><span><b class="mono" id="efect" style="font-size:19px;color:'+c[2]+'">'+dur(ef)+'</b> <span class="ks">de '+String(CAPDIA).replace('.',',')+' h · <b style="color:'+c[2]+'">'+p+'%</b></span></span>'+
@@ -244,7 +249,7 @@ function vLista(){
   return (m.espera&&(!i||!S.mos[i-1].espera)?'<div class="lbl" style="margin:14px 0 6px">TODAVÍA EN MÁQUINA · TE VAN A LLEGAR</div>':'')+'<button type="button" class="fila" '+act('abrir',i)+' style="'+(m.espera?'opacity:.55;':'')+'background:'+fondo(m)+';border:'+borde(m)+';border-left:7px solid '+m.color+'">'+
   '<div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px"><span class="mono" style="font-size:24px;font-weight:700">'+m.mo+cuPill(m)+'</span>'+
   '<span style="text-align:right"><b style="font-size:17px">'+m.entrega+'</b> '+badge(m)+'</span></div>'+
-  '<div style="font-size:12px;color:var(--tx2);margin:2px 0 4px">#'+m.sec+' <b class="pill" style="background:'+m.color+'">'+m.tipo+'</b>'+(m.so?' · <b>'+E(m.so)+'</b>':'')+(m.espera?' · <b style="color:#FFC45C">aún en '+E(m.espera)+'</b>':'')+'</div>'+
+  '<div style="font-size:12px;color:var(--tx2);margin:2px 0 4px">#'+m.sec+(m.estAct?' · está en <b style="color:'+m.color+'">'+E(m.estAct)+'</b>':'')+''+(m.so?' · <b>'+E(m.so)+'</b>':'')+(m.espera?' · <b style="color:#FFC45C">aún en '+E(m.espera)+'</b>':'')+'</div>'+
   '<div style="font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+E(m.nombre)+'</div>'+
   '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;gap:6px"><span class="mono sku">'+m.sku+'</span><span style="text-align:right;white-space:nowrap"><span class="ks">Faltan </span><b style="font-size:22px">'+fmtN(m.piezas)+'</b><span class="ks"> de '+fmtN(m.plan)+'</span></span></div>'+barraPz(m)+
   '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:7px"><span class="st" style="'+estStyM(m)+'">'+E(estTxtM(m))+'</span>'+
@@ -255,14 +260,14 @@ function vDetalle(){var m=cur(),st=m.st,falt=Math.max(0,m.piezas-hz(m)),tramo=st
  var noStart=!(st.status==='none'||st.status==='pausa'),noPausa=st.status!=='prog',noFin=!(st.status==='prog'||st.status==='pausa');
  var ruta=m.ruta.map(function(r){var est=r[2]?(st.status==='done'?'done':(st.status==='none'?(r[1]||'none'):(st.status==='pausa'?'pausa':'prog'))):r[1];
   var c={done:['#0E3628','#1B7A56','#7FE3BC','✓ '],prog:['#3A2A0C','#8A6413','#FFD37A','● '],pausa:['#2A1418','#7A2A2E','#FFB3B6','Ⅱ '],none:['#0E1723','#22344A','#8FA3BA','']}[est]||['#0E1723','#22344A','#8FA3BA',''];
-  return '<div class="rt" style="background:'+c[0]+';border:'+(r[2]?'2px solid #EAF1F9':'1px solid '+c[1])+';color:'+c[2]+'">'+c[3]+E(r[0])+'</div>';}).join('');
+  return '<div class="rt" style="background:'+c[0]+';border:'+(r[2]?'2px solid #EAF1F9':'1px solid '+c[1])+';border-top:3px solid '+cest(r[0])+';color:'+c[2]+'">'+c[3]+'<span style="color:'+cest(r[0])+';font-weight:700">'+E(r[0])+'</span></div>';}).join('');
  var quien=st.status==='pausa'?'En pausa: '+(st.motivos[st.motivos.length-1]||''):(st.status==='prog'?'Trabajando: '+(st.op||OPERADOR):'');
  return '<div style="display:flex;align-items:center;gap:10px;margin:10px 0">'+
   '<button type="button" class="sec" style="font-weight:700" '+act('volver')+'>← Regresar</button>'+
   '<div style="flex-grow:1;text-align:right"><b style="font-size:18px">'+m.entrega+'</b> '+badge(m)+'</div></div>'+
  '<div class="card" style="padding:12px;background:'+fondo(m)+';border:'+borde(m)+';border-left:7px solid '+m.color+'">'+
   '<div style="display:flex;justify-content:space-between;align-items:baseline"><span class="mono" style="font-size:30px;font-weight:700">'+m.mo+cuPill(m)+'</span><span><span class="ks">Faltan </span><b style="font-size:26px">'+fmtN(m.piezas)+'</b><span class="ks"> de '+fmtN(m.plan)+'</span></span></div>'+
-  '<div style="font-size:12px;color:var(--tx2);margin:2px 0 6px">#'+m.sec+' <b class="pill" style="background:'+m.color+'">'+m.tipo+'</b></div>'+
+  '<div style="font-size:12px;color:var(--tx2);margin:2px 0 6px">#'+m.sec+(m.estAct?' · está en <b style="color:'+m.color+'">'+E(m.estAct)+'</b>':'')+'</div>'+
   '<div style="font-size:17px">'+E(m.nombre)+'</div><div style="margin-top:6px"><span class="mono sku">'+m.sku+'</span></div></div>'+
  '<div class="card" style="padding:12px;margin-top:10px">'+
   '<div style="display:flex;justify-content:space-between;align-items:center"><span class="lbl">TU OPERACIÓN</span><span class="st" style="'+estStyM(m)+'">'+E(estTxtM(m))+'</span></div>'+

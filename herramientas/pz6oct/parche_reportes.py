@@ -159,3 +159,8 @@ import runpy as _rp
 _bk=sys.argv[:]; sys.argv=[_bk[0],D]
 _rp.run_path(os.path.join(os.path.dirname(os.path.abspath(__file__)),'..','material_surtido','parche_surtido.py'),run_name='__main__')
 sys.argv=_bk
+
+# ===== 4a parte (Moisés, 11-oct-2026 · COLOR11OCT): color fijo por estación y sin TIPOS, igual que TV y tabletas =====
+_bk=sys.argv[:]; sys.argv=[_bk[0],D]
+_rp.run_path(os.path.join(os.path.dirname(os.path.abspath(__file__)),'parche_colores.py'),run_name='__main__')
+sys.argv=_bk
