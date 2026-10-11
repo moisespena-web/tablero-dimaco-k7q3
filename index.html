@@ -533,7 +533,8 @@ var HEAD='<div class="row head"><div class="stripe"></div><div class="mo">ORDEN<
  '</div><div class="dl">LÍMITE</div></div>';
 
 var datos=null, pagina=0, t0=Date.now();
-var LEYT='<span class="leyt">'+TIPOS.map(function(t){return '<span><b class="tpill" style="background:'+t[2]+'">'+t[0].toUpperCase()+'</b> '+t[1].filter(function(o){return o!=="Limpieza & SQA";}).map(function(o){return {"Corte":"Corte","Taladro":"Taladro","CNC":"TM-2P","Doblez":"Doblez"}[o];}).join(" + ")+'</span>';}).join("")+'<span><b class="tpill" style="background:#8A93A6">MIXTO</b> Ruta especial</span><span style="color:#8FA3BA;font-style:italic">· Todas terminan en Limpieza &amp; SQA</span><span><b class="tpill cu">COBRE</b> va primero en su entrega</span></span>';
+/* Moisés 11-oct-2026: se quitó la leyenda de TIPOS (todos saben que va Corte → estaciones → Limpieza & SQA); solo queda la de cobre */
+var LEYT='<span class="leyt"><span><b class="tpill cu">COBRE</b> va primero en su entrega</span></span>';
 var MESL=["ENERO","FEBRERO","MARZO","ABRIL","MAYO","JUNIO","JULIO","AGOSTO","SEPTIEMBRE","OCTUBRE","NOVIEMBRE","DICIEMBRE"];
 var CU="#D9773F",AL="#8FA6BA";
 function nf(n){return Math.round(n).toLocaleString("en-US");}
