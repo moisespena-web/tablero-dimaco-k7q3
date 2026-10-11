@@ -89,6 +89,8 @@ def sol(m):
 def unidad(uom,n):
     if uom=='in': return 'solera' if n==1 else 'soleras'
     return {'hoja':'hoja','hojas':'hoja'}.get(uom,uom or 'pz')+('' if n==1 or not uom else ('s' if not (uom or '').endswith('s') else ''))
+# COLOR11OCT · color fijo por estación (Moisés 11-oct-2026: lo de la TV va en todo; tono oscuro para papel)
+CEST_P={'Corte':'#1F6FD1','Taladro':'#6E4BD8','TM-2P':'#D6337F','Doblez':'#6F8C00','Limpieza & SQA':'#0E9C9C','Limpieza':'#0E9C9C'}
 def hoja(app,est,proy,out,hoy,hora):
     COLS=COLS0 if est!='Corte' else [x if x[0]!='Operación' else ('Solera a pedir',112) for x in COLS0]
     SURT=surtido() if est=='Corte' else {}; ped={}
@@ -103,7 +105,8 @@ def hoja(app,est,proy,out,hoy,hora):
         pag[0]+=1; y=H-28
         if LOGO:
             iw,ih=LOGO.getSize(); c.drawImage(LOGO,x0,y-30,width=34*iw/ih,height=34,mask='auto')
-        c.setFillColor(INK); c.setFont('Helvetica-Bold',17); c.drawCentredString(W/2,y-8,'Hoja de avance · Estación %s'%est)
+        t1='Hoja de avance · Estación '; w1=c.stringWidth(t1,'Helvetica-Bold',17); w2=c.stringWidth(est,'Helvetica-Bold',17); xt=W/2-(w1+w2)/2
+        c.setFillColor(INK); c.setFont('Helvetica-Bold',17); c.drawString(xt,y-8,t1); c.setFillColor(colors.HexColor(CEST_P.get(est,'#1F2A37'))); c.drawString(xt+w1,y-8,est)
         c.setFont('Helvetica',9); c.setFillColor(MUT); c.drawCentredString(W/2,y-21,'%s · MOs de Katana al %s %s · hoja %d'%(proy,hoy,hora,pag[0]))
         c.setFillColor(INK); c.setFont('Helvetica',10)
         c.drawRightString(x0+TW,y-6,'Fecha: ____ / ____ / ______'); c.drawRightString(x0+TW,y-22,'Operador: ______________________')
@@ -112,7 +115,7 @@ def hoja(app,est,proy,out,hoy,hora):
         c.drawString(x0,y,'"Faltan X de Y" = lo que falta entregar de la MO, igual que en Katana, la TV y la estación.')
         y-=8
         xs=x0
-        c.setFillColor(colors.HexColor('#1F2A37')); c.rect(x0,y-15,TW,15,stroke=0,fill=1); c.setFillColor(colors.white); c.setFont('Helvetica-Bold',7.6)
+        c.setFillColor(colors.HexColor(CEST_P.get(est,'#1F2A37'))); c.rect(x0,y-15,TW,15,stroke=0,fill=1); c.setFillColor(colors.white); c.setFont('Helvetica-Bold',7.6)
         for (h,_),w in zip(COLS,ws): c.drawCentredString(xs+w/2,y-10.5,h); xs+=w
         return y-15
     y=cab()
