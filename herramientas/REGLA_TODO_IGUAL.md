@@ -20,3 +20,6 @@ y la copia de la TV en el artifact de Claude.
 - Ya no hay TIPOS (Corte → estaciones → Limpieza & SQA lo sabe todo mundo). Solo queda la nota de COBRE.
 - La TV lleva la franja de flujo: por estación MOs, piezas en espera, % de avance, alertas (vencidas, CU) y "MÁS ATRASADA".
 - La TV tiene ◀ ⏸ ▶ (pausa se quita sola a los 5 min).
+
+## Hojas de avance: Taladro y TM-2P en una sola hoja (Moisés, 11-oct-2026, regla)
+Misma área de trabajo y mismo líder/responsable (Fernando): una sola hoja "Hoja de avance - Taladro y TM-2P_FS.pdf". Cada renglón trae la operación en el color de su estación (Taladro lila, TM-2P rosa). Ya no se generan hojas separadas de Taladro ni de TM-2P.
