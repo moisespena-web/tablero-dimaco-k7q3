@@ -164,3 +164,7 @@ sys.argv=_bk
 _bk=sys.argv[:]; sys.argv=[_bk[0],D]
 _rp.run_path(os.path.join(os.path.dirname(os.path.abspath(__file__)),'parche_colores.py'),run_name='__main__')
 sys.argv=_bk
+# ===== 5a parte (11-oct-2026 · DL11OCT): choque de nombre `dl` que tumbaba la reposición =====
+_bk=sys.argv[:]; sys.argv=[_bk[0],D]
+_rp.run_path(os.path.join(os.path.dirname(os.path.abspath(__file__)),'parche_dl.py'),run_name='__main__')
+sys.argv=_bk
