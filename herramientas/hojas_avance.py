@@ -1,5 +1,5 @@
 """Hojas de avance para anotar a pluma (temporal, pedido de Moisés 6-oct-2026) — una por estación MAFESA
-(Corte, Taladro, TM-2P, Doblez, Limpieza & SQA), con las MOs que muestra cada app de estación.
+(Corte, Taladro y TM-2P en una sola hoja, Doblez, Limpieza & SQA), con las MOs que muestra cada app de estación.
 Uso: python3 hojas_avance.py --repo <clon de tablero-dimaco-k7q3> --out <carpeta> --fs DD-MM_HH-MM [--racks]
 Correr DESPUÉS de actualizar las estaciones (regla 22:00, paso 3) para que salgan con las MOs de ese corte.
 Archivos: "Hoja de avance - <Estación>_<FS>.pdf". Racks solo con --racks (por ahora Moisés pidió solo MAFESA)."""
@@ -15,7 +15,8 @@ try:
 except Exception as e: LOGO=None; print('sin logo',e)
 AP=argparse.ArgumentParser(); AP.add_argument('--repo',default='/home/claude/tablero-dimaco-k7q3'); AP.add_argument('--out',default='/home/claude/hojas/out'); AP.add_argument('--fs',default=''); AP.add_argument('--racks',action='store_true')
 ARGS=AP.parse_args(); REPO=ARGS.repo
-EST=[('app-corte','Corte','MAFESA'),('app-taladro','Taladro','MAFESA'),('app-tm2p','TM-2P','MAFESA'),('app-doblez','Doblez','MAFESA'),('app-limpieza','Limpieza & SQA','MAFESA'),
+# TALTM11OCT (Moisés, 11-oct-2026, regla): Taladro y TM-2P van en UNA sola hoja — misma área y mismo líder (Fernando).
+EST=[('app-corte','Corte','MAFESA'),('app-taladro+app-tm2p','Taladro y TM-2P','MAFESA'),('app-doblez','Doblez','MAFESA'),('app-limpieza','Limpieza & SQA','MAFESA'),
      ('app-habilitado','Habilitado','RACKS'),('app-laser','Láser y Router','RACKS'),('app-armado1','Armado y Soldadura 1','RACKS'),('app-pintura','Pintura','RACKS'),('app-vestido','Rotulado y Vestido','RACKS')]
 MES=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic']
 def arr(t,key):
@@ -94,8 +95,13 @@ CEST_P={'Corte':'#1F6FD1','Taladro':'#6E4BD8','TM-2P':'#D6337F','Doblez':'#6F8C0
 def hoja(app,est,proy,out,hoy,hora):
     COLS=COLS0 if est!='Corte' else [x if x[0]!='Operación' else ('Solera a pedir',112) for x in COLS0]
     SURT=surtido() if est=='Corte' else {}; ped={}
-    t=open('%s/%s/index.html'%(REPO,app)).read()
-    mos=arr(t,'var DATA=[') if 'var DATA=[' in t else arr(t[t.index('mos:[{'):],'mos:[')
+    mos=[]; apps=app.split('+')
+    for a_ in apps:
+        t=open('%s/%s/index.html'%(REPO,a_)).read()
+        ms=arr(t,'var DATA=[') if 'var DATA=[' in t else arr(t[t.index('mos:[{'):],'mos:[')
+        for m_ in ms: m_['_est']='TM-2P' if a_=='app-tm2p' else ('Taladro' if a_=='app-taladro' else est)
+        mos+=ms
+    if len(apps)>1: mos.sort(key=lambda m_:(int(m_.get('sec') or 999),m_['_est']!='TM-2P'))   # orden de la TV; en la misma MO primero TM-2P
     _pie=re.search(r'MOs de Katana al ([0-9]{1,2}-[a-z]{3}) ([0-9]{1,2}:[0-9]{2})',t)   # la hora del corte de datos, no la de impresión
     if _pie: hoy,hora=_pie.group(1),_pie.group(2)
     c=canvas.Canvas(out,pagesize=(W,H)); c.setTitle('Hoja de avance · '+est)
@@ -105,8 +111,9 @@ def hoja(app,est,proy,out,hoy,hora):
         pag[0]+=1; y=H-28
         if LOGO:
             iw,ih=LOGO.getSize(); c.drawImage(LOGO,x0,y-30,width=34*iw/ih,height=34,mask='auto')
-        t1='Hoja de avance · Estación '; w1=c.stringWidth(t1,'Helvetica-Bold',17); w2=c.stringWidth(est,'Helvetica-Bold',17); xt=W/2-(w1+w2)/2
-        c.setFillColor(INK); c.setFont('Helvetica-Bold',17); c.drawString(xt,y-8,t1); c.setFillColor(colors.HexColor(CEST_P.get(est,'#1F2A37'))); c.drawString(xt+w1,y-8,est)
+        t1='Hoja de avance · Estación '; partes=[(t1,INK)]+([('Taladro',colors.HexColor(CEST_P['Taladro'])),(' y ',INK),('TM-2P',colors.HexColor(CEST_P['TM-2P']))] if est=='Taladro y TM-2P' else [(est,colors.HexColor(CEST_P.get(est,'#1F2A37')))])
+        xt=W/2-sum(c.stringWidth(p_,'Helvetica-Bold',17) for p_,_ in partes)/2; c.setFont('Helvetica-Bold',17)
+        for p_,col_ in partes: c.setFillColor(col_); c.drawString(xt,y-8,p_); xt+=c.stringWidth(p_,'Helvetica-Bold',17)
         c.setFont('Helvetica',9); c.setFillColor(MUT); c.drawCentredString(W/2,y-21,'%s · MOs de Katana al %s %s · hoja %d'%(proy,hoy,hora,pag[0]))
         c.setFillColor(INK); c.setFont('Helvetica',10)
         c.drawRightString(x0+TW,y-6,'Fecha: ____ / ____ / ______'); c.drawRightString(x0+TW,y-22,'Operador: ______________________')
@@ -115,17 +122,22 @@ def hoja(app,est,proy,out,hoy,hora):
         c.drawString(x0,y,'"Faltan X de Y" = lo que falta entregar de la MO, igual que en Katana, la TV y la estación.')
         y-=8
         xs=x0
-        c.setFillColor(colors.HexColor(CEST_P.get(est,'#1F2A37'))); c.rect(x0,y-15,TW,15,stroke=0,fill=1); c.setFillColor(colors.white); c.setFont('Helvetica-Bold',7.6)
+        if est=='Taladro y TM-2P':
+            c.setFillColor(colors.HexColor(CEST_P['Taladro'])); c.rect(x0,y-15,TW/2,15,stroke=0,fill=1); c.setFillColor(colors.HexColor(CEST_P['TM-2P'])); c.rect(x0+TW/2,y-15,TW/2,15,stroke=0,fill=1)
+        else: c.setFillColor(colors.HexColor(CEST_P.get(est,'#1F2A37'))); c.rect(x0,y-15,TW,15,stroke=0,fill=1)
+        c.setFillColor(colors.white); c.setFont('Helvetica-Bold',7.6)
         for (h,_),w in zip(COLS,ws): c.drawCentredString(xs+w/2,y-10.5,h); xs+=w
         return y-15
     y=cab()
     for i,m in enumerate(mos,1):
         if y-RH<40:
             c.showPage(); y=cab()
-        plan,e,h,f,sig=pz(m)
+        plan,e,h,f,sig=pz(m); er=m.get('_est',est)
         if m.get('prio'): c.setFillColor(colors.HexColor('#F7E2DC')); c.rect(x0,y-RH,TW,RH,stroke=0,fill=1)
         xs=x0; ty=y-11
-        vals=[str(i),m['mo'],m.get('sku') or '—',m.get('nombre',''),m.get('paso') or m.get('opName') or '',fd(m.get('ent') or m.get('deadline') or '')]
+        op_=m.get('paso') or m.get('opName') or ''
+        # TM-2P se distingue por color (rosa) — la columna es angosta para anteponer "TM-2P"
+        vals=[str(i),m['mo'],m.get('sku') or '—',m.get('nombre',''),op_,fd(m.get('ent') or m.get('deadline') or '')]
         fonts=[('Helvetica',8),('Helvetica-Bold',8.4),('Courier-Bold',7.6),('Helvetica',7.8),('Helvetica',7.4),('Helvetica-Bold',8)]
         for k,(v,(fn,fs)) in enumerate(zip(vals,fonts)):
             if est=='Corte' and k==4:
@@ -141,7 +153,7 @@ def hoja(app,est,proy,out,hoy,hora):
                         c.setFont('Helvetica',6.2); c.setFillColor(MUT); c.drawString(xs+5+pdfmetrics.stringWidth(a_,'Helvetica-Bold',8.4),y-21,ell(c,'(%s %s)'%(f"{tot:,.1f}".rstrip('0').rstrip('.'),uom),'Helvetica',6.2,40)); c.setFillColor(INK)
                         q=ped.setdefault(sku,[0.0,uom,[]]); q[0]+=tot; q[2].append(m['mo'])
                 xs+=ws[k]; continue
-            c.setFillColor(INK); c.setFont(fn,fs); c.drawString(xs+3,ty,ell(c,v,fn,fs,ws[k]-6)); xs+=ws[k]
+            c.setFillColor(colors.HexColor(CEST_P.get(er,'#1F2A37')) if k==4 else INK); c.setFont('Helvetica-Bold' if k==4 else fn,fs); c.drawString(xs+3,ty,ell(c,v,'Helvetica-Bold' if k==4 else fn,fs,ws[k]-6)); xs+=ws[k]
         if m.get('prio'): c.setFont('Helvetica-Bold',6.4); c.drawString(x0+sum(ws[:1])+3,y-21,'URGE')
         # Faltan X de Y + mini barra
         w=ws[6]; a_=f"{plan-e:,}"; b_=f" de {plan:,}"
@@ -154,7 +166,7 @@ def hoja(app,est,proy,out,hoy,hora):
         c.setFillColor(INK)
         if e or h:
             c.setFont('Helvetica',5.6); c.setFillColor(MUT)
-            txt=(f"{e:,} entregadas · " if e else '')+(f"{h:,} ya {HECHO.get(est,'hechas')}"+(f" → {sig}" if sig else '')+" · " if h else '')+f"{f:,} {PORH.get(est,'por hacer')}"
+            txt=(f"{e:,} entregadas · " if e else '')+(f"{h:,} ya {HECHO.get(er,'hechas')}"+(f" → {sig}" if sig else '')+" · " if h else '')+f"{f:,} {PORH.get(er,'por hacer')}"
             c.drawString(x0+sum(ws[:3])+3,y-RH+5,ell(c,txt,'Helvetica',5.6,ws[3]+ws[4]-6)); c.setFillColor(INK)
         xs+=w
         # casillas para escribir
