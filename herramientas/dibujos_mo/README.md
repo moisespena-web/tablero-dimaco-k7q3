@@ -13,12 +13,17 @@ y se le manda por correo.
 - `dibujos_mo.py armar` / `registrar` — ver el encabezado del script.
 
 ## SKU nuevo sin recorte (solo con la iMac encendida)
-Los planos están en `/Moises Peña/Carpeta del equipo DIMACO METALMECANICA/MAFESA/Dibujos MAFESA` (un PDF por número de
-plano: la parte antes del guion del SKU; a veces `AutoVue - _<plano>.dwg.pdf` o `<plano>-REVn.pdf`; si hay varios, el de
-revisión más alta). La regla solo tiene acceso por la iMac a `Dimaco/Mafesa`, así que:
-1. Dropbox `copy` del plano a `/Moises Peña/Dimaco/Mafesa/Dibujos MAFESA (copia)/` (crear la carpeta si falta; no borrar el original).
-2. `device_stage_files` de esa copia, `pdftoppm -r 300`, mirar la hoja (Read de un PNG a 80 dpi) y ubicar la vista de la parte
-   (número después del guion: -0005 = P.5; en planos de tabla, la FIG. que dice su renglón). Si la parte trae vista de doblez
-   aparte, recortarla también como `-2`.
+REGLA (Moisés, 11-oct-2026): los planos de MAFESA se toman SIEMPRE de la carpeta central, sin copiarlos a ningún otro lado
+("lo que no quiero es que haya planos por aquí y por allá"):
+`/Moises Peña/Carpeta del equipo DIMACO METALMECANICA/MAFESA/Dibujos MAFESA` (en la iMac:
+`/Users/moisespena/Library/CloudStorage/Dropbox-Dimaco2022/Moises Peña/Carpeta del equipo DIMACO METALMECANICA/MAFESA/Dibujos MAFESA`).
+Un PDF por número de plano (la parte antes del guion del SKU; a veces `AutoVue - _<plano>.dwg.pdf` o `<plano>-REVn.pdf`;
+si hay varios, el de revisión más alta).
+1. `device_stage_files` del plano DIRECTO de esa carpeta (la tarea debe tenerla entre sus carpetas). NO usar Dropbox `copy`
+   ni la carpeta vieja "Dibujos MAFESA (copia)".
+2. `pdftoppm -r 300`, mirar la hoja (Read de un PNG a 80 dpi) y ubicar la vista de la parte (número después del guion:
+   -0005 = P.5; en planos de tabla, la FIG. que dice su renglón). Si la parte trae vista de doblez aparte, recortarla también como `-2`.
 3. Guardar en `recortes/` (gris, máx. 1800 px de ancho), agregar la entrada a `catalogo.json` y revisar el recorte a ojo.
+4. Si el SKU está en alguna estación y no tiene dibujo, agregar también a `piezas-extra.js` (vista + renglón de la tabla en
+   amarillo) y subir el `?v=` en la plantilla y las 5 estaciones.
 Sin iMac: la MO sale con "Sin recorte de plano" y no se registra; vuelve a salir la noche siguiente.
