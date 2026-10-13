@@ -5,6 +5,9 @@
 > y en las otras 4 (Corte, Taladro, TM-2P, Doblez) `true`. `gen.py` ya lo pone así (CFG `katana`). Si una tarea dice
 > "PAUSA_KATANA=true debe quedar en las 5", esa frase es anterior a esta regla: NO cambies Limpieza a `true`.
 > Los resúmenes por correo ya no aplican nada de Limpieza (ver `herramientas/resumenes_correo/README.md`).
+>
+> **⚠ ALARMA DE PARADA APAGADA (Moisés, 13-oct-2026):** en TODAS las estaciones (las 5 MAFESA y Habilitado, Láser y Router,
+> Pintura, Vestido, Armado 1) `LIM_PARADA=1e12`: no hay letrero, sonido ni WhatsApp de "estación parada". No la reactives sin que Moisés lo pida.
 
 Pedido de Moisés: Corte, Taladro, TM-2P, Doblez y Limpieza & SQA funcionan igual y en formato teléfono.
 
