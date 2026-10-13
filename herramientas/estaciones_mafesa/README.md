@@ -1,5 +1,11 @@
 # Estaciones MAFESA — las 5 iguales (6-oct-2026)
 
+> **⚠ LIMPIEZA EN VIVO (Moisés, 13-oct-2026) — manda sobre cualquier instrucción anterior:** la Estación Limpieza & SQA
+> está conectada a Katana en vivo (Cynthia, iPhone). En `app-limpieza/index.html` debe quedar `var PAUSA_KATANA=false;`
+> y en las otras 4 (Corte, Taladro, TM-2P, Doblez) `true`. `gen.py` ya lo pone así (CFG `katana`). Si una tarea dice
+> "PAUSA_KATANA=true debe quedar en las 5", esa frase es anterior a esta regla: NO cambies Limpieza a `true`.
+> Los resúmenes por correo ya no aplican nada de Limpieza (ver `herramientas/resumenes_correo/README.md`).
+
 Pedido de Moisés: Corte, Taladro, TM-2P, Doblez y Limpieza & SQA funcionan igual y en formato teléfono.
 
 - **Base:** la plantilla de teléfono (la más completa: avisos de Moisés, alarma de estación parada con WhatsApp, "lista para…/espera", sonido, pantalla siempre encendida, Faltan X de total con barra).
