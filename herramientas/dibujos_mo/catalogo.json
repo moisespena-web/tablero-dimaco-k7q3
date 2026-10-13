@@ -235,5 +235,143 @@
   "imgs": [
    "36B9157-0021-1.png"
   ]
+ },
+ "37A12458-0001": {
+  "desc": "TERMINAL .250 x 3.000 x 9.250",
+  "plano": "6 barrenos (4 de .563 + 2 de .228) · 2 dobleces (N.S. y F.S.)",
+  "ref": "37A12458 · P.1",
+  "nota": "",
+  "imgs": [
+   "37A12458-0001-1.png"
+  ]
+ },
+ "37A9755-0004": {
+  "desc": "SHIM CU .250 x 2.000 x 2.000",
+  "plano": "1 barreno .438 · sin doblez",
+  "ref": "37A9755 · parte 4",
+  "nota": "",
+  "imgs": [
+   "37A9755-0004-1.png"
+  ]
+ },
+ "37A10093-0002": {
+  "desc": "NEUTRAL BAR .500 x 4.000 x 24.500",
+  "plano": "4 barrenos .563 · sin doblez",
+  "ref": "37A10093 · P.2",
+  "nota": "",
+  "imgs": [
+   "37A10093-0002-1.png"
+  ]
+ },
+ "37A10786A-0007": {
+  "desc": "LINK .250 x .750 x 19.125",
+  "plano": "sin barrenos · 4 dobleces (bend diagram P.3, 6-9)",
+  "ref": "37A10786A · P.7 + bend diagram",
+  "nota": "",
+  "imgs": [
+   "37A10786A-0007-1.png",
+   "37A10786A-0007-2.png"
+  ]
+ },
+ "37A14255-0002": {
+  "desc": "NEU. TERM. .250 x 3.000 x 12.750",
+  "plano": "4 barrenos (2 de .563 + 2 de .228) · 1 doblez a 90°",
+  "ref": "37A14255 · P.2 + vista doblada",
+  "nota": "",
+  "imgs": [
+   "37A14255-0002-1.png",
+   "37A14255-0002-2.png"
+  ]
+ },
+ "37A14310-0001": {
+  "desc": "CONN. BAR .250 x 1.500 x 25.500",
+  "plano": "6 barrenos .313 · sin doblez",
+  "ref": "37A14310 · P.1",
+  "nota": "",
+  "imgs": [
+   "37A14310-0001-1.png"
+  ]
+ },
+ "37A12202-0001": {
+  "desc": "XO TERM .250 x .750 x 4.875",
+  "plano": "2 barrenos (.312 + .228) · 1 doblez N.S. 90°",
+  "ref": "37A12202 · P.1",
+  "nota": "",
+  "imgs": [
+   "37A12202-0001-1.png"
+  ]
+ },
+ "37A12917-0005": {
+  "desc": "TAP PAD .375 x 2.000 x 3.938",
+  "plano": "FIG. 1: 1 barreno 7/16\" · 1 doblez N.S.",
+  "ref": "37A12917 · FIG. 1, parte 5",
+  "nota": "",
+  "imgs": [
+   "37A12917-0005-1.png"
+  ]
+ },
+ "36B6788-0003": {
+  "desc": "H.V. BAR .250 x 1.500 x 6.062",
+  "plano": "barreno \"J\" + 2 barrenos \"E\" · 1 doblez",
+  "ref": "36B6788 · partes 3-5, parte 3",
+  "nota": "",
+  "imgs": [
+   "36B6788-0003-1.png"
+  ]
+ },
+ "37A14128-0004": {
+  "desc": "NEU. BAR .250 x 1.500 x 19.000",
+  "plano": "sin vista propia en el plano (solo el renglón de la tabla): barra recta sin barrenos",
+  "ref": "37A14128 · tabla, parte 4",
+  "nota": "Revisar: el plano no dibuja la parte 4; Katana la tiene como Corte + Limpieza.",
+  "imgs": [
+   "37A14128-0004-1.png"
+  ]
+ },
+ "37A7525-0004": {
+  "desc": "TERMINAL .500 x 3.000 x 5.500",
+  "plano": "3 barrenos .563 · sin doblez",
+  "ref": "37A7525 · P.4",
+  "nota": "",
+  "imgs": [
+   "37A7525-0004-1.png"
+  ]
+ },
+ "37A9996-0002": {
+  "desc": "X3 BAR .250 x 2.000 x 24.500",
+  "plano": "sin barrenos · sin doblez",
+  "ref": "37A9996 · P.2",
+  "nota": "",
+  "imgs": [
+   "37A9996-0002-1.png"
+  ]
+ },
+ "36B3480-0033": {
+  "desc": "TAP PAD .250 x 1.500 x 3.625",
+  "plano": "FIG. 2 (A 2.125 · B 1.750 · C .563): barrenos + ranura · 1 doblez",
+  "ref": "36B3480 · FIG. 2, parte 33",
+  "nota": "",
+  "imgs": [
+   "36B3480-0033-1.png"
+  ]
+ },
+ "37A7524-0003": {
+  "desc": "TERMINAL .250 x 3.000 x 3.750",
+  "plano": "2 barrenos .563 · sin doblez",
+  "ref": "37A7524 · P.3",
+  "nota": "",
+  "imgs": [
+   "37A7524-0003-1.png"
+  ]
+ },
+ "37A5683-0005": {
+  "desc": "TERMINAL .250 x .750 x 3.563",
+  "plano": "2 barrenos (.312 + .228) · 1 doblez F.S. 90°",
+  "ref": "37A5683 · P.5 + vista doblada",
+  "nota": "",
+  "imgs": [
+   "37A5683-0005-1.png",
+   "37A5683-0005-2.png"
+  ]
  }
 }
