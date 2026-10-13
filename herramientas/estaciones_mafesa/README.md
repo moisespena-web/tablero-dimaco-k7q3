@@ -14,3 +14,9 @@ Pedido de Moisés: Corte, Taladro, TM-2P, Doblez y Limpieza & SQA funcionan igua
 ## Datos
 Las 5 usan el mismo arreglo `var DATA=[...]` (formato Doblez): `mo, sec, nombre, sku, piezas (planeadas), entregadas (completed_quantity), ent, deadline, prio, paso, recurso, planeado, fuenteT, recursoMal, ruta [[estación, done|prog|none, esActual]], ingSku, ingNombre, ingTot, ingUom, notas, hechas, rowId` (+ `so`, `espera` en Limpieza). TM-2P ya NO usa `mos:[...]`.
 La corrida de las 22:00 reemplaza solo `var DATA=[...]` y el texto "MOs de Katana al d-mmm HH:MM" del pie.
+
+## Autorecarga (Moisés, 12-oct-2026)
+"Que las estaciones se recarguen junto con la TV": cada 2 min la estación descarga su propio `index.html` (sin caché) y compara
+el pie "MOs de Katana al ..." con el suyo (`PIE_ACT`, lo pone `gen.py`). Si cambió (la regla publicó MOs nuevas), guarda lo
+capturado y recarga sola. Nunca recarga con una ventana abierta (captura, pausa, PIN): espera a que se cierre.
+Además recarga a las 6:00 (hora de México), igual que la TV. Por eso la regla SIEMPRE debe correr `gen.py` después de cambiar el pie.
