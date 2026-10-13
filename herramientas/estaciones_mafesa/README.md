@@ -19,4 +19,4 @@ La corrida de las 22:00 reemplaza solo `var DATA=[...]` y el texto "MOs de Katan
 "Que las estaciones se recarguen junto con la TV": cada 2 min la estación descarga su propio `index.html` (sin caché) y compara
 el pie "MOs de Katana al ..." con el suyo (`PIE_ACT`, lo pone `gen.py`). Si cambió (la regla publicó MOs nuevas), guarda lo
 capturado y recarga sola. Nunca recarga con una ventana abierta (captura, pausa, PIN): espera a que se cierre.
-Además recarga a las 18:40 (hora de México) (Moisés, 12-oct-2026; antes 6:00). Por eso la regla SIEMPRE debe correr `gen.py` después de cambiar el pie.
+Además recarga a las 7:00, 12:00, 16:00 y 18:40 (hora de México) (Moisés, 12-oct-2026; `HRECARGA` en la plantilla). Por eso la regla SIEMPRE debe correr `gen.py` después de cambiar el pie.
