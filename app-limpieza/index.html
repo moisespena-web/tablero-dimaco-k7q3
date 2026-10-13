@@ -146,7 +146,7 @@ S.mos.forEach(pendEnt);setTimeout(leerTV,800);setInterval(leerTV,120000);   /* T
 /* AUTORECARGA (Moisés, 12-oct-2026: "que las estaciones se recarguen junto con la TV"): cada 2 min revisa si en GitHub hay
    una versión nueva de esta estación (otro "MOs de Katana al ..."); si la hay, guarda lo capturado y recarga sola.
    Nunca recarga con una ventana abierta (captura de piezas, pausa, PIN...): espera a que se cierre. Además recarga a las 7:00, 12:00, 16:00 y 18:40 (hora de México). */
-var PIE_ACT='12-oct 22:37',T0CARGA=Date.now();
+var PIE_ACT='12-oct 23:58',T0CARGA=Date.now();
 function mxHM(){var d=new Date(Date.now()-6*3600000);return {h:d.getUTCHours(),m:d.getUTCMinutes()};}
 function recargar(){if(S.modal)return;try{guardar();}catch(e){}location.reload();}
 function revisarVersion(){fetch(location.pathname+'?v='+Date.now(),{cache:'no-store'}).then(function(r){return r.ok?r.text():'';}).then(function(t){
@@ -181,7 +181,7 @@ function cargar(){try{var j=JSON.parse(localStorage.getItem(KEY)||'null');if(!j)
 /* ============ CONEXIÓN CON KATANA (apagada mientras SRV_URL esté vacío) ============ */
 var SRV_URL='https://dimaco-estaciones.moises-pena.workers.dev';
 var CONX=null;try{CONX=JSON.parse(localStorage.getItem('dimaco_limpieza_conx')||'null');}catch(e){}
-var PAUSA_KATANA=true;   /* PAUSA 8-oct-2026 (Moisés): las estaciones NO se conectan a Katana; solo capturan en la iPad (resumen). Poner false para reactivar. */
+var PAUSA_KATANA=false;   /* PAUSA 8-oct-2026 (Moisés): las estaciones NO se conectan a Katana; solo capturan en la iPad (resumen). Se prende por estación en gen.py (CFG 'katana'). 13-oct-2026: Limpieza & SQA en vivo con Cynthia (prueba). */
 function enLinea(){return !PAUSA_KATANA&&!!(SRV_URL&&CONX&&CONX.codigo);}
 function api(met,ruta,body){return fetch(SRV_URL.replace(/\/$/,'')+ruta,{method:met,headers:{'X-Tablet':CONX.codigo,'Content-Type':'application/json'},body:body?JSON.stringify(body):undefined,cache:'no-store'})
  .then(function(r){return r.json().catch(function(){return {ok:false,error:'HTTP '+r.status};}).then(function(j){j._status=r.status;return j;});});}

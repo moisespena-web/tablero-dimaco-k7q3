@@ -1,6 +1,12 @@
 # Resúmenes de estaciones por correo → Katana (Moisés, 8-oct-2026)
 
-Las 5 estaciones MAFESA (Corte, Taladro, TM-2P, Doblez, Limpieza & SQA) tienen `PAUSA_KATANA=true`: NO se conectan a Katana, solo capturan en la iPad.
+Corte, Taladro, TM-2P y Doblez tienen `PAUSA_KATANA=true`: NO se conectan a Katana, solo capturan en la iPad.
+
+**EXCEPCIÓN LIMPIEZA EN VIVO (Moisés, 13-oct-2026):** desde el 13-oct-2026 la Estación Limpieza & SQA está conectada a Katana EN VIVO
+(`PAUSA_KATANA=false`, la opera Cynthia en su iPhone): cada START / PAUSA / FIN ya escribe en Katana por el servidor de Cloudflare.
+Por eso los resúmenes NO aplican nada de Limpieza: ignora el correo "RESUMEN LIMPIEZA" y cualquier renglón "· Limpieza ·"
+(fechas 13/10/2026 en adelante). Si aparece, solo menciónalo como duda ("Limpieza ya va en vivo; no se aplicó"). Nunca toques
+la operación Limpieza & SQA ni el renglón "Limpieza" de las notas desde esta regla.
 Lupita (Corte, Taladro, TM-2P, Limpieza) y Miguel (Doblez) mandan el **Resumen del turno** (botón 📋 Resumen → "Enviar a Ing. Moisés" → Mail)
 a **moises.pena@dimaco-mx.com** dos veces al día (~11:45 y ~18:30). Las corridas de las 12:00, 17:00 y 22:00 lo pasan a Katana con esta regla.
 

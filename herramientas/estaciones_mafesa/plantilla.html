@@ -181,7 +181,7 @@ function cargar(){try{var j=JSON.parse(localStorage.getItem(KEY)||'null');if(!j)
 /* ============ CONEXIÓN CON KATANA (apagada mientras SRV_URL esté vacío) ============ */
 var SRV_URL='https://dimaco-estaciones.moises-pena.workers.dev';
 var CONX=null;try{CONX=JSON.parse(localStorage.getItem('dimaco_@@SLUG@@_conx')||'null');}catch(e){}
-var PAUSA_KATANA=true;   /* PAUSA 8-oct-2026 (Moisés): las estaciones NO se conectan a Katana; solo capturan en la iPad (resumen). Poner false para reactivar. */
+var PAUSA_KATANA=@@PAUSA@@;   /* PAUSA 8-oct-2026 (Moisés): las estaciones NO se conectan a Katana; solo capturan en la iPad (resumen). Se prende por estación en gen.py (CFG 'katana'). 13-oct-2026: Limpieza & SQA en vivo con Cynthia (prueba). */
 function enLinea(){return !PAUSA_KATANA&&!!(SRV_URL&&CONX&&CONX.codigo);}
 function api(met,ruta,body){return fetch(SRV_URL.replace(/\/$/,'')+ruta,{method:met,headers:{'X-Tablet':CONX.codigo,'Content-Type':'application/json'},body:body?JSON.stringify(body):undefined,cache:'no-store'})
  .then(function(r){return r.json().catch(function(){return {ok:false,error:'HTTP '+r.status};}).then(function(j){j._status=r.status;return j;});});}
