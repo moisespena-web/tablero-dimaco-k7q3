@@ -1,0 +1,48 @@
+name: Planos MAFESA (bajar de Dropbox, cifrado)
+# Moisés, 12-oct-2026: la regla nocturna corre en la nube y no puede bajar archivos de Dropbox.
+# La regla deja en herramientas/dibujos_mo/pedido/<id>.json los links temporales (un solo uso) de los planos;
+# este robot los baja, los CIFRA con la llave pública planos_pub.pem y los deja en entrega/<id>.enc + <id>.key.
+# Solo la regla tiene la llave privada. Los planos nunca quedan legibles en el repo (es público).
+on:
+  push:
+    paths: ['herramientas/dibujos_mo/pedido/*.json']
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: planos
+  cancel-in-progress: false
+jobs:
+  bajar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Bajar, cifrar y entregar
+        run: |
+          set -eu
+          D=herramientas/dibujos_mo
+          git config user.name "Planos DIMACO"; git config user.email "actions@users.noreply.github.com"
+          shopt -s nullglob
+          for P in $D/pedido/*.json; do
+            ID=$(basename "$P" .json)
+            W=$(mktemp -d); mkdir -p "$W/planos"
+            python3 - "$P" "$W/planos" > "$W/lista.txt" <<'PY'
+          import json,sys
+          for f in json.load(open(sys.argv[1]))["files"]:
+              print(f["url"] + "\t" + sys.argv[2] + "/" + f["name"].replace("/","_"))
+          PY
+            OK=0; ERR=""
+            while IFS=$'\t' read -r U F; do
+              if curl -sSL --max-time 90 -o "$F" "$U" && [ -s "$F" ]; then OK=$((OK+1)); else ERR="$ERR $(basename "$F")"; rm -f "$F"; fi
+            done < "$W/lista.txt"
+            echo "{\"ok\": $OK, \"fallaron\": \"${ERR# }\"}" > "$W/planos/_estado.json"
+            tar -C "$W/planos" -czf "$W/p.tgz" .
+            openssl rand -hex 32 > "$W/k"
+            openssl enc -aes-256-cbc -pbkdf2 -salt -in "$W/p.tgz" -out "$D/entrega/$ID.enc" -pass file:"$W/k"
+            openssl pkeyutl -encrypt -pubin -inkey $D/planos_pub.pem -pkeyopt rsa_padding_mode:oaep -in "$W/k" -out "$D/entrega/$ID.key"
+            git rm -q "$P"; git add "$D/entrega/$ID.enc" "$D/entrega/$ID.key"
+            rm -rf "$W"
+          done
+          git commit -m "Planos cifrados para la regla nocturna" || exit 0
+          for i in 1 2 3; do git pull --rebase -q && git push && break; sleep 5; done
