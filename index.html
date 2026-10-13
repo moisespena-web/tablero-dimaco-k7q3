@@ -357,7 +357,7 @@ padding:20px 34px;box-shadow:0 0 70px rgba(229,72,77,.95);animation:alimpP 1s st
   <div class="msg"></div>
   <span class="pctl"><button id="btnPrev" title="Página anterior">◀</button><button id="btnPausa" title="Pausar">⏸</button><button id="btnNext" title="Página siguiente">▶</button></span>
   <span id="sndIco">🔇</span>
-  <div id="stamp"></div><span class="build">v2026-10-11a</span><div class="bar"><i id="pb"></i></div>
+  <div id="stamp"></div><span class="build">v2026-10-13a</span><div class="bar"><i id="pb"></i></div>
  </footer>
  <div id="alimp" hidden></div>
  <div id="toasts"></div>
@@ -737,7 +737,8 @@ function pausa(on){PAUSA=on===undefined?!PAUSA:on;var b=$("btnPausa");if(b){b.te
   document.body.classList.toggle("pausado",PAUSA);clearTimeout(PAUSA_T);if(PAUSA)PAUSA_T=setTimeout(function(){pausa(false);},300000);t0=Date.now();}
 $("btnPausa").onclick=function(){pausa();};$("btnPrev").onclick=function(){irPag(-1);};$("btnNext").onclick=function(){irPag(1);};
 window.__pausa=function(){return [PAUSA,pagina];};
-document.addEventListener("keydown",function(e){if(e.key===" "){e.preventDefault();pausa();}else if(e.key==="ArrowRight"){irPag(1);}else if(e.key==="ArrowLeft"){irPag(-1);}});
+document.addEventListener("keydown",function(e){var tg=e.target,tn=tg&&tg.tagName;if(tn==="TEXTAREA"||tn==="INPUT"||tn==="SELECT"||(tg&&tg.isContentEditable)||!$("panel").hidden)return;   /* 13-oct-2026: el espacio y las flechas son de la TV solo fuera del cuadro de aviso (antes se comían los espacios del aviso) */
+  if(e.key===" "){e.preventDefault();pausa();}else if(e.key==="ArrowRight"){irPag(1);}else if(e.key==="ArrowLeft"){irPag(-1);}});
 setInterval(function(){$("pb").style.width=PAUSA?"100%":Math.min(100,(Date.now()-t0)/DUR*100)+"%";},200);
 setInterval(function(){if(!PAUSA&&Date.now()-t0>=DUR-250)irPag(1);},500);
 setInterval(edad,60000);
