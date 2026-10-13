@@ -168,3 +168,7 @@ sys.argv=_bk
 _bk=sys.argv[:]; sys.argv=[_bk[0],D]
 _rp.run_path(os.path.join(os.path.dirname(os.path.abspath(__file__)),'parche_dl.py'),run_name='__main__')
 sys.argv=_bk
+# ===== 6a parte (Moisés, 12-oct-2026 · CYN12OCT): PDF de MO en proceso en 2 hojas (máquinas / Cynthia) =====
+_bk=sys.argv[:]; sys.argv=[_bk[0],D]
+_rp.run_path(os.path.join(os.path.dirname(os.path.abspath(__file__)),'parche_cynthia_pdf.py'),run_name='__main__')
+sys.argv=_bk
