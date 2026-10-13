@@ -59,5 +59,19 @@
   "MO-400|TM-2P": 21,
   "MO-400|Taladro": 21,
   "MO-400|Limpieza": 21
+ },
+ "2026-10-12": {
+  "MO-407|Corte": 10,
+  "MO-409|Corte": 5,
+  "MO-406|Corte": 15,
+  "MO-408|Corte": 5,
+  "MO-410|Corte": 4,
+  "MO-411|Corte": 1,
+  "MO-412|Corte": 680,
+  "MO-405|Taladro": 15,
+  "MO-412|Taladro": 98,
+  "MO-388|Doblez": 39,
+  "MO-383|Doblez": 50,
+  "MO-365|Doblez": 10
  }
 }
