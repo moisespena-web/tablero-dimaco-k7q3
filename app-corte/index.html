@@ -66,7 +66,7 @@ button:disabled{cursor:not-allowed}
 (function(){
 "use strict";
 var JORNADA=[7.5,18.6], MAQ="Corte", OPERADOR="Operador", KEY='dimaco_corte_v1', PINOPS=false, ESPERA=false, RECURSO="Corte Mafesa";
-var OPS=['Emiliano','[Operador 2]','[Operador 3]'];
+var OPS=['Operador'];
 var PZ=window.PIEZAS||{}, PZD=false?(window.PIEZAS_DOBLEZ||{}):{}, LOGO=null;
 var AVP=null, AVPN="Corte";   /* avance por proceso: se lee en vivo del datos.json de la TV (leerTV) */
 function vAvp(){if(!AVP||!AVP.t)return '';var p=AVP.pct,c=p>=70?['#0C3024','#25C083','#4FE0A6']:(p>=50?['#33250A','#F2A93B','#FFC45C']:['#3A1216','#E5484D','#FF6369']);return '<div style="position:relative;overflow:hidden;background:'+c[0]+';border:2px solid '+c[1]+';border-radius:12px;padding:8px 14px 12px;margin:6px 0 8px;flex:none;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap"><span style="font-size:14px;letter-spacing:2px;color:#C9D6E6;font-weight:700">AVANCE '+E(AVP.p.toUpperCase())+'</span><span style="font-size:15px;color:#C9D6E6">'+AVP.h.toLocaleString('en-US')+' de '+AVP.t.toLocaleString('en-US')+' pz · todas las MOs de la TV</span><b style="margin-left:auto;font-size:30px;line-height:1;color:'+c[2]+'">'+p+'%</b><i style="position:absolute;left:0;bottom:0;height:5px;width:'+Math.max(2,p)+'%;background:'+c[1]+'"></i></div>';}

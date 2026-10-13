@@ -15,7 +15,7 @@
  *   CODIGO_VESTIDO  (secreto)  código del teléfono de la Estación Rotulado y Vestido
  *   CODIGO_ARMADO1  (secreto)  código del teléfono de la Estación Armado y Soldadura 1
  *   CODIGO_TALADRO  (secreto)  código del teléfono de la Estación Taladro (MAFESA)
- *   PINES           (secreto)  JSON con el PIN de cada operador de la TM-2P, ej. {"Emiliano":"4821"}
+ *   PINES           (secreto)  ya no se usa: desde el 12-oct-2026 la TM-2P no pide operador ni PIN (se puede borrar)
  *   ORIGEN          (texto)    https://moisespena-web.github.io   (opcional)
  *
  *   DROPBOX_URL     (secreto)  link compartido de la carpeta Dropbox "Dimaco/Tablero TV" (el mismo que usa GitHub)
@@ -54,7 +54,7 @@ const KATANA = 'https://api.katanamrp.com/v1';
 const ABIERTOS = ['NOT_STARTED', 'IN_PROGRESS', 'PAUSED', 'BLOCKED'];
 const MEM = new Map();
 const ESTACIONES = {
-  tm2p:   { nombre: 'TM-2P',  recursos: ['TM-2P', 'Cuadrado Mafesa'], etiqueta: r => 'TM-2P (' + (r.operation_name || '').trim() + ')', conPin: true },
+  tm2p:   { nombre: 'TM-2P',  recursos: ['TM-2P', 'Cuadrado Mafesa'], etiqueta: r => 'TM-2P (' + (r.operation_name || '').trim() + ')', conPin: false, operador: 'Operador' },
   doblez: { nombre: 'Doblez', recursos: ['Doblez Mafesa'],            etiqueta: () => 'Doblez', conPin: false, operador: 'Miguel' },
   laser:  { nombre: 'Láser y Router', recursos: ['Corte Laser', 'Router'], etiqueta: r => (r.operation_name || '').trim() || 'Láser', conPin: false, operador: 'Luis' },
   limpieza: { nombre: 'Limpieza & SQA', recursos: ['Limpieza & SQA'], etiqueta: () => 'Limpieza', conPin: false, operador: 'Cynthia' },
