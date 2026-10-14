@@ -427,7 +427,7 @@ padding:20px 34px;box-shadow:0 0 70px rgba(229,72,77,.95);animation:alimpP 1s st
   <div class="msg"></div>
   <span class="pctl"><button id="btnPrev" title="Página anterior">◀</button><button id="btnPausa" title="Pausar">⏸</button><button id="btnNext" title="Página siguiente">▶</button></span>
   <span id="sndIco">🔇</span>
-  <div id="stamp"></div><span class="build">v2026-10-14c</span><div class="bar"><i id="pb"></i></div>
+  <div id="stamp"></div><span class="build">v2026-10-14d</span><div class="bar"><i id="pb"></i></div>
  </footer>
  <div id="alimp" hidden></div>
  <div id="toasts"></div>
@@ -811,43 +811,27 @@ function render0(D){
   edad();
 }
 function edad(){
-  /* Semaforo de frescura, alineado a los 3 cortes de Cynthia (10:05 / 14:05 / 18:05, L-V).
-     Mide si LLEGO el corte que tocaba, no la edad de los datos.
-       verde = el ultimo corte esperado si llego
-       gris  = fuera de turno (antes de 7:30, despues de 19:00, fin de semana)
-       rojo  = paso un corte + 20 min de gracia y el dato no avanzo
-     Copia GitHub: todo en hora fija de CDMX (UTC-6), igual que mx(), sin depender del reloj de la TV.
-     Se trabaja con "fechas virtuales" (epoch - 6 h) y getters UTC. */
+  /* 14-oct-2026 (Moisés): ya no hay cortes a horas fijas (7/12/17 eliminados). El tablero
+     se alimenta EN VIVO del servidor (lee Katana cada 15 min), así que el semáforo mide la
+     EDAD del dato:
+       verde = dato de hace 35 min o menos
+       gris  = fuera de turno (antes de 7:30, después de 19:00, fin de semana)
+       rojo  = en turno y el dato tiene más de 35 min → algo se detuvo, avisar a Moisés */
   var sp=$("stamp"),ts=Date.parse(sp.getAttribute("data-ts"));
   if(!isFinite(ts)){sp.className="";sp.textContent=sp.getAttribute("data-base")||"";return;}
-  var OFF=6*3600000,CORTES=[[10,5],[14,5],[18,5]],GRACIA=20*60000,INI=7.5,FIN=19;
-  var now=new Date(Date.now()-OFF),DS=new Date(ts-OFF);
+  var MAXMIN=35,INI=7.5,FIN=19;
+  var OFF=6*3600000,now=new Date(Date.now()-OFF),DS=new Date(ts-OFF);
   function hm(d){return pad(d.getUTCHours())+":"+pad(d.getUTCMinutes());}
-  function hab(d){var w=d.getUTCDay();return w>=1&&w<=5;}
-  function dia(d,dd,h,mi){return new Date(Date.UTC(d.getUTCFullYear(),d.getUTCMonth(),d.getUTCDate()+(dd||0),h||0,mi||0,0,0));}
-  function corte(d,i){return dia(d,0,CORTES[i][0],CORTES[i][1]);}
   function cuando(d){
-    var n=Math.round((dia(d)-dia(now))/86400000);
-    return (n===0?"":n===-1?"ayer ":n===1?"mañana ":(d.getUTCDate()+"/"+(d.getUTCMonth()+1)+" "))+hm(d);
-  }
-  var ult=null,d=new Date(now.getTime());
-  for(var k=0;k<8&&!ult;k++){
-    if(hab(d))for(var i=CORTES.length-1;i>=0;i--){var c=corte(d,i);if(now-c>=GRACIA){ult=c;break;}}
-    if(!ult)d=dia(d,-1,23,59);
-  }
-  var prox=null,e=new Date(now.getTime());
-  for(var k2=0;k2<8&&!prox;k2++){
-    if(hab(e))for(var j=0;j<CORTES.length;j++){var c2=corte(e,j);if(c2.getTime()+GRACIA>now.getTime()){prox=c2;break;}}
-    if(!prox)e=dia(e,1,0,1);
-  }
-  var pt=prox?cuando(prox):"—";
-  var hnow=now.getUTCHours()+now.getUTCMinutes()/60;
-  if(!hab(now)||hnow>=FIN||hnow<INI){
-    sp.className="fuera";sp.textContent="Fuera de turno · últimos datos "+cuando(DS)+" · próximo corte "+pt;
-  }else if(!ult||DS.getTime()>=ult.getTime()-60000){
-    sp.className="ok";sp.textContent="Corte "+cuando(DS)+" ✓ · próximo "+pt;
+    var dd=(now-d)/86400000,mismo=d.getUTCDate()===now.getUTCDate()&&d.getUTCMonth()===now.getUTCMonth();
+    return (mismo?"":dd<2?"ayer ":(d.getUTCDate()+"/"+(d.getUTCMonth()+1)+" "))+hm(d);}
+  var w=now.getUTCDay(),hnow=now.getUTCHours()+now.getUTCMinutes()/60,min=Math.round((now-DS)/60000);
+  if(w<1||w>5||hnow>=FIN||hnow<INI){
+    sp.className="fuera";sp.textContent="Fuera de turno · últimos datos "+cuando(DS);
+  }else if(min<=MAXMIN){
+    sp.className="ok";sp.textContent="En vivo · Katana "+hm(DS)+" ✓";
   }else{
-    sp.className="viejo";sp.textContent="No llegó el corte de las "+hm(ult)+" · datos de "+cuando(DS);
+    sp.className="viejo";sp.textContent="⚠ SIN ACTUALIZAR desde "+cuando(DS)+" ("+(min<120?min+" min":Math.round(min/60)+" h")+") · avisar a Moisés";
   }
 }
 
@@ -1023,6 +1007,17 @@ render(window.__DATOS__);
   cargar();setInterval(cargar,60000);                        // los datos, cada minuto
   var t0carga=Date.now();                                    // recarga completa diaria a las 6:00 (toma cambios de diseño)
   setInterval(function(){var d=mx();if(d.h===6&&d.m<5&&Date.now()-t0carga>3600000)location.reload();},60000);
+  /* 14-oct-2026: recarga sola cuando se publica un diseño nuevo (build.txt cambia). Revisa cada 5 min.
+     Para no ciclar si GitHub sirve la copia vieja, intenta una sola vez por cada sello nuevo. */
+  var MIBUILD=(document.querySelector(".build")||{}).textContent||"";
+  function checarBuild(){var x=new XMLHttpRequest();x.open("GET","build.txt?t="+Date.now(),true);
+    x.onload=function(){if(x.status!==200)return;var b=String(x.responseText||"").trim();
+      if(!/^v\d{4}-\d\d-\d\d[a-z]$/.test(b)||b===MIBUILD.trim())return;
+      var ya="";try{ya=sessionStorage.getItem("tv_rl")||"";}catch(e){}
+      if(ya===b)return;try{sessionStorage.setItem("tv_rl",b);}catch(e){}
+      location.reload();};
+    x.send();}
+  setInterval(checarBuild,300000);
 })();
 })();
 </script>

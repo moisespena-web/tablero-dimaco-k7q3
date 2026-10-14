@@ -2,6 +2,10 @@
 
 Corte, Taladro, TM-2P y Doblez tienen `PAUSA_KATANA=true`: NO se conectan a Katana, solo capturan en la iPad.
 
+**EXCEPCIÓN DOBLEZ EN VIVO (Moisés, 14-oct-2026):** desde el 14-oct-2026 la Estación Doblez (Miguel) también va EN VIVO a Katana.
+Igual que Limpieza: los resúmenes NO aplican nada de Doblez (ignora "RESUMEN DOBLEZ" y renglones "· Doblez ·" con fecha 14/10/2026
+en adelante; solo menciónalo como duda). Nunca toques la operación Doblez Mafesa ni el renglón "Doblez" de las notas desde esta regla.
+
 **EXCEPCIÓN LIMPIEZA EN VIVO (Moisés, 13-oct-2026):** desde el 13-oct-2026 la Estación Limpieza & SQA está conectada a Katana EN VIVO
 (`PAUSA_KATANA=false`, la opera Cynthia en su iPhone): cada START / PAUSA / FIN ya escribe en Katana por el servidor de Cloudflare.
 Por eso los resúmenes NO aplican nada de Limpieza: ignora el correo "RESUMEN LIMPIEZA" y cualquier renglón "· Limpieza ·"
