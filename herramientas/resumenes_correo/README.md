@@ -2,15 +2,22 @@
 
 Corte, Taladro, TM-2P y Doblez tienen `PAUSA_KATANA=true`: NO se conectan a Katana, solo capturan en la iPad.
 
+**CANDADO ANTI-DUPLICADO (Moisés, 14-oct-2026) — manda sobre las dos excepciones de abajo:** TODAS las estaciones siguen
+mandando su resumen por correo, aunque Limpieza (Cynthia) y Doblez (Miguel) ya escriban en vivo a Katana. Antes de aplicar
+cualquier renglón (MO · estación · fecha) lee la nota (`additional_info`) y el estado de esa operación en Katana:
+- Si la nota YA trae un segmento de esa estación con esa fecha (lo escribió el servidor en vivo o una corrida anterior) →
+  NO se aplica nada; anota en el ledger el N del correo para que no se vuelva a revisar. Si el N del correo no coincide con
+  lo que dice Katana, va como duda ("Katana dice X, el correo dice N"), nunca se suma.
+- Si la operación ya está COMPLETED → no se toca.
+- Solo si Katana NO tiene nada de esa estación en esa fecha se aplica con la regla normal (delta = N − aplicado).
+Así, si Miguel o Cynthia no conectaron el teléfono ese día, el correo sí entra; y si sí conectaron, no se duplica.
+
 **EXCEPCIÓN DOBLEZ EN VIVO (Moisés, 14-oct-2026):** desde el 14-oct-2026 la Estación Doblez (Miguel) también va EN VIVO a Katana.
-Igual que Limpieza: los resúmenes NO aplican nada de Doblez (ignora "RESUMEN DOBLEZ" y renglones "· Doblez ·" con fecha 14/10/2026
-en adelante; solo menciónalo como duda). Nunca toques la operación Doblez Mafesa ni el renglón "Doblez" de las notas desde esta regla.
+Su correo "RESUMEN DOBLEZ" se revisa con el CANDADO ANTI-DUPLICADO de arriba (no se ignora a ciegas).
 
 **EXCEPCIÓN LIMPIEZA EN VIVO (Moisés, 13-oct-2026):** desde el 13-oct-2026 la Estación Limpieza & SQA está conectada a Katana EN VIVO
 (`PAUSA_KATANA=false`, la opera Cynthia en su iPhone): cada START / PAUSA / FIN ya escribe en Katana por el servidor de Cloudflare.
-Por eso los resúmenes NO aplican nada de Limpieza: ignora el correo "RESUMEN LIMPIEZA" y cualquier renglón "· Limpieza ·"
-(fechas 13/10/2026 en adelante). Si aparece, solo menciónalo como duda ("Limpieza ya va en vivo; no se aplicó"). Nunca toques
-la operación Limpieza & SQA ni el renglón "Limpieza" de las notas desde esta regla.
+Su correo "RESUMEN LIMPIEZA" se revisa con el CANDADO ANTI-DUPLICADO de arriba: lo normal es que Katana ya lo tenga y no se aplique nada.
 Lupita (Corte, Taladro, TM-2P, Limpieza) y Miguel (Doblez) mandan el **Resumen del turno** (botón 📋 Resumen → "Enviar a Ing. Moisés" → Mail)
 a **moises.pena@dimaco-mx.com** dos veces al día (~11:45 y ~18:30). Las corridas de las 12:00, 17:00 y 22:00 lo pasan a Katana con esta regla.
 
