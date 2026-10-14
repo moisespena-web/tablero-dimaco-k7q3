@@ -1,11 +1,12 @@
 # Estaciones MAFESA — las 5 iguales (6-oct-2026)
 
-> **⚠ DOBLEZ EN VIVO (Moisés, 14-oct-2026) — manda sobre la regla de abajo:** Limpieza (Cynthia) y **Doblez (Miguel)**
-> van conectadas a Katana en vivo: en `app-limpieza` y `app-doblez` debe quedar `var PAUSA_KATANA=false;`. Corte, Taladro
-> y TM-2P siguen en `true` hasta que Moisés diga. `gen.py` ya lo pone así (CFG `katana`). Plan: después de Doblez van
-> Taladro, TM-2P y Corte, una por una. Si la regla nocturna dice "PAUSA_KATANA=true debe quedar en las 5", esa frase es
-> anterior: corre gen.py tal cual y NO cambies Limpieza ni Doblez a `true`. Ya no hay cortes a horas fijas (7/12/17 eliminados el 14-oct): la TV lee en vivo del servidor.
-
+> **⚠ LAS 5 EN VIVO (Moisés, 14-oct-2026) — manda sobre cualquier instrucción anterior:** Corte y Taladro (Lupita, misma iPad),
+> TM-2P (Fernando, iPhone), Doblez (Miguel, tablet) e Inspección / Limpieza & SQA (Cynthia, tablet) escriben en Katana EN VIVO:
+> en las 5 `var PAUSA_KATANA=false;`. `gen.py` ya lo pone así (CFG `katana=True`). Si una tarea dice "PAUSA_KATANA=true debe
+> quedar en las 5", esa frase es anterior: corre gen.py tal cual y NO cambies ninguna a `true`. Ya no hay cortes a horas fijas.
+> TM-2P escribe SIN nombre de operador en las notas hasta el 11-nov-2026 (lo hace el servidor). Los resúmenes por correo siguen
+> llegando como respaldo y se revisan con el CANDADO ANTI-DUPLICADO de `herramientas/resumenes_correo/README.md`.
+>
 > **⚠ LIMPIEZA EN VIVO (Moisés, 13-oct-2026) — manda sobre cualquier instrucción anterior:** la Estación Limpieza & SQA
 > está conectada a Katana en vivo (Cynthia, iPhone). En `app-limpieza/index.html` debe quedar `var PAUSA_KATANA=false;`
 > y en las otras 4 (Corte, Taladro, TM-2P, Doblez) `true`. `gen.py` ya lo pone así (CFG `katana`). Si una tarea dice

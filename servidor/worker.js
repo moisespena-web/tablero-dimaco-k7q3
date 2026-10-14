@@ -95,7 +95,7 @@ export default {
         let v = null;
         try { v = await tableroVivo(env, t, false); } catch (e) { v = null; }   // si Katana falla, el programa tal cual
         const out = v || t;
-        try { const hp = await hoyTV(env); if (hp && out.datos) out.datos = { ...out.datos, hoyPz: hp.pz, hoyFecha: hp.fecha }; } catch (e) {}   // HOYPZ
+        try { if (out.datos && !out.datos.hoyPz) { const hp = await hoyTV(env); if (hp) out.datos = { ...out.datos, hoyPz: hp.pz, hoyFecha: hp.fecha }; } } catch (e) {}   // respaldo: contador viejo solo si no hay HOYK
         return json(out);
       } catch (e) { return json({ ok: false, error: String(e && e.message || e) }, 502); }
     }
@@ -323,8 +323,11 @@ function fechaMX(d) {
     .formatToParts(d).forEach(x => p[x.type] = x.value);
   return p.day + '/' + p.month + '/' + p.year;
 }
+// 14-oct-2026 (Moisés): TM-2P va SIN nombre de operador en las notas (fase de pruebas 11-oct → 11-nov-2026)
+const SIN_NOMBRE = /^TM-2P\b/;
 function escribirAvance(notas, etq, av) {
-  const linea = etq + ': ' + av.ops.join(', ') + ' ' + av.pz + '/' + av.total + ' (' + av.fecha + ')' + (av.seg > 0 ? ' · ' + durTxt(av.seg) : '');
+  const ops = SIN_NOMBRE.test(etq) ? [] : av.ops;
+  const linea = etq + ':' + (ops.length ? ' ' + ops.join(', ') : '') + ' ' + av.pz + '/' + av.total + ' (' + av.fecha + ')' + (av.seg > 0 ? ' · ' + durTxt(av.seg) : '');
   const lines = String(notas || '').split('\n');
   const re = reLinea(etq);
   const i = lines.findIndex(l => re.test(l.trim()));
@@ -452,6 +455,33 @@ async function sumarHoy(env, est, n) {
     await env.TV.put(key, JSON.stringify(cur), { expirationTtl: 400 * 86400 });
   } catch (e) {}
 }
+/* HOYK (14-oct-2026, Moisés: "que Katana sea la única verdad"): las piezas de HOY salen de Katana, no de un contador aparte.
+   A la primera lectura del día se guarda una foto base (KV base:AAAA-MM-DD) con lo hecho por MO y columna según las notas
+   (x de "x/y"; si la operación ya está COMPLETED y no hay renglón, el total planeado). HOY = lo de ahora − la base,
+   nunca negativo. Una MO que sale del tablero (Cynthia la cerró) cuenta como completa en todas sus columnas.
+   Así, si alguien corrige una nota en Katana, la TV se corrige sola en la siguiente lectura. */
+function hechoCols(r) {
+  const o = {};
+  for (const [op, st] of r.ops || []) { const av = (r.av || {})[op]; o[op] = av ? (parseInt(av, 10) || 0) : (st === 'COMPLETED' ? (r.plan || 0) : 0); }
+  return o;
+}
+async function hoyKatana(env, D) {
+  if (!env.TV || !D || !D.rows) return null;
+  const iso = horaMX(new Date()).iso, key = 'base:' + iso, cur = {};
+  for (const r of D.rows) cur[r.id] = { plan: r.plan || 0, c: hechoCols(r) };
+  let base = await env.TV.get(key, 'json');
+  if (!base) { base = cur; await env.TV.put(key, JSON.stringify(cur), { expirationTtl: 3 * 86400 }); }
+  const pz = { 'Corte': 0, 'Taladro': 0, 'CNC': 0, 'Doblez': 0, 'Limpieza & SQA': 0 };
+  for (const id of new Set([...Object.keys(base), ...Object.keys(cur)])) {
+    const b = base[id], c = cur[id];
+    for (const col of new Set([...Object.keys(b ? b.c : {}), ...Object.keys(c ? c.c : {})])) {
+      if (!(col in pz)) continue;
+      const v0 = b ? (b.c[col] || 0) : 0, v1 = c ? (c.c[col] || 0) : (b ? b.plan : 0);
+      pz[col] += Math.max(0, v1 - v0);
+    }
+  }
+  return { fecha: iso, pz };
+}
 async function hoyTV(env) {
   if (!env.TV) return null;
   const iso = horaMX(new Date()).iso, cur = (await env.TV.get('hoy:' + iso, 'json')) || {}, pz = {};
@@ -529,7 +559,7 @@ async function leerZip(b, quiero) {
 /* ======================= TVVIVO (10-oct-2026) =======================
    Programa de la última corrida (orden, Laura, cobre, fechas de entrega, material) + estado real de Katana.
    Misma lógica que build_entregas.py del skill tablero-entregas-mafesa para lo que cambia durante el día. */
-const VIVO_TTL = 15 * 60e3, VIVO_MIN = 60e3;
+const VIVO_TTL = 15 * 60e3, VIVO_MIN = 60e3, VIVO_TURNO = 4 * 60e3;   // 14-oct-2026: en horario se recalcula cada 4 min
 const MAF_REC = new Set(['Corte Mafesa', 'Taladro Mafesa', 'TM-2P', 'Cuadrado Mafesa', 'Doblez Mafesa', 'Limpieza & SQA']);
 const ORDOPS = ['Corte', 'Taladro', 'CNC', 'Doblez', 'Limpieza & SQA'];
 const TIPOS_TV = { 'Corte': 1, 'Corte|Taladro': 2, 'Corte|Doblez|Taladro': 3, 'CNC|Corte': 4, 'CNC|Corte|Doblez': 5 };
@@ -551,12 +581,13 @@ async function tableroVivo(env, t, forzar) {
   const sucio = await env.TV.get('sucio');
   const edad = prev ? Date.now() - prev.calc : Infinity;
   const nuevoPrograma = !prev || prev.fuente !== t.fuente;
-  const toca = forzar || nuevoPrograma || (sucio && edad > VIVO_MIN) || (edad > VIVO_TTL + 5 * 60e3 && enHorario(new Date()));
+  const toca = forzar || nuevoPrograma || (sucio && edad > VIVO_MIN) || (enHorario(new Date()) && edad > VIVO_TURNO);
   if (!toca) return prev.out;
   if (sucio) fotoVencida();   // que la foto de Katana traiga lo que la estación acaba de escribir
   const F = await foto(katana(env.KATANA_API_KEY));
   const datos = armarVivo(t.datos, F, new Date());
   if (!datos) return prev ? prev.out : null;
+  try { const hp = await hoyKatana(env, datos); if (hp) { datos.hoyPz = hp.pz; datos.hoyFecha = hp.fecha; } } catch (e) {}   // HOYK
   const out = { datos, aviso: t.aviso || {}, fuente: t.fuente, leido: new Date().toISOString(), vivo: true };
   await env.TV.put('vivo', JSON.stringify({ calc: Date.now(), fuente: t.fuente, out }));
   if (sucio) { try { await env.TV.delete('sucio'); } catch (e) {} }

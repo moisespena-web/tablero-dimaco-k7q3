@@ -1,9 +1,9 @@
 # Resúmenes de estaciones por correo → Katana (Moisés, 8-oct-2026)
 
-Corte, Taladro, TM-2P y Doblez tienen `PAUSA_KATANA=true`: NO se conectan a Katana, solo capturan en la iPad.
+(Historia: hasta el 14-oct-2026 Corte, Taladro, TM-2P y Doblez no se conectaban a Katana. Desde el 14-oct las 5 van en vivo; ver el candado.)
 
-**CANDADO ANTI-DUPLICADO (Moisés, 14-oct-2026) — manda sobre las dos excepciones de abajo:** TODAS las estaciones siguen
-mandando su resumen por correo, aunque Limpieza (Cynthia) y Doblez (Miguel) ya escriban en vivo a Katana. Antes de aplicar
+**CANDADO ANTI-DUPLICADO (Moisés, 14-oct-2026) — manda sobre las excepciones de abajo:** desde el 14-oct-2026 LAS 5 estaciones
+(Corte, Taladro, TM-2P, Doblez y Limpieza) escriben EN VIVO a Katana y además siguen mandando su resumen por correo. Antes de aplicar
 cualquier renglón (MO · estación · fecha) lee la nota (`additional_info`) y el estado de esa operación en Katana:
 - Si la nota YA trae un segmento de esa estación con esa fecha (lo escribió el servidor en vivo o una corrida anterior) →
   NO se aplica nada; anota en el ledger el N del correo para que no se vuelva a revisar. Si el N del correo no coincide con
