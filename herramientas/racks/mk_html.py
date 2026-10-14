@@ -14,10 +14,16 @@ src=src[:i]+'<script>window.__DATOS__='+json.dumps(D,ensure_ascii=False)+';'+src
 # columnas dinamicas
 rep('''var OPS=["Corte","Taladro","CNC","Doblez","Limpieza & SQA"];
 var LBL={"Corte":"CORTE","Taladro":"TALADRO","CNC":"TM-2P","Doblez":"DOBLEZ","Limpieza & SQA":"LIMPIEZA"};
+/* Color fijo por estación (Moisés, 11-oct-2026): el nombre de cada proceso siempre en su color, en toda la TV */
+var CEST={"Corte":"#5AB0FF","Taladro":"#B79CFF","CNC":"#FF7EB6","Doblez":"#C9E24F","Limpieza & SQA":"#3FD9D9"};
+function lblc(o){return '<span style="color:'+CEST[o]+'">'+LBL[o]+'</span>';}
 var ORD={"Corte":0,"Taladro":1,"CNC":2,"Doblez":3,"Limpieza & SQA":4};''',
 '''/* RACKS: las columnas vienen en los datos (D.ops = [[clave,etiqueta],...]); la franja es el color del cliente */
 var OPS=["Corte","Laser","Router","Doblez","Armado","Pintura","Vestido"];
 var LBL={"Corte":"CORTE","Laser":"LÁSER","Router":"ROUTER","Doblez":"DOBLEZ","Armado":"ARMADO","Pintura":"PINTURA","Vestido":"VESTIDO"};
+/* Color fijo por estación (como MAFESA, 11-oct-2026) */
+var CEST={"Corte":"#5AB0FF","Laser":"#FF9F43","Router":"#B79CFF","Doblez":"#C9E24F","Armado":"#FF7EB6","Pintura":"#3FD9D9","Vestido":"#FFD84D"};
+function lblc(o){return '<span style="color:'+(CEST[o]||"#FFFFFF")+'">'+LBL[o]+'</span>';}
 var ORD={};OPS.forEach(function(o,i){ORD[o]=i;});
 function setOps(D){if(!D||!D.ops||!D.ops.length)return;OPS=D.ops.map(function(x){return x[0];});LBL={};ORD={};
   D.ops.forEach(function(x,i){LBL[x[0]]=x[1];ORD[x[0]]=i;});document.documentElement.style.setProperty("--nops",OPS.length);}''')
@@ -27,11 +33,14 @@ rep('''function tipoDe(r){
   var s=r.ops.map''')
 rep('''var HEAD='<div class="row head">''','''function HEADF(){return '<div class="row head">''')
 rep(''''</div><div class="dl">LÍMITE</div></div>';''',''''</div><div class="dl">LÍMITE</div></div>';}''')
-rep('''var LEYT='<span class="leyt">'+TIPOS.map''','''var LEYT0='<span class="leyt">'+TIPOS.map''')
+# 11-oct-2026: la leyenda de MAFESA cambió a la de COBRE; en racks se renombra y se usa la de clientes
+rep('''var LEYT='<span class="leyt">''','''var LEYT0='<span class="leyt">''')
 rep('''function render(D){try{renderMat(D);}''','''function leyCli(D){return '<span class="leyt">'+((D&&D.clientes)||[]).map(function(c){return '<span><b class="tpill" style="background:'+c[1]+'">&nbsp;</b> '+esc(c[0])+'</span>';}).join("")+'<span style="color:#8FA3BA;font-style:italic">· Franja = cliente</span></span>';}
 var LEYT="";
 function render(D){try{setOps(D);LEYT=leyCli(D);}catch(e){}try{renderMat(D);}''')
 rep('''HEAD.replace("LÍMITE","ENTREGA"):HEAD)''','''HEADF().replace("LÍMITE","ENTREGA"):HEADF())''')
+# 13-oct-2026: MAFESA pinta la rayita con el color de la estación (11-oct); en racks la franja sigue siendo el color del cliente
+rep('''<div class="stripe" style="background:'+(ea?CEST[ea]:'#25C083')+'"></div>''','''<div class="stripe" style="background:'+t[1]+'"></div>''')
 # sin recuadro de material en racks
 rep('''function renderMat(D){var m=$('mat');''','''function renderMat(D){var m=$('mat');if(D&&D.proyecto==='racks'){m.hidden=true;return;}''')
 # datos: racks/datos.json (sin buzón de MAFESA)
@@ -40,7 +49,7 @@ rep('''pedir([BUZON+"/tablero","datos.json",RAWG+"datos.json"],function(j){''','
 rep('''pedir([BUZON+"/tablero/aviso","aviso.json",RAWG+"aviso.json"],''','''pedir(["aviso.json",RAWG+"racks/aviso.json"],''')
 rep('<title>','<title>',1)
 src=re.sub(r'<title>[^<]*</title>','<title>MO en proceso · Racks</title>',src,1)
-src=re.sub(r'<span class="build">v[^<]*</span>','<span class="build">r2026-10-09</span>',src,1)
+src=re.sub(r'<span class="build">v[^<]*</span>','<span class="build">r2026-10-13</span>',src,1)
 # CSS para N columnas (7 en racks)
 css='''
 /* ---- RACKS: 7 estaciones ---- */
