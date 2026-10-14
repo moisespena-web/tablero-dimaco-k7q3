@@ -373,5 +373,41 @@
    "37A5683-0005-1.png",
    "37A5683-0005-2.png"
   ]
+ },
+ "37A12458-0005": {
+  "desc": "TERMINAL .250 x 3.000 x 6.688",
+  "plano": "4 barrenos (2 de .563 + 2 de .228) · 1 doblez (N.S.)",
+  "ref": "37A12458 · P.5",
+  "nota": "",
+  "imgs": [
+   "37A12458-0005-1.png"
+  ]
+ },
+ "37A13660-0003": {
+  "desc": "PICK-UP .375 x 2.000 x 8.625",
+  "plano": "sin vista en el plano (solo tabla de partes): barra recta, sin barrenos ni dobleces indicados",
+  "ref": "37A13660 · tabla, parte 3",
+  "nota": "El plano no trae dibujo de la pieza, solo el renglón de la tabla.",
+  "imgs": [
+   "37A13660-0003-1.png"
+  ]
+ },
+ "37A14325-0002": {
+  "desc": "LV LINK COBRE .250 x 4.000 x 6.081",
+  "plano": "4 ranuras .563 x 1.000 · 2 dobleces (F.S. y N.S. @ 47°, offset 1.750)",
+  "ref": "37A14325 · P.2",
+  "nota": "",
+  "imgs": [
+   "37A14325-0002-1.png"
+  ]
+ },
+ "37A7829-0002": {
+  "desc": "TERMINAL COBRE .250 x 1.000 x 3.938",
+  "plano": "2 barrenos (.437 + .228) · 1 doblez (N.S.)",
+  "ref": "37A7829 · P.2",
+  "nota": "",
+  "imgs": [
+   "37A7829-0002-1.png"
+  ]
  }
 }
