@@ -1,10 +1,11 @@
 {
- "stamp": "2026-10-14T09:10",
+ "stamp": "2026-10-14T12:00",
  "incidencias": [
   {
    "fecha": "2026-10-13",
    "tipo": "scrap",
    "origen": "cal",
+   "operador": "Cynthia",
    "deteccion": "insp-dob",
    "causa": "Inspección deficiente (se liberó mal)",
    "mo": "MO-389",
@@ -15,12 +16,14 @@
    "piezas": 50,
    "estado": "abierta",
    "accion": "Reforzar la inspección o agregar punto de revisión",
-   "accionDetalle": "Miguel fabricara piezas nuevas"
+   "accionDetalle": "Miguel fabricara piezas nuevas",
+   "monto": 1106.0
   },
   {
    "fecha": "2026-10-12",
    "tipo": "retrabajo",
    "origen": "dob",
+   "operador": "Miguel",
    "deteccion": "insp-dob",
    "causa": "Ángulo de doblez incorrecto",
    "mo": "MO-395",
@@ -37,6 +40,7 @@
    "fecha": "2026-10-01",
    "tipo": "scrap",
    "origen": "dob",
+   "operador": "Daniel",
    "deteccion": "insp-dob",
    "causa": "Ángulo de doblez incorrecto",
    "mo": "MO-395",
@@ -47,7 +51,8 @@
    "piezas": 22,
    "estado": "abierta",
    "accion": "Fabricar de nuevo (reposición)",
-   "accionDetalle": "Miguel fabricara las 22 pz nuevas para el 8 de octubre"
+   "accionDetalle": "Miguel fabricara las 22 pz nuevas para el 8 de octubre",
+   "monto": 924.66
   }
  ]
 }
