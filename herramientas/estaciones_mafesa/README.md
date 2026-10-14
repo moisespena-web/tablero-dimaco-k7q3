@@ -3,7 +3,8 @@
 > **⚠ DOBLEZ EN VIVO (Moisés, 14-oct-2026) — manda sobre la regla de abajo:** Limpieza (Cynthia) y **Doblez (Miguel)**
 > van conectadas a Katana en vivo: en `app-limpieza` y `app-doblez` debe quedar `var PAUSA_KATANA=false;`. Corte, Taladro
 > y TM-2P siguen en `true` hasta que Moisés diga. `gen.py` ya lo pone así (CFG `katana`). Plan: después de Doblez van
-> Taladro, TM-2P y Corte, una por una. Ya no hay cortes a horas fijas (7/12/17 eliminados el 14-oct): la TV lee en vivo del servidor.
+> Taladro, TM-2P y Corte, una por una. Si la regla nocturna dice "PAUSA_KATANA=true debe quedar en las 5", esa frase es
+> anterior: corre gen.py tal cual y NO cambies Limpieza ni Doblez a `true`. Ya no hay cortes a horas fijas (7/12/17 eliminados el 14-oct): la TV lee en vivo del servidor.
 
 > **⚠ LIMPIEZA EN VIVO (Moisés, 13-oct-2026) — manda sobre cualquier instrucción anterior:** la Estación Limpieza & SQA
 > está conectada a Katana en vivo (Cynthia, iPhone). En `app-limpieza/index.html` debe quedar `var PAUSA_KATANA=false;`
