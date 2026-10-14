@@ -75,5 +75,27 @@
   "MO-365|Doblez": 10,
   "MO-366|TM-2P": 30,
   "MO-366|Limpieza": 39
+ },
+ "2026-10-13": {
+  "MO-415|Corte": 9,
+  "MO-416|Corte": 104,
+  "MO-417|Corte": 92,
+  "MO-419|Corte": 1,
+  "MO-418|Corte": 39,
+  "MO-366|TM-2P": 8,
+  "MO-413|TM-2P": 6,
+  "MO-379|TM-2P": 37,
+  "MO-383|Doblez": 186,
+  "MO-405|Doblez": 15,
+  "MO-415|Doblez": 9,
+  "MO-406|Doblez": 15,
+  "MO-404|Doblez": 15,
+  "MO-402|Doblez": 20,
+  "MO-399|Taladro": 30,
+  "MO-403|Taladro": 20,
+  "MO-406|Taladro": 15,
+  "MO-408|Taladro": 5,
+  "MO-411|Taladro": 1,
+  "MO-412|Taladro": 574
  }
 }
