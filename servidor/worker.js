@@ -20,6 +20,8 @@
  *
  *   DROPBOX_URL     (secreto)  link compartido de la carpeta Dropbox "Dimaco/Tablero TV" (el mismo que usa GitHub)
  *
+ * 14-oct-2026 (HOYPZ): GET /tablero trae datos.hoyPz = piezas procesadas HOY por estación (KV hoy:AAAA-MM-DD).
+ *
  * Rutas:  GET /estado · GET /operadores · GET /cola · POST /pin · POST /evento
  *         GET /tablero (público: programa + estado real de Katana) · GET /tablero/aviso
  *
@@ -92,7 +94,9 @@ export default {
         if (ruta === '/tablero/aviso') return json(t.aviso || {});
         let v = null;
         try { v = await tableroVivo(env, t, false); } catch (e) { v = null; }   // si Katana falla, el programa tal cual
-        return json(v || t);
+        const out = v || t;
+        try { const hp = await hoyTV(env); if (hp && out.datos) out.datos = { ...out.datos, hoyPz: hp.pz, hoyFecha: hp.fecha }; } catch (e) {}   // HOYPZ
+        return json(out);
       } catch (e) { return json({ ok: false, error: String(e && e.message || e) }, 502); }
     }
 
@@ -361,6 +365,7 @@ async function evento(k, est, env, b) {
       const nv = { ops: prev.ops.includes(operador) ? prev.ops : prev.ops.concat(operador), pz: total, total, fecha: fechaMX(new Date()), seg: Math.max(prev.seg, num(row.total_actual_time)) };
       await k.patch('/manufacturing_orders/' + mo.id, { additional_info: escribirAvance(mo.additional_info, etq, nv) });
       fotoVencida();
+      await sumarHoy(env, est, nv.pz - prev.pz);   // HOYPZ
       return { ok: true, repetido: true, mo: mo.order_no, op: resumen(row, nv) };
     }
     return { ok: true, repetido: true, mo: mo.order_no, op: resumen(row, null) };
@@ -420,6 +425,7 @@ async function evento(k, est, env, b) {
   if (suma && (seg > 0 || pzLapso > 0 || b.accion === 'completar')) {
     await k.patch('/manufacturing_orders/' + mo.id, { additional_info: escribirAvance(mo.additional_info, etq, nuevo) });
     fotoVencida();
+    await sumarHoy(env, est, nuevo.pz - prev.pz);   // HOYPZ
   }
   return { ok: true, mo: mo.order_no, op: resumen(despues, nuevo) };
 }
@@ -427,6 +433,30 @@ async function evento(k, est, env, b) {
 function resumen(r, av) {
   return { rowId: r.id, status: r.status, tiempoReal: av ? av.seg : num(r.total_actual_time), hechas: av ? av.pz : 0,
            asignados: (r.assigned_operators || []).map(o => o.name), completadoPor: (r.completed_by_operators || []).map(o => o.name) };
+}
+
+/* ---------------- HOYPZ (14-oct-2026, Moisés): piezas procesadas hoy por estación ----------------
+   Cada lapso que una estación captura (pausa / fin / completar) suma sus piezas al contador del día en el KV "TV",
+   llave hoy:AAAA-MM-DD (hora de México) → { "TM-2P": n, "Doblez": n, ... } por nombre de estación.
+   "Procesadas" = trabajo de esa estación: una pieza que pasa por 4 estaciones cuenta en cada una.
+   El contador arranca en 0 cada día; los días anteriores al 14-oct-2026 no existen (antes nadie guardaba el dato por día).
+   Lectura y escritura no son atómicas en KV: con capturas simultáneas de dos estaciones podría perderse un lapso (raro). */
+const HOY_COL = { 'Corte': 'Corte', 'Taladro': 'Taladro', 'TM-2P': 'CNC', 'Doblez': 'Doblez', 'Limpieza & SQA': 'Limpieza & SQA' };
+async function sumarHoy(env, est, n) {
+  n = Math.round(n || 0);
+  if (!env || !env.TV || !(n > 0)) return;
+  try {
+    const key = 'hoy:' + horaMX(new Date()).iso;
+    const cur = (await env.TV.get(key, 'json')) || {};
+    cur[est.nombre] = (cur[est.nombre] || 0) + n;
+    await env.TV.put(key, JSON.stringify(cur), { expirationTtl: 400 * 86400 });
+  } catch (e) {}
+}
+async function hoyTV(env) {
+  if (!env.TV) return null;
+  const iso = horaMX(new Date()).iso, cur = (await env.TV.get('hoy:' + iso, 'json')) || {}, pz = {};
+  for (const [nom, col] of Object.entries(HOY_COL)) pz[col] = cur[nom] || 0;
+  return { fecha: iso, pz };
 }
 
 /* ---------------- utilidades ---------------- */

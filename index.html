@@ -400,6 +400,12 @@ padding:20px 34px;box-shadow:0 0 70px rgba(229,72,77,.95);animation:alimpP 1s st
 .pcal .mt.cu{background:#D9773F}
 .pcal .vacio{font-size:22px;color:#4FE0A6;padding:14px 6px}
 .pcal .mas{font-size:16px;color:#9C937F;padding:2px 6px}
+/* HOYPZ 14-oct-2026: línea "HOY" en cada recuadro de estación */
+.hy{display:flex;align-items:center;gap:10px;margin-top:5px;padding-top:5px;border-top:1px dashed #2A3C52}
+.hy .hl{font-size:14px;font-weight:800;letter-spacing:2px;color:#C9D6E6}
+.hy .hb{flex:1;height:14px;background:#1B2A3D;border-radius:7px;overflow:hidden}.hy .hb i{display:block;height:100%;border-radius:7px}
+.hy b{font-size:30px;font-weight:800;line-height:1;font-variant-numeric:tabular-nums;min-width:62px;text-align:right}
+.hy .hu{font-size:14px;color:var(--tx2)}
 </style></head><body>
 <div id="stage">
  <header>
@@ -421,7 +427,7 @@ padding:20px 34px;box-shadow:0 0 70px rgba(229,72,77,.95);animation:alimpP 1s st
   <div class="msg"></div>
   <span class="pctl"><button id="btnPrev" title="Página anterior">◀</button><button id="btnPausa" title="Pausar">⏸</button><button id="btnNext" title="Página siguiente">▶</button></span>
   <span id="sndIco">🔇</span>
-  <div id="stamp"></div><span class="build">v2026-10-14b</span><div class="bar"><i id="pb"></i></div>
+  <div id="stamp"></div><span class="build">v2026-10-14c</span><div class="bar"><i id="pb"></i></div>
  </footer>
  <div id="alimp" hidden></div>
  <div id="toasts"></div>
@@ -671,7 +677,12 @@ function flujoHTML(D,abiertas,carga){
      '<div class="ft"><span class="fn" style="font-weight:700">'+lblc(o)+(mal?'<span class="tag">MÁS ATRASADA</span>':'')+'</span><span class="fb">'+x.mo+'</span><span class="fu">MO</span></div>'+
      '<div class="fs"><span><b>'+carga[o].toLocaleString("en-US")+'</b> pz en espera</span>'+(a!=null?'<span class="fp">'+a+'%</span>':'')+'</div>'+
      (a!=null?'<div class="apb"><i style="width:'+Math.max(2,a)+'%"></i></div>':'')+
-     '<div class="al">'+(al||'<i class="ok">sin alertas</i>')+'</div></div>';}).join('')+'</div>';}
+     '<div class="al">'+(al||'<i class="ok">sin alertas</i>')+'</div>'+hoyHTML(D,o)+'</div>';}).join('')+'</div>';}
+/* HOYPZ 14-oct-2026 (Moisés): piezas procesadas HOY por estación, dentro de cada recuadro del flujo.
+   Las cuenta el servidor de las estaciones (cada lapso capturado). Una pieza que pasa por 4 estaciones cuenta en cada una.
+   La barra compara contra la estación que más lleva en el día. Si el dato no viene, no se muestra la línea. */
+function hoyHTML(D,o){var H=D.hoyPz;if(!H)return '';var v=+H[o]||0,mx=0;for(var k in H)mx=Math.max(mx,+H[k]||0);
+  return '<div class="hy" title="Piezas procesadas hoy en '+esc(NOMEST[o]||o)+'"><span class="hl">HOY</span><span class="hb"><i style="width:'+(mx?Math.max(v?3:0,v/mx*100):0)+'%;background:'+CEST[o]+'"></i></span><b>'+nf(v)+'</b><span class="hu">pz</span></div>';}
 
 /* ---------- 14-oct-2026: página CALIDAD MAFESA (reemplaza a la de Cynthia) ---------- */
 var CAL=window.__CAL__||null;
