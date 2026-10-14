@@ -1,0 +1,42 @@
+{
+ "stamp": "2026-10-14T17:58",
+ "proyecto": "racks",
+ "incidencias": [
+  {
+   "fecha": "2026-09-25",
+   "tipo": "retrabajo",
+   "origen": "dis",
+   "deteccion": "ves",
+   "causa": "Plano o dibujo con error",
+   "mo": "MO-248",
+   "so": "2619",
+   "producto": "Dollie Front Corner",
+   "cliente": "GM",
+   "piezas": 12,
+   "estado": "abierta",
+   "accion": "Retrabajar la pieza",
+   "accionDetalle": "",
+   "diasRetraso": 1,
+   "operador": "Uriel",
+   "monto": null
+  },
+  {
+   "fecha": "2026-09-21",
+   "tipo": "retrabajo",
+   "origen": "hab",
+   "deteccion": "ves",
+   "causa": "Barrenado o punzonado mal hecho",
+   "mo": "MO-239",
+   "so": "2622",
+   "producto": "DT Door panel intercompanyRacks",
+   "cliente": "Antolin Interiors",
+   "piezas": 10,
+   "estado": "abierta",
+   "accion": "Retrabajar la pieza",
+   "accionDetalle": "Ricardo retrabajo los barrenos",
+   "diasRetraso": 2,
+   "operador": "Mario",
+   "monto": null
+  }
+ ]
+}

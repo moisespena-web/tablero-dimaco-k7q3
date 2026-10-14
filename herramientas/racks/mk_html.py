@@ -65,7 +65,23 @@ css='''
 </style></head>'''
 assert src.count('</style></head>')==1
 src=src.replace('</style></head>',css)
-# 14-oct-2026: la página CALIDAD MAFESA del tablero de MAFESA NO va en Racks
-rep('if(CAL)bloques.push(["CALIDAD MAFESA",null,"cal"]);','if(CAL&&D.proyecto!=="racks")bloques.push(["CALIDAD MAFESA",null,"cal"]);')
+# ---- 14-oct-2026 (Moisés): página CALIDAD RACKS, copia de la CALIDAD MAFESA con los datos del Tablero de Calidad de racks ----
+# datos: racks/calidad.json (lo arma herramientas/racks/calidad_racks.py); departamentos de racks; "quién" = líder del depto.
+import os
+CALR=json.load(open('racks/calidad.json')) if os.path.exists('racks/calidad.json') else {"stamp":"","proyecto":"racks","incidencias":[]}
+i=src.index('<script>window.__CAL__=');j=src.index('</script>',i)
+src=src[:i]+'<script>window.__CAL__='+json.dumps(CALR,ensure_ascii=False)+';'+src[j:]
+rep('var CDEP={cor:["CORTE","Corte"],tal:["TALADRO / TM-2P","Taladro"],dob:["DOBLEZ","Doblez"],lim:["LIMPIEZA","Limpieza & SQA"],cal:["INSPECCIÓN",null],ing:["PLANO / PROGRAMA",null],ext:["PROVEEDOR",null]};',
+    'var CDEP={dis:["DISEÑO",null],hab:["HABILITADO","Corte"],las:["LÁSER","Laser"],arm:["ARMADO","Armado"],pin:["PINTURA","Pintura"],ves:["VESTIDO","Vestido"],cal:["INSPECCIÓN",null],ext:["PROVEEDOR",null]};')
+rep('reclamo:"RECLAMO MAFESA"}','reclamo:"RECLAMO CLIENTE"}')
+rep('<h2>CALIDAD MAFESA · ','<h2>CALIDAD RACKS · ')
+rep('<span>RECLAMOS DE MAFESA</span>','<span>RECLAMOS DE CLIENTE</span>')
+rep('["cor","tal","dob","lim","cal"].map(function(id,i){','["dis","hab","las","arm","pin","ves","cal"].map(function(id,i){')
+rep('["ing","ext"].map(function(id){','["ext"].map(function(id){')
+# en lugar de la etiqueta CU/AL va el cliente, y en lugar del SKU, la SO
+rep('<span class="mt\'+(cu?\' cu\':\'\')+\'">\'+(cu?\'CU\':\'AL\')+\'</span>', '\'+(r.cliente?\'<span class="mt">\'+esc(r.cliente)+\'</span>\':\'\')+\'')
+rep("esc(r.sku||\"\")+' · '+esc(r.producto||\"\")", "(r.so?'SO '+esc(r.so)+' · ':'')+esc(r.producto||\"\")")
+rep('bloques.push(["CALIDAD MAFESA",null,"cal"]);','bloques.push(["CALIDAD RACKS",null,"cal"]);')
+rep('pedir(["calidad.json",RAWG+"calidad.json"],','pedir(["calidad.json",RAWG+"racks/calidad.json"],')
 open('racks/index.html','w').write(src)
 print('ok',len(src))
