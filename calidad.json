@@ -1,0 +1,53 @@
+{
+ "stamp": "2026-10-14T09:10",
+ "incidencias": [
+  {
+   "fecha": "2026-10-13",
+   "tipo": "scrap",
+   "origen": "cal",
+   "deteccion": "insp-dob",
+   "causa": "Inspección deficiente (se liberó mal)",
+   "mo": "MO-389",
+   "so": "SO-23",
+   "sku": "37A14254-0002",
+   "producto": "TERM AL. 1/4 x 1-1/2 7.75",
+   "material": "Aluminio",
+   "piezas": 50,
+   "estado": "abierta",
+   "accion": "Reforzar la inspección o agregar punto de revisión",
+   "accionDetalle": "Miguel fabricara piezas nuevas"
+  },
+  {
+   "fecha": "2026-10-12",
+   "tipo": "retrabajo",
+   "origen": "dob",
+   "deteccion": "insp-dob",
+   "causa": "Ángulo de doblez incorrecto",
+   "mo": "MO-395",
+   "so": "SO-30, SO-40, SO-42",
+   "sku": "37A10786A-0008",
+   "producto": "TERM AL. 1/4 x 1 x 23.75",
+   "material": "Aluminio",
+   "piezas": 4,
+   "estado": "abierta",
+   "accion": "Retrabajar la pieza",
+   "accionDetalle": "Miguel revosara el doblez, y pedira apoyo a calidad para la validacion"
+  },
+  {
+   "fecha": "2026-10-01",
+   "tipo": "scrap",
+   "origen": "dob",
+   "deteccion": "insp-dob",
+   "causa": "Ángulo de doblez incorrecto",
+   "mo": "MO-395",
+   "so": "SO-30, SO-40, SO-42",
+   "sku": "37A10786A-0008",
+   "producto": "TERM AL. 1/4 x 1 x 23.75",
+   "material": "Aluminio",
+   "piezas": 22,
+   "estado": "abierta",
+   "accion": "Fabricar de nuevo (reposición)",
+   "accionDetalle": "Miguel fabricara las 22 pz nuevas para el 8 de octubre"
+  }
+ ]
+}
