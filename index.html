@@ -661,7 +661,7 @@ var CTIPO={scrap:"SCRAP",retrabajo:"RETRABAJO",retraso:"RETRASO",reclamo:"RECLAM
 function cCol(id){var d=CDEP[id];return d&&d[1]?CEST[d[1]]:"#EAF1F9";}
 function cSem(n,rec){return rec?"#E5484D":n===0?"#25C083":n<=2?"#F2A93B":"#E5484D";}
 function renderCal(C,hDisp){
-  var I=(C&&C.incidencias)||[],d=mx(),mes=d.a+"-"+pad(d.mes+1);
+  var I=(C&&C.incidencias)||[],d=(typeof mx==="function")?mx():(function(){var n=new Date();return {mes:n.getMonth(),a:n.getFullYear()};})(),mes=d.a+"-"+pad(d.mes+1);
   var M=I.filter(function(r){return String(r.fecha||"").slice(0,7)===mes;});
   var ab=I.filter(function(r){return r.estado!=="cerrada";});
   var pz=M.filter(function(r){return r.tipo==="scrap"||r.tipo==="retrabajo";}).reduce(function(a,r){return a+(+r.piezas||0);},0);
