@@ -337,6 +337,76 @@ padding:20px 34px;box-shadow:0 0 70px rgba(229,72,77,.95);animation:alimpP 1s st
 .chip.tarde u{color:#fff;background:#E5484D;border-radius:4px;padding:0 5px}
 #pages.compacto .tipo.soc{font-size:17px;color:#C9D6E6;font-weight:700;letter-spacing:.3px}
 .row{position:relative}.row.head .pz{text-align:right}.pz b{display:block;line-height:1}.pz span{display:block;margin:1px 0 0;font-size:15px}.lg{white-space:nowrap}.pzbar{position:absolute;left:14px;right:14px;bottom:0;height:4px;border-radius:3px;overflow:hidden;display:flex;background:#2E3D52;opacity:.95}.pzbar i{display:block;height:100%}.row{flex-wrap:wrap;row-gap:3px;align-content:center}.pzw{flex-basis:100%;padding:0 0 3px 22px}.pzw .pzbar{position:static;height:9px;border-radius:5px}.pzbar.pzabs{position:absolute;left:14px;right:14px;bottom:0;height:4px}.pzl{display:flex;gap:4px 22px;margin-top:4px;font-size:17px;color:#C9D6E6;white-space:nowrap}.pzl i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px}#pages.compacto .row{max-height:120px;padding-top:4px;flex:1 0 auto}#pages.compacto .row:has(.pzw){max-height:170px}#pages.compacto .row.head{flex:none}.row.cu{background:#3B2516;border-color:#D9773F;border-width:2px}#pages.compacto .row.cu{background:#3B2516}.tpill.cu{background:#D9773F}
+/* --- 14-oct-2026 (Moisés): página CALIDAD MAFESA (reemplaza la de Cynthia) ---
+   Mientras está en pantalla: se ocultan los recuadros de arriba (indicadores y franja de estaciones),
+   fondo grafito con retícula de plano, calibrador y sello CERO DEFECTOS en dorado.
+   Lleva quién originó cada incidencia y el scrap en $ (solo material) por mes y acumulado. */
+#stage{transition:background-color .6s}
+#stage:has(.pcal.on) .krow,#stage:has(.pcal.on) #ests{display:none}
+#stage:has(.pcal.on){background-color:#14151A;
+ background-image:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 400 400%22%3E%3Cg opacity=%22.17%22%3E%3Cdefs%3E%3Cpath id=%22r%22 d=%22M200,200 m-150,0 a150,150 0 1,1 300,0 a150,150 0 1,1 -300,0%22/%3E%3C/defs%3E%3Cg fill=%22none%22 stroke=%22%23D9B45A%22%3E%3Ccircle cx=%22200%22 cy=%22200%22 r=%22190%22 stroke-width=%226%22/%3E%3Ccircle cx=%22200%22 cy=%22200%22 r=%22178%22 stroke-width=%222%22/%3E%3Ccircle cx=%22200%22 cy=%22200%22 r=%22118%22 stroke-width=%223%22/%3E%3C/g%3E%3Ctext fill=%22%23D9B45A%22 font-family=%22Arial%22 font-weight=%22700%22 font-size=%2230%22 letter-spacing=%226%22%3E%3CtextPath href=%22%23r%22%3ECERO DEFECTOS %C2%B7 HECHO BIEN A LA PRIMERA %C2%B7 %3C/textPath%3E%3C/text%3E%3Cpath d=%22M140 205 L185 250 L270 160%22 fill=%22none%22 stroke=%22%23D9B45A%22 stroke-width=%2222%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22/%3E%3C/g%3E%3C/svg%3E"),url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1500 520%22%3E%3Cg opacity=%22.22%22%3E%3Cg fill=%22none%22 stroke=%22%23D9B45A%22 stroke-width=%223%22 stroke-linejoin=%22round%22%3E%3Crect x=%2260%22 y=%22120%22 width=%221380%22 height=%2290%22 rx=%228%22/%3E%3Cpath d=%22M60 210 L60 470 L120 470 L170 230 L170 210%22/%3E%3Cpath d=%22M60 120 L60 30 L95 30 L120 120%22/%3E%3Crect x=%22560%22 y=%22100%22 width=%22300%22 height=%22130%22 rx=%2210%22/%3E%3Cpath d=%22M560 230 L560 470 L620 470 L640 230%22/%3E%3Cpath d=%22M560 100 L560 30 L590 30 L610 100%22/%3E%3Ccircle cx=%22800%22 cy=%22250%22 r=%2222%22/%3E%3Cline x1=%221440%22 y1=%22165%22 x2=%221490%22 y2=%22165%22/%3E%3C/g%3E%3Cg stroke=%22%23D9B45A%22 stroke-width=%222%22%3E%3Cline x1=%22120%22 y1=%22120%22 x2=%22120%22 y2=%22154%22/%3E%3Cline x1=%22130%22 y1=%22120%22 x2=%22130%22 y2=%22134%22/%3E%3Cline x1=%22140%22 y1=%22120%22 x2=%22140%22 y2=%22134%22/%3E%3Cline x1=%22150%22 y1=%22120%22 x2=%22150%22 y2=%22134%22/%3E%3Cline x1=%22160%22 y1=%22120%22 x2=%22160%22 y2=%22134%22/%3E%3Cline x1=%22170%22 y1=%22120%22 x2=%22170%22 y2=%22144%22/%3E%3Cline x1=%22180%22 y1=%22120%22 x2=%22180%22 y2=%22134%22/%3E%3Cline x1=%22190%22 y1=%22120%22 x2=%22190%22 y2=%22134%22/%3E%3Cline x1=%22200%22 y1=%22120%22 x2=%22200%22 y2=%22134%22/%3E%3Cline x1=%22210%22 y1=%22120%22 x2=%22210%22 y2=%22134%22/%3E%3Cline x1=%22220%22 y1=%22120%22 x2=%22220%22 y2=%22154%22/%3E%3Cline x1=%22230%22 y1=%22120%22 x2=%22230%22 y2=%22134%22/%3E%3Cline x1=%22240%22 y1=%22120%22 x2=%22240%22 y2=%22134%22/%3E%3Cline x1=%22250%22 y1=%22120%22 x2=%22250%22 y2=%22134%22/%3E%3Cline x1=%22260%22 y1=%22120%22 x2=%22260%22 y2=%22134%22/%3E%3Cline x1=%22270%22 y1=%22120%22 x2=%22270%22 y2=%22144%22/%3E%3Cline x1=%22280%22 y1=%22120%22 x2=%22280%22 y2=%22134%22/%3E%3Cline x1=%22290%22 y1=%22120%22 x2=%22290%22 y2=%22134%22/%3E%3Cline x1=%22300%22 y1=%22120%22 x2=%22300%22 y2=%22134%22/%3E%3Cline x1=%22310%22 y1=%22120%22 x2=%22310%22 y2=%22134%22/%3E%3Cline x1=%22320%22 y1=%22120%22 x2=%22320%22 y2=%22154%22/%3E%3Cline x1=%22330%22 y1=%22120%22 x2=%22330%22 y2=%22134%22/%3E%3Cline x1=%22340%22 y1=%22120%22 x2=%22340%22 y2=%22134%22/%3E%3Cline x1=%22350%22 y1=%22120%22 x2=%22350%22 y2=%22134%22/%3E%3Cline x1=%22360%22 y1=%22120%22 x2=%22360%22 y2=%22134%22/%3E%3Cline x1=%22370%22 y1=%22120%22 x2=%22370%22 y2=%22144%22/%3E%3Cline x1=%22380%22 y1=%22120%22 x2=%22380%22 y2=%22134%22/%3E%3Cline x1=%22390%22 y1=%22120%22 x2=%22390%22 y2=%22134%22/%3E%3Cline x1=%22400%22 y1=%22120%22 x2=%22400%22 y2=%22134%22/%3E%3Cline x1=%22410%22 y1=%22120%22 x2=%22410%22 y2=%22134%22/%3E%3Cline x1=%22420%22 y1=%22120%22 x2=%22420%22 y2=%22154%22/%3E%3Cline x1=%22430%22 y1=%22120%22 x2=%22430%22 y2=%22134%22/%3E%3Cline x1=%22440%22 y1=%22120%22 x2=%22440%22 y2=%22134%22/%3E%3Cline x1=%22450%22 y1=%22120%22 x2=%22450%22 y2=%22134%22/%3E%3Cline x1=%22460%22 y1=%22120%22 x2=%22460%22 y2=%22134%22/%3E%3Cline x1=%22470%22 y1=%22120%22 x2=%22470%22 y2=%22144%22/%3E%3Cline x1=%22480%22 y1=%22120%22 x2=%22480%22 y2=%22134%22/%3E%3Cline x1=%22490%22 y1=%22120%22 x2=%22490%22 y2=%22134%22/%3E%3Cline x1=%22500%22 y1=%22120%22 x2=%22500%22 y2=%22134%22/%3E%3Cline x1=%22510%22 y1=%22120%22 x2=%22510%22 y2=%22134%22/%3E%3Cline x1=%22520%22 y1=%22120%22 x2=%22520%22 y2=%22154%22/%3E%3Cline x1=%22530%22 y1=%22120%22 x2=%22530%22 y2=%22134%22/%3E%3Cline x1=%22540%22 y1=%22120%22 x2=%22540%22 y2=%22134%22/%3E%3Cline x1=%22550%22 y1=%22120%22 x2=%22550%22 y2=%22134%22/%3E%3Cline x1=%22560%22 y1=%22120%22 x2=%22560%22 y2=%22134%22/%3E%3Cline x1=%22570%22 y1=%22120%22 x2=%22570%22 y2=%22144%22/%3E%3Cline x1=%22580%22 y1=%22120%22 x2=%22580%22 y2=%22134%22/%3E%3Cline x1=%22590%22 y1=%22120%22 x2=%22590%22 y2=%22134%22/%3E%3Cline x1=%22600%22 y1=%22120%22 x2=%22600%22 y2=%22134%22/%3E%3Cline x1=%22610%22 y1=%22120%22 x2=%22610%22 y2=%22134%22/%3E%3Cline x1=%22620%22 y1=%22120%22 x2=%22620%22 y2=%22154%22/%3E%3Cline x1=%22630%22 y1=%22120%22 x2=%22630%22 y2=%22134%22/%3E%3Cline x1=%22640%22 y1=%22120%22 x2=%22640%22 y2=%22134%22/%3E%3Cline x1=%22650%22 y1=%22120%22 x2=%22650%22 y2=%22134%22/%3E%3Cline x1=%22660%22 y1=%22120%22 x2=%22660%22 y2=%22134%22/%3E%3Cline x1=%22670%22 y1=%22120%22 x2=%22670%22 y2=%22144%22/%3E%3Cline x1=%22680%22 y1=%22120%22 x2=%22680%22 y2=%22134%22/%3E%3Cline x1=%22690%22 y1=%22120%22 x2=%22690%22 y2=%22134%22/%3E%3Cline x1=%22700%22 y1=%22120%22 x2=%22700%22 y2=%22134%22/%3E%3Cline x1=%22710%22 y1=%22120%22 x2=%22710%22 y2=%22134%22/%3E%3Cline x1=%22720%22 y1=%22120%22 x2=%22720%22 y2=%22154%22/%3E%3Cline x1=%22730%22 y1=%22120%22 x2=%22730%22 y2=%22134%22/%3E%3Cline x1=%22740%22 y1=%22120%22 x2=%22740%22 y2=%22134%22/%3E%3Cline x1=%22750%22 y1=%22120%22 x2=%22750%22 y2=%22134%22/%3E%3Cline x1=%22760%22 y1=%22120%22 x2=%22760%22 y2=%22134%22/%3E%3Cline x1=%22770%22 y1=%22120%22 x2=%22770%22 y2=%22144%22/%3E%3Cline x1=%22780%22 y1=%22120%22 x2=%22780%22 y2=%22134%22/%3E%3Cline x1=%22790%22 y1=%22120%22 x2=%22790%22 y2=%22134%22/%3E%3Cline x1=%22800%22 y1=%22120%22 x2=%22800%22 y2=%22134%22/%3E%3Cline x1=%22810%22 y1=%22120%22 x2=%22810%22 y2=%22134%22/%3E%3Cline x1=%22820%22 y1=%22120%22 x2=%22820%22 y2=%22154%22/%3E%3Cline x1=%22830%22 y1=%22120%22 x2=%22830%22 y2=%22134%22/%3E%3Cline x1=%22840%22 y1=%22120%22 x2=%22840%22 y2=%22134%22/%3E%3Cline x1=%22850%22 y1=%22120%22 x2=%22850%22 y2=%22134%22/%3E%3Cline x1=%22860%22 y1=%22120%22 x2=%22860%22 y2=%22134%22/%3E%3Cline x1=%22870%22 y1=%22120%22 x2=%22870%22 y2=%22144%22/%3E%3Cline x1=%22880%22 y1=%22120%22 x2=%22880%22 y2=%22134%22/%3E%3Cline x1=%22890%22 y1=%22120%22 x2=%22890%22 y2=%22134%22/%3E%3Cline x1=%22900%22 y1=%22120%22 x2=%22900%22 y2=%22134%22/%3E%3Cline x1=%22910%22 y1=%22120%22 x2=%22910%22 y2=%22134%22/%3E%3Cline x1=%22920%22 y1=%22120%22 x2=%22920%22 y2=%22154%22/%3E%3Cline x1=%22930%22 y1=%22120%22 x2=%22930%22 y2=%22134%22/%3E%3Cline x1=%22940%22 y1=%22120%22 x2=%22940%22 y2=%22134%22/%3E%3Cline x1=%22950%22 y1=%22120%22 x2=%22950%22 y2=%22134%22/%3E%3Cline x1=%22960%22 y1=%22120%22 x2=%22960%22 y2=%22134%22/%3E%3Cline x1=%22970%22 y1=%22120%22 x2=%22970%22 y2=%22144%22/%3E%3Cline x1=%22980%22 y1=%22120%22 x2=%22980%22 y2=%22134%22/%3E%3Cline x1=%22990%22 y1=%22120%22 x2=%22990%22 y2=%22134%22/%3E%3Cline x1=%221000%22 y1=%22120%22 x2=%221000%22 y2=%22134%22/%3E%3Cline x1=%221010%22 y1=%22120%22 x2=%221010%22 y2=%22134%22/%3E%3Cline x1=%221020%22 y1=%22120%22 x2=%221020%22 y2=%22154%22/%3E%3Cline x1=%221030%22 y1=%22120%22 x2=%221030%22 y2=%22134%22/%3E%3Cline x1=%221040%22 y1=%22120%22 x2=%221040%22 y2=%22134%22/%3E%3Cline x1=%221050%22 y1=%22120%22 x2=%221050%22 y2=%22134%22/%3E%3Cline x1=%221060%22 y1=%22120%22 x2=%221060%22 y2=%22134%22/%3E%3Cline x1=%221070%22 y1=%22120%22 x2=%221070%22 y2=%22144%22/%3E%3Cline x1=%221080%22 y1=%22120%22 x2=%221080%22 y2=%22134%22/%3E%3Cline x1=%221090%22 y1=%22120%22 x2=%221090%22 y2=%22134%22/%3E%3Cline x1=%221100%22 y1=%22120%22 x2=%221100%22 y2=%22134%22/%3E%3Cline x1=%221110%22 y1=%22120%22 x2=%221110%22 y2=%22134%22/%3E%3Cline x1=%221120%22 y1=%22120%22 x2=%221120%22 y2=%22154%22/%3E%3Cline x1=%221130%22 y1=%22120%22 x2=%221130%22 y2=%22134%22/%3E%3Cline x1=%221140%22 y1=%22120%22 x2=%221140%22 y2=%22134%22/%3E%3Cline x1=%221150%22 y1=%22120%22 x2=%221150%22 y2=%22134%22/%3E%3Cline x1=%221160%22 y1=%22120%22 x2=%221160%22 y2=%22134%22/%3E%3Cline x1=%221170%22 y1=%22120%22 x2=%221170%22 y2=%22144%22/%3E%3Cline x1=%221180%22 y1=%22120%22 x2=%221180%22 y2=%22134%22/%3E%3Cline x1=%221190%22 y1=%22120%22 x2=%221190%22 y2=%22134%22/%3E%3Cline x1=%221200%22 y1=%22120%22 x2=%221200%22 y2=%22134%22/%3E%3Cline x1=%221210%22 y1=%22120%22 x2=%221210%22 y2=%22134%22/%3E%3Cline x1=%221220%22 y1=%22120%22 x2=%221220%22 y2=%22154%22/%3E%3Cline x1=%221230%22 y1=%22120%22 x2=%221230%22 y2=%22134%22/%3E%3Cline x1=%221240%22 y1=%22120%22 x2=%221240%22 y2=%22134%22/%3E%3Cline x1=%221250%22 y1=%22120%22 x2=%221250%22 y2=%22134%22/%3E%3Cline x1=%221260%22 y1=%22120%22 x2=%221260%22 y2=%22134%22/%3E%3Cline x1=%221270%22 y1=%22120%22 x2=%221270%22 y2=%22144%22/%3E%3Cline x1=%221280%22 y1=%22120%22 x2=%221280%22 y2=%22134%22/%3E%3Cline x1=%221290%22 y1=%22120%22 x2=%221290%22 y2=%22134%22/%3E%3Cline x1=%221300%22 y1=%22120%22 x2=%221300%22 y2=%22134%22/%3E%3Cline x1=%221310%22 y1=%22120%22 x2=%221310%22 y2=%22134%22/%3E%3Cline x1=%221320%22 y1=%22120%22 x2=%221320%22 y2=%22154%22/%3E%3Cline x1=%221330%22 y1=%22120%22 x2=%221330%22 y2=%22134%22/%3E%3Cline x1=%221340%22 y1=%22120%22 x2=%221340%22 y2=%22134%22/%3E%3Cline x1=%221350%22 y1=%22120%22 x2=%221350%22 y2=%22134%22/%3E%3Cline x1=%221360%22 y1=%22120%22 x2=%221360%22 y2=%22134%22/%3E%3Cline x1=%221370%22 y1=%22120%22 x2=%221370%22 y2=%22144%22/%3E%3Cline x1=%221380%22 y1=%22120%22 x2=%221380%22 y2=%22134%22/%3E%3Cline x1=%221390%22 y1=%22120%22 x2=%221390%22 y2=%22134%22/%3E%3Cline x1=%221400%22 y1=%22120%22 x2=%221400%22 y2=%22134%22/%3E%3Cline x1=%221410%22 y1=%22120%22 x2=%221410%22 y2=%22134%22/%3E%3Cline x1=%221420%22 y1=%22120%22 x2=%221420%22 y2=%22154%22/%3E%3C/g%3E%3Cg fill=%22%23D9B45A%22 font-family=%22Arial%22 font-size=%2222%22 text-anchor=%22middle%22%3E%3Ctext x=%22120%22 y=%22196%22%3E0%3C/text%3E%3Ctext x=%22220%22 y=%22196%22%3E1%3C/text%3E%3Ctext x=%22320%22 y=%22196%22%3E2%3C/text%3E%3Ctext x=%22420%22 y=%22196%22%3E3%3C/text%3E%3Ctext x=%22520%22 y=%22196%22%3E4%3C/text%3E%3Ctext x=%22620%22 y=%22196%22%3E5%3C/text%3E%3Ctext x=%22720%22 y=%22196%22%3E6%3C/text%3E%3Ctext x=%22820%22 y=%22196%22%3E7%3C/text%3E%3Ctext x=%22920%22 y=%22196%22%3E8%3C/text%3E%3Ctext x=%221020%22 y=%22196%22%3E9%3C/text%3E%3Ctext x=%221120%22 y=%22196%22%3E10%3C/text%3E%3Ctext x=%221220%22 y=%22196%22%3E11%3C/text%3E%3Ctext x=%221320%22 y=%22196%22%3E12%3C/text%3E%3Ctext x=%221420%22 y=%22196%22%3E13%3C/text%3E%3C/g%3E%3Cg stroke=%22%23D9B45A%22 stroke-width=%222%22%3E%3Cline x1=%22590%22 y1=%22230%22 x2=%22590%22 y2=%22204%22/%3E%3Cline x1=%22602%22 y1=%22230%22 x2=%22602%22 y2=%22215%22/%3E%3Cline x1=%22614%22 y1=%22230%22 x2=%22614%22 y2=%22215%22/%3E%3Cline x1=%22626%22 y1=%22230%22 x2=%22626%22 y2=%22215%22/%3E%3Cline x1=%22638%22 y1=%22230%22 x2=%22638%22 y2=%22215%22/%3E%3Cline x1=%22650%22 y1=%22230%22 x2=%22650%22 y2=%22204%22/%3E%3Cline x1=%22662%22 y1=%22230%22 x2=%22662%22 y2=%22215%22/%3E%3Cline x1=%22674%22 y1=%22230%22 x2=%22674%22 y2=%22215%22/%3E%3Cline x1=%22686%22 y1=%22230%22 x2=%22686%22 y2=%22215%22/%3E%3Cline x1=%22698%22 y1=%22230%22 x2=%22698%22 y2=%22215%22/%3E%3Cline x1=%22710%22 y1=%22230%22 x2=%22710%22 y2=%22204%22/%3E%3Cline x1=%22722%22 y1=%22230%22 x2=%22722%22 y2=%22215%22/%3E%3Cline x1=%22734%22 y1=%22230%22 x2=%22734%22 y2=%22215%22/%3E%3Cline x1=%22746%22 y1=%22230%22 x2=%22746%22 y2=%22215%22/%3E%3Cline x1=%22758%22 y1=%22230%22 x2=%22758%22 y2=%22215%22/%3E%3Cline x1=%22770%22 y1=%22230%22 x2=%22770%22 y2=%22204%22/%3E%3Cline x1=%22782%22 y1=%22230%22 x2=%22782%22 y2=%22215%22/%3E%3Cline x1=%22794%22 y1=%22230%22 x2=%22794%22 y2=%22215%22/%3E%3Cline x1=%22806%22 y1=%22230%22 x2=%22806%22 y2=%22215%22/%3E%3Cline x1=%22818%22 y1=%22230%22 x2=%22818%22 y2=%22215%22/%3E%3Cline x1=%22830%22 y1=%22230%22 x2=%22830%22 y2=%22204%22/%3E%3C/g%3E%3C/g%3E%3C/svg%3E"),url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22120%22 height=%22120%22%3E%3Cpath d=%22M120 0H0V120%22 fill=%22none%22 stroke=%22%236B6252%22 stroke-opacity=%22.30%22 stroke-width=%221.5%22/%3E%3Cpath d=%22M30 0V120M60 0V120M90 0V120M0 30H120M0 60H120M0 90H120%22 fill=%22none%22 stroke=%22%236B6252%22 stroke-opacity=%22.12%22 stroke-width=%221%22/%3E%3C/svg%3E"),radial-gradient(1100px 650px at 80% 75%,rgba(217,180,90,.10),transparent 70%);
+ background-repeat:no-repeat,no-repeat,repeat,no-repeat;background-size:560px 560px,1240px auto,120px 120px,100% 100%;
+ background-position:right 30px bottom 50px,left 30px bottom 40px,0 0,0 0}
+.pcal{gap:12px!important}
+.pcal .ch{display:flex;align-items:center;justify-content:space-between}
+.pcal .ch h2{margin:0;font-size:30px;letter-spacing:4px;color:#F2D58A;display:flex;align-items:center;gap:14px}
+.pcal .ch h2::before{content:"";width:44px;height:44px;flex:none;background:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 400 400%22%3E%3Cg opacity=%221%22%3E%3Cdefs%3E%3Cpath id=%22r%22 d=%22M200,200 m-150,0 a150,150 0 1,1 300,0 a150,150 0 1,1 -300,0%22/%3E%3C/defs%3E%3Cg fill=%22none%22 stroke=%22%23D9B45A%22%3E%3Ccircle cx=%22200%22 cy=%22200%22 r=%22190%22 stroke-width=%226%22/%3E%3Ccircle cx=%22200%22 cy=%22200%22 r=%22178%22 stroke-width=%222%22/%3E%3Ccircle cx=%22200%22 cy=%22200%22 r=%22118%22 stroke-width=%223%22/%3E%3C/g%3E%3Ctext fill=%22%23D9B45A%22 font-family=%22Arial%22 font-weight=%22700%22 font-size=%2230%22 letter-spacing=%226%22%3E%3CtextPath href=%22%23r%22%3ECERO DEFECTOS %C2%B7 HECHO BIEN A LA PRIMERA %C2%B7 %3C/textPath%3E%3C/text%3E%3Cpath d=%22M140 205 L185 250 L270 160%22 fill=%22none%22 stroke=%22%23D9B45A%22 stroke-width=%2222%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22/%3E%3C/g%3E%3C/svg%3E") center/contain no-repeat}
+.pcal .ch span{font-size:17px;color:#B8AE97}
+.pcal .ck{display:grid;grid-template-columns:repeat(4,1fr) 1.25fr 1.25fr;gap:12px;flex:none}
+.pcal .ck>div{background:rgba(24,25,31,.72);border:2px solid #3A3830;border-radius:14px;padding:8px 16px}
+.pcal .ck b{display:block;font-size:52px;line-height:1.05;font-variant-numeric:tabular-nums}
+.pcal .ck span{font-size:16px;color:#B8AE97;letter-spacing:1px}
+.pcal .ck .rojo{border-color:#E5484D}.pcal .ck .rojo b{color:#FF6369}
+.pcal .ck .verde b{color:#4FE0A6}
+.pcal .ck .din{border-color:#D9B45A;background:rgba(48,40,20,.72)}.pcal .ck .din b{color:#F2D58A;font-size:46px}
+.pcal .cm{display:flex;gap:12px;flex:none}
+.pcal .cbox{background:rgba(24,25,31,.72);border:1px solid #3A3830;border-radius:14px;padding:10px 16px;min-width:0}
+.pcal .ctt{font-size:17px;letter-spacing:2px;color:#C9BC98;margin-bottom:8px}
+.pcal .cflow{flex:1.25}
+.pcal .cfl{display:flex;align-items:stretch;gap:6px}
+.pcal .cn{flex:1;background:rgba(10,10,13,.82);border-radius:10px;border-top:6px solid;padding:6px 10px;display:flex;flex-direction:column;min-width:0}
+.pcal .cn .nm{font-size:15px;letter-spacing:-.2px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pcal .cn b{font-size:46px;line-height:1.05;font-variant-numeric:tabular-nums}
+.pcal .cn small{font-size:14px;color:#9C937F}
+.pcal .cn .qn{margin-top:4px;display:flex;flex-direction:column;gap:2px}
+.pcal .cn .qn i{font-style:normal;font-size:17px;font-weight:700;color:#EAF1F9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pcal .cn .qn i u{text-decoration:none;color:#9C937F;font-weight:400}
+.pcal .car{align-self:center;color:#6B6252;font-size:20px}
+.pcal .cext{display:flex;gap:16px;margin-top:8px;font-size:16px;color:#9C937F}.pcal .cext b{color:#EAF1F9}
+.pcal .cgraf{flex:1;display:flex;flex-direction:column}
+.pcal .cgraf svg{width:100%;height:230px;display:block}
+.pcal .cab{flex:1;min-height:0;display:flex;gap:12px}
+.pcal .ccau{flex:0 0 520px}
+.pcal .cb{display:grid;grid-template-columns:1fr 120px 34px;gap:10px;align-items:center;font-size:17px;margin-bottom:8px}
+.pcal .cb .l{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#D8D2C2}
+.pcal .cb .t{height:14px;background:rgba(10,10,13,.82);border-radius:4px;overflow:hidden}
+.pcal .cb .t i{display:block;height:100%;border-radius:4px}
+.pcal .cb b{text-align:right;font-size:21px}
+.pcal .cabl{flex:1;min-width:0;overflow:hidden}
+.pcal .ccau,.pcal .cabl{background:rgba(24,25,31,.55)}
+.pcal .cr{display:grid;grid-template-columns:76px 300px 120px 200px 1fr 120px;gap:12px;align-items:center;background:rgba(10,10,13,.82);border-radius:10px;border-left:8px solid;padding:7px 12px;margin-bottom:7px;font-size:17px}
+.pcal .cr .cmo{font-size:21px;font-weight:800}
+.pcal .cr .sk{font-size:14px;color:#9C937F;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pcal .cr .es{font-weight:800;line-height:1.1}.pcal .cr .es div{font-size:17px;color:#EAF1F9;font-weight:700}
+.pcal .cr .es div u{text-decoration:none;color:#9C937F;font-weight:400;font-size:13px;margin-right:4px}
+.pcal .cr .cs{font-size:17px;line-height:1.2}
+.pcal .cr .ac{font-size:14px;color:#9C937F;line-height:1.2}
+.pcal .cr .pz{text-align:right;font-size:24px;font-weight:800;line-height:1}
+.pcal .cr .pz span{display:block;font-size:13px;font-weight:400;color:#9C937F}
+.pcal .cr .pz em{display:block;font-style:normal;font-size:16px;color:#F2D58A;margin-top:2px}
+.pcal .tp{display:inline-block;font-size:14px;font-weight:800;border-radius:6px;padding:2px 8px;color:#fff}
+.pcal .tp.scrap{background:#E5484D}.pcal .tp.retrabajo{background:#C98A12}.pcal .tp.retraso{background:#2F7FD1}.pcal .tp.reclamo{background:#8E1E22;outline:2px solid #FF6369}
+.pcal .mt{display:inline-block;font-size:13px;font-weight:800;border-radius:4px;padding:0 6px;margin-left:6px;vertical-align:2px;color:#fff;background:#5E6B78}
+.pcal .mt.cu{background:#D9773F}
+.pcal .vacio{font-size:22px;color:#4FE0A6;padding:14px 6px}
+.pcal .mas{font-size:16px;color:#9C937F;padding:2px 6px}
+/* HOYPZ 14-oct-2026: línea "HOY" en cada recuadro de estación */
+.hy{display:flex;align-items:center;gap:10px;margin-top:5px;padding-top:5px;border-top:1px dashed #2A3C52}
+.hy .hl{font-size:14px;font-weight:800;letter-spacing:2px;color:#C9D6E6}
+.hy .hb{flex:1;height:14px;background:#1B2A3D;border-radius:7px;overflow:hidden}.hy .hb i{display:block;height:100%;border-radius:7px}
+.hy b{font-size:30px;font-weight:800;line-height:1;font-variant-numeric:tabular-nums;min-width:62px;text-align:right}
+.hy .hu{font-size:14px;color:var(--tx2)}
+
 /* ---- RACKS: 7 estaciones ---- */
 :root{--nops:7}
 .ops{width:880px;grid-template-columns:repeat(var(--nops),minmax(0,1fr));gap:6px}
@@ -369,7 +439,7 @@ padding:20px 34px;box-shadow:0 0 70px rgba(229,72,77,.95);animation:alimpP 1s st
   <div class="msg"></div>
   <span class="pctl"><button id="btnPrev" title="Página anterior">◀</button><button id="btnPausa" title="Pausar">⏸</button><button id="btnNext" title="Página siguiente">▶</button></span>
   <span id="sndIco">🔇</span>
-  <div id="stamp"></div><span class="build">r2026-10-13</span><div class="bar"><i id="pb"></i></div>
+  <div id="stamp"></div><span class="build">r2026-10-14</span><div class="bar"><i id="pb"></i></div>
  </footer>
  <div id="alimp" hidden></div>
  <div id="toasts"></div>
@@ -397,7 +467,8 @@ padding:20px 34px;box-shadow:0 0 70px rgba(229,72,77,.95);animation:alimpP 1s st
 </div>
 <button id="fab" type="button" hidden>✏️ Aviso TV</button>
 
-<script>window.__DATOS__={"stamp": "2026-10-13T19:05:00-06:00", "modo": "entregas", "proyecto": "racks", "ops": [["Corte", "CORTE"], ["Laser", "LÁSER"], ["Router", "ROUTER"], ["Doblez", "DOBLEZ"], ["Armado", "ARMADO"], ["Pintura", "PINTURA"], ["Vestido", "VESTIDO"]], "clientes": [["Antolin", "#2F7FD8"], ["GM", "#7A1F3D"], ["OpMobility USA", "#3F8F2F"]], "rows": [{"mo": "MO-245", "id": 19097678, "sku": "", "nombre": "Floor Console Cart", "piezas": 2, "plan": 2, "entr": 0, "deadline": "2026-09-21", "entrega": "2026-09-21", "prio": false, "ops": [["Corte", "IN_PROGRESS"], ["Armado", "NOT_STARTED"], ["Pintura", "NOT_STARTED"], ["Vestido", "NOT_STARTED"]], "av": {}, "cliente": "GM", "color": "#7A1F3D", "so": "2620 · GM", "grp": "sig", "nota": ""}, {"mo": "MO-247", "id": 19097866, "sku": "", "nombre": "Dollie Radiador", "piezas": 4, "plan": 4, "entr": 0, "deadline": "2026-09-21", "entrega": "2026-09-21", "prio": false, "ops": [["Corte", "COMPLETED"], ["Armado", "COMPLETED"], ["Pintura", "IN_PROGRESS"], ["Vestido", "NOT_STARTED"]], "av": {}, "cliente": "GM", "color": "#7A1F3D", "so": "2619 · GM", "grp": "sig", "nota": ""}, {"mo": "MO-420", "id": 19582038, "sku": "MAC30872", "nombre": "MAC30872", "piezas": 26, "plan": 26, "entr": 0, "deadline": "2026-10-20", "entrega": "2026-10-20", "prio": false, "ops": [["Armado", "NOT_STARTED"]], "av": {}, "cliente": "GM", "color": "#7A1F3D", "so": "2522 · GM", "grp": "sig", "nota": ""}, {"mo": "MO-293", "id": 19207844, "sku": "R-01", "nombre": "Roller Side Cap", "piezas": 50, "plan": 50, "entr": 0, "deadline": "2026-09-28", "entrega": "2026-09-28", "prio": false, "ops": [["Corte", "COMPLETED"], ["Laser", "COMPLETED"], ["Doblez", "COMPLETED"], ["Armado", "IN_PROGRESS"], ["Pintura", "NOT_STARTED"], ["Vestido", "NOT_STARTED"]], "av": {}, "cliente": "OpMobility USA", "color": "#3F8F2F", "so": "2623 · OpMobility USA", "grp": "sig", "nota": ""}, {"mo": "MO-296", "id": 19207867, "sku": "", "nombre": "02 Front Fascia GMC", "piezas": 2, "plan": 2, "entr": 0, "deadline": "2026-10-07", "entrega": "2026-10-07", "prio": false, "ops": [["Corte", "COMPLETED"], ["Router", "COMPLETED"], ["Laser", "COMPLETED"], ["Armado", "COMPLETED"], ["Pintura", "COMPLETED"], ["Vestido", "IN_PROGRESS"]], "av": {}, "cliente": "OpMobility USA", "color": "#3F8F2F", "so": "2623 · OpMobility USA", "grp": "sig", "nota": ""}, {"mo": "MO-297", "id": 19207879, "sku": "2624-OP-06", "nombre": "06 Front Side Cap Reinf", "piezas": 5, "plan": 5, "entr": 0, "deadline": "2026-10-07", "entrega": "2026-10-07", "prio": false, "ops": [["Corte", "IN_PROGRESS"], ["Laser", "COMPLETED"], ["Armado", "IN_PROGRESS"], ["Pintura", "NOT_STARTED"], ["Vestido", "NOT_STARTED"]], "av": {}, "cliente": "OpMobility USA", "color": "#3F8F2F", "so": "2624 · OpMobility USA", "grp": "sig", "nota": ""}, {"mo": "MO-299", "id": 19207881, "sku": "2624-OP-01", "nombre": "01 Front Fascia Chevy", "piezas": 2, "plan": 3, "entr": 1, "deadline": "2026-09-28", "entrega": "2026-09-28", "prio": false, "ops": [["Corte", "COMPLETED"], ["Laser", "COMPLETED"], ["Router", "COMPLETED"], ["Armado", "COMPLETED"], ["Pintura", "IN_PROGRESS"], ["Vestido", "IN_PROGRESS"]], "av": {}, "cliente": "OpMobility USA", "color": "#3F8F2F", "so": "2624 · OpMobility USA", "grp": "sig", "nota": ""}, {"mo": "MO-300", "id": 19207892, "sku": "2624-OP-01", "nombre": "01 Front Fascia Chevy", "piezas": 2, "plan": 2, "entr": 0, "deadline": "2026-09-28", "entrega": "2026-09-28", "prio": false, "ops": [["Corte", "COMPLETED"], ["Laser", "COMPLETED"], ["Armado", "COMPLETED"], ["Pintura", "NOT_STARTED"], ["Vestido", "NOT_STARTED"]], "av": {}, "cliente": "OpMobility USA", "color": "#3F8F2F", "so": "2624 · OpMobility USA", "grp": "sig", "nota": ""}, {"mo": "MO-294", "id": 19207845, "sku": "", "nombre": "Roller Side Cap Center", "piezas": 15, "plan": 15, "entr": 0, "deadline": "2026-10-07", "entrega": "2026-10-07", "prio": false, "ops": [["Corte", "NOT_STARTED"], ["Laser", "NOT_STARTED"], ["Doblez", "NOT_STARTED"], ["Armado", "NOT_STARTED"], ["Pintura", "NOT_STARTED"], ["Vestido", "NOT_STARTED"]], "av": {}, "cliente": "OpMobility USA", "color": "#3F8F2F", "so": "2623 · OpMobility USA", "grp": "sig", "nota": ""}, {"mo": "MO-421", "id": 19582081, "sku": "VW38 Intercompany", "nombre": "VW38 Intercompany", "piezas": 3, "plan": 5, "entr": 2, "deadline": "2026-10-20", "entrega": "2026-10-20", "prio": false, "ops": [["Corte", "NOT_STARTED"], ["Laser", "NOT_STARTED"], ["Router", "NOT_STARTED"], ["Armado", "NOT_STARTED"], ["Pintura", "NOT_STARTED"], ["Vestido", "NOT_STARTED"]], "av": {}, "cliente": "Antolin", "color": "#2F7FD8", "so": "2616 · Antolin", "grp": "sig", "nota": ""}], "avProc": [{"p": "CORTE", "h": 60, "t": 85, "pct": 71}, {"p": "LÁSER", "h": 61, "t": 79, "pct": 77}, {"p": "ROUTER", "h": 4, "t": 7, "pct": 57}, {"p": "DOBLEZ", "h": 50, "t": 65, "pct": 77}, {"p": "ARMADO", "h": 10, "t": 111, "pct": 9}, {"p": "PINTURA", "h": 2, "t": 85, "pct": 2}, {"p": "VESTIDO", "h": 0, "t": 85, "pct": 0}], "faltaPz": 364, "soSinMO": ["SO-4008 · OpMobility USA", "2622 · Antolin", "2621 · GM", "2540 · Antolin"]};</script>
+<script>window.__CAL__={"stamp": "2026-10-14T12:00", "incidencias": [{"fecha": "2026-10-13", "tipo": "scrap", "origen": "cal", "operador": "Cynthia", "deteccion": "insp-dob", "causa": "Inspección deficiente (se liberó mal)", "mo": "MO-389", "so": "SO-23", "sku": "37A14254-0002", "producto": "TERM AL. 1/4 x 1-1/2 7.75", "material": "Aluminio", "piezas": 50, "estado": "abierta", "accion": "Reforzar la inspección o agregar punto de revisión", "accionDetalle": "Miguel fabricara piezas nuevas", "monto": 1106.0}, {"fecha": "2026-10-12", "tipo": "retrabajo", "origen": "dob", "operador": "Miguel", "deteccion": "insp-dob", "causa": "Ángulo de doblez incorrecto", "mo": "MO-395", "so": "SO-30, SO-40, SO-42", "sku": "37A10786A-0008", "producto": "TERM AL. 1/4 x 1 x 23.75", "material": "Aluminio", "piezas": 4, "estado": "abierta", "accion": "Retrabajar la pieza", "accionDetalle": "Miguel revosara el doblez, y pedira apoyo a calidad para la validacion"}, {"fecha": "2026-10-01", "tipo": "scrap", "origen": "dob", "operador": "Daniel", "deteccion": "insp-dob", "causa": "Ángulo de doblez incorrecto", "mo": "MO-395", "so": "SO-30, SO-40, SO-42", "sku": "37A10786A-0008", "producto": "TERM AL. 1/4 x 1 x 23.75", "material": "Aluminio", "piezas": 22, "estado": "abierta", "accion": "Fabricar de nuevo (reposición)", "accionDetalle": "Miguel fabricara las 22 pz nuevas para el 8 de octubre", "monto": 924.66}]};</script>
+<script>window.__DATOS__={"stamp": "2026-10-14T17:50:00-06:00", "modo": "entregas", "proyecto": "racks", "ops": [["Corte", "CORTE"], ["Laser", "LÁSER"], ["Router", "ROUTER"], ["Doblez", "DOBLEZ"], ["Armado", "ARMADO"], ["Pintura", "PINTURA"], ["Vestido", "VESTIDO"], ["CNC", "CNC"], ["Diseño", "DISEÑO"]], "clientes": [["Antolin", "#2F7FD8"], ["GM", "#7A1F3D"], ["OpMobility USA", "#3F8F2F"]], "rows": [{"mo": "MO-245", "id": 19097678, "sku": "", "nombre": "Floor Console Cart", "piezas": 2, "plan": 2, "entr": 0, "deadline": "2026-09-21", "entrega": "2026-09-21", "prio": false, "ops": [["Corte", "IN_PROGRESS"], ["Armado", "NOT_STARTED"], ["Pintura", "NOT_STARTED"], ["Vestido", "NOT_STARTED"]], "av": {}, "cliente": "GM", "color": "#7A1F3D", "so": "2620 · GM", "grp": "sig", "nota": ""}, {"mo": "MO-247", "id": 19097866, "sku": "", "nombre": "Dollie Radiador", "piezas": 4, "plan": 4, "entr": 0, "deadline": "2026-09-21", "entrega": "2026-09-21", "prio": false, "ops": [["Corte", "COMPLETED"], ["Armado", "COMPLETED"], ["Pintura", "IN_PROGRESS"], ["Vestido", "NOT_STARTED"]], "av": {}, "cliente": "GM", "color": "#7A1F3D", "so": "2619 · GM", "grp": "sig", "nota": ""}, {"mo": "MO-437", "id": 19602606, "sku": "2626GM01", "nombre": "Racks CCA", "piezas": 14, "plan": 28, "entr": 14, "deadline": "2026-10-21", "entrega": "2026-10-21", "prio": false, "ops": [["Armado", "IN_PROGRESS"], ["Pintura", "IN_PROGRESS"], ["Vestido", "IN_PROGRESS"]], "av": {}, "cliente": "GM", "color": "#7A1F3D", "so": "2626 · GM", "grp": "sig", "nota": ""}, {"mo": "MO-438", "id": 19602625, "sku": "2627GM01", "nombre": "MINOMI Rack Shutter", "piezas": 1, "plan": 1, "entr": 0, "deadline": "2026-10-21", "entrega": "2026-10-21", "prio": false, "ops": [["Corte", "COMPLETED"], ["Armado", "IN_PROGRESS"], ["Vestido", "NOT_STARTED"]], "av": {}, "cliente": "GM", "color": "#7A1F3D", "so": "2627 · GM", "grp": "sig", "nota": ""}, {"mo": "MO-420", "id": 19582038, "sku": "MAC30872", "nombre": "MAC30872", "piezas": 26, "plan": 26, "entr": 0, "deadline": "2026-10-20", "entrega": "2026-10-20", "prio": false, "ops": [["Armado", "NOT_STARTED"]], "av": {}, "cliente": "GM", "color": "#7A1F3D", "so": "2522 · GM", "grp": "sig", "nota": ""}, {"mo": "MO-429", "id": 19601494, "sku": "MAC55635/MAC55636", "nombre": "MAC55635/MAC55636", "piezas": 3, "plan": 3, "entr": 0, "deadline": "2026-10-21", "entrega": "2026-10-21", "prio": false, "ops": [["Corte", "NOT_STARTED"], ["Armado", "NOT_STARTED"], ["Pintura", "NOT_STARTED"], ["Vestido", "NOT_STARTED"]], "av": {}, "cliente": "GM", "color": "#7A1F3D", "so": "2603 · GM", "grp": "sig", "nota": ""}, {"mo": "MO-430", "id": 19601509, "sku": "MAC47629", "nombre": "MAC47629 Rack de Llantas", "piezas": 2, "plan": 2, "entr": 0, "deadline": "2026-10-21", "entrega": "2026-10-21", "prio": false, "ops": [["Corte", "NOT_STARTED"], ["Laser", "NOT_STARTED"], ["Armado", "NOT_STARTED"], ["Pintura", "NOT_STARTED"], ["Vestido", "NOT_STARTED"]], "av": {}, "cliente": "GM", "color": "#7A1F3D", "so": "2605 · GM", "grp": "sig", "nota": ""}, {"mo": "MO-431", "id": 19601541, "sku": "MAC48005", "nombre": "MAC48005", "piezas": 29, "plan": 29, "entr": 0, "deadline": "2026-10-21", "entrega": "2026-10-21", "prio": false, "ops": [["Corte", "NOT_STARTED"], ["Armado", "NOT_STARTED"], ["Pintura", "NOT_STARTED"], ["Vestido", "NOT_STARTED"]], "av": {}, "cliente": "GM", "color": "#7A1F3D", "so": "2610 · GM", "grp": "sig", "nota": ""}, {"mo": "MO-432", "id": 19601572, "sku": "MAC52975", "nombre": "MAC52975", "piezas": 39, "plan": 39, "entr": 0, "deadline": "2026-10-21", "entrega": "2026-10-21", "prio": false, "ops": [["Corte", "NOT_STARTED"], ["Armado", "NOT_STARTED"], ["Pintura", "NOT_STARTED"]], "av": {}, "cliente": "GM", "color": "#7A1F3D", "so": "2611 · GM", "grp": "sig", "nota": ""}, {"mo": "MO-435", "id": 19602555, "sku": "2625GM01", "nombre": "Plataforma Giratoria", "piezas": 2, "plan": 2, "entr": 0, "deadline": "2026-10-21", "entrega": "2026-10-21", "prio": false, "ops": [["Corte", "NOT_STARTED"], ["Laser", "NOT_STARTED"], ["CNC", "NOT_STARTED"], ["Armado", "NOT_STARTED"], ["Pintura", "NOT_STARTED"], ["Vestido", "NOT_STARTED"]], "av": {}, "cliente": "GM", "color": "#7A1F3D", "so": "2625 · GM", "grp": "sig", "nota": ""}, {"mo": "MO-436", "id": 19602569, "sku": "2625GM02", "nombre": "Charolas Consolas", "piezas": 8, "plan": 8, "entr": 0, "deadline": "2026-10-21", "entrega": "2026-10-21", "prio": false, "ops": [["Corte", "NOT_STARTED"], ["Laser", "NOT_STARTED"], ["CNC", "NOT_STARTED"], ["Pintura", "NOT_STARTED"], ["Vestido", "NOT_STARTED"]], "av": {}, "cliente": "GM", "color": "#7A1F3D", "so": "2625 · GM", "grp": "sig", "nota": ""}, {"mo": "MO-293", "id": 19207844, "sku": "R-01", "nombre": "Roller Side Cap", "piezas": 50, "plan": 50, "entr": 0, "deadline": "2026-09-28", "entrega": "2026-09-28", "prio": false, "ops": [["Corte", "COMPLETED"], ["Laser", "COMPLETED"], ["Doblez", "COMPLETED"], ["Armado", "IN_PROGRESS"], ["Pintura", "NOT_STARTED"], ["Vestido", "NOT_STARTED"]], "av": {}, "cliente": "OpMobility USA", "color": "#3F8F2F", "so": "2623 · OpMobility USA", "grp": "sig", "nota": ""}, {"mo": "MO-297", "id": 19207879, "sku": "2624OP06", "nombre": "06 Front Side Cap Reinf", "piezas": 5, "plan": 5, "entr": 0, "deadline": "2026-10-07", "entrega": "2026-10-07", "prio": false, "ops": [["Corte", "IN_PROGRESS"], ["Laser", "COMPLETED"], ["Armado", "IN_PROGRESS"], ["Pintura", "IN_PROGRESS"], ["Vestido", "NOT_STARTED"]], "av": {}, "cliente": "OpMobility USA", "color": "#3F8F2F", "so": "2624 · OpMobility USA", "grp": "sig", "nota": ""}, {"mo": "MO-299", "id": 19207881, "sku": "2624OP01", "nombre": "01 Front Fascia Chevy", "piezas": 2, "plan": 3, "entr": 1, "deadline": "2026-09-28", "entrega": "2026-09-28", "prio": false, "ops": [["Corte", "COMPLETED"], ["Laser", "COMPLETED"], ["Router", "COMPLETED"], ["Armado", "COMPLETED"], ["Pintura", "IN_PROGRESS"], ["Vestido", "IN_PROGRESS"]], "av": {}, "cliente": "OpMobility USA", "color": "#3F8F2F", "so": "2624 · OpMobility USA", "grp": "sig", "nota": ""}, {"mo": "MO-300", "id": 19207892, "sku": "2624OP01", "nombre": "01 Front Fascia Chevy", "piezas": 2, "plan": 2, "entr": 0, "deadline": "2026-09-28", "entrega": "2026-09-28", "prio": false, "ops": [["Corte", "COMPLETED"], ["Laser", "COMPLETED"], ["Armado", "COMPLETED"], ["Pintura", "IN_PROGRESS"], ["Vestido", "NOT_STARTED"]], "av": {}, "cliente": "OpMobility USA", "color": "#3F8F2F", "so": "2624 · OpMobility USA", "grp": "sig", "nota": ""}, {"mo": "MO-294", "id": 19207845, "sku": "", "nombre": "Roller Side Cap Center", "piezas": 15, "plan": 15, "entr": 0, "deadline": "2026-10-07", "entrega": "2026-10-07", "prio": false, "ops": [["Corte", "NOT_STARTED"], ["Laser", "NOT_STARTED"], ["Doblez", "NOT_STARTED"], ["Armado", "NOT_STARTED"], ["Pintura", "NOT_STARTED"], ["Vestido", "NOT_STARTED"]], "av": {}, "cliente": "OpMobility USA", "color": "#3F8F2F", "so": "2623 · OpMobility USA", "grp": "sig", "nota": ""}, {"mo": "MO-421", "id": 19582081, "sku": "VW38 Intercompany", "nombre": "VW38 Intercompany", "piezas": 3, "plan": 5, "entr": 2, "deadline": "2026-10-20", "entrega": "2026-10-20", "prio": false, "ops": [["Diseño", "NOT_STARTED"], ["Corte", "NOT_STARTED"], ["Laser", "NOT_STARTED"], ["Router", "NOT_STARTED"], ["Armado", "NOT_STARTED"], ["Pintura", "NOT_STARTED"], ["Vestido", "NOT_STARTED"]], "av": {}, "cliente": "Antolin", "color": "#2F7FD8", "so": "2616 · Antolin", "grp": "sig", "nota": ""}, {"mo": "MO-428", "id": 19601421, "sku": "362038740", "nombre": "DT ME Assy End Item Shipping Racks", "piezas": 4, "plan": 4, "entr": 0, "deadline": "2026-10-21", "entrega": "2026-10-21", "prio": false, "ops": [["Corte", "NOT_STARTED"], ["Armado", "NOT_STARTED"], ["Pintura", "NOT_STARTED"], ["Vestido", "NOT_STARTED"]], "av": {}, "cliente": "Antolin", "color": "#2F7FD8", "so": "2547 · Antolin", "grp": "sig", "nota": ""}, {"mo": "MO-434", "id": 19602108, "sku": "R00030343", "nombre": "EJ NA25 ICS Garage Racks", "piezas": 11, "plan": 11, "entr": 0, "deadline": "2026-10-21", "entrega": "2026-10-21", "prio": false, "ops": [["Corte", "NOT_STARTED"], ["Armado", "NOT_STARTED"], ["Pintura", "NOT_STARTED"], ["Vestido", "NOT_STARTED"]], "av": {}, "cliente": "Antolin", "color": "#2F7FD8", "so": "2629 · Antolin", "grp": "sig", "nota": ""}, {"mo": "MO-439", "id": 19602629, "sku": "2628AN01", "nombre": "JIS Rack Console", "piezas": 1, "plan": 1, "entr": 0, "deadline": "2026-10-21", "entrega": "2026-10-21", "prio": false, "ops": [["Corte", "NOT_STARTED"], ["Laser", "NOT_STARTED"], ["Armado", "NOT_STARTED"], ["Pintura", "NOT_STARTED"], ["Vestido", "NOT_STARTED"]], "av": {}, "cliente": "Antolin", "color": "#2F7FD8", "so": "2628 · Antolin", "grp": "sig", "nota": ""}], "avProc": [{"p": "CORTE", "h": 59, "t": 183, "pct": 32}, {"p": "LÁSER", "h": 59, "t": 90, "pct": 66}, {"p": "ROUTER", "h": 2, "t": 5, "pct": 40}, {"p": "DOBLEZ", "h": 50, "t": 65, "pct": 77}, {"p": "ARMADO", "h": 8, "t": 215, "pct": 4}, {"p": "PINTURA", "h": 0, "t": 196, "pct": 0}, {"p": "VESTIDO", "h": 0, "t": 158, "pct": 0}, {"p": "CNC", "h": 0, "t": 10, "pct": 0}, {"p": "DISEÑO", "h": 0, "t": 3, "pct": 0}], "faltaPz": 2720, "soSinMO": ["2534 · GM", "2622 · Antolin", "2621 · GM", "2540 · Antolin"]};</script>
 <script>/* Sonidos del tablero. crearSonidos(ctx) -> {aviso, alerta, terminada, vencida, campana, katana} */
 function crearSonidos(getCtx){
   function tono(f,t,d,tipo,vol){
@@ -622,7 +693,77 @@ function flujoHTML(D,abiertas,carga){
      '<div class="ft"><span class="fn" style="font-weight:700">'+lblc(o)+(mal?'<span class="tag">MÁS ATRASADA</span>':'')+'</span><span class="fb">'+x.mo+'</span><span class="fu">MO</span></div>'+
      '<div class="fs"><span><b>'+carga[o].toLocaleString("en-US")+'</b> pz en espera</span>'+(a!=null?'<span class="fp">'+a+'%</span>':'')+'</div>'+
      (a!=null?'<div class="apb"><i style="width:'+Math.max(2,a)+'%"></i></div>':'')+
-     '<div class="al">'+(al||'<i class="ok">sin alertas</i>')+'</div></div>';}).join('')+'</div>';}
+     '<div class="al">'+(al||'<i class="ok">sin alertas</i>')+'</div>'+hoyHTML(D,o)+'</div>';}).join('')+'</div>';}
+/* HOYPZ 14-oct-2026 (Moisés): piezas procesadas HOY por estación, dentro de cada recuadro del flujo.
+   Las cuenta el servidor de las estaciones (cada lapso capturado). Una pieza que pasa por 4 estaciones cuenta en cada una.
+   La barra compara contra la estación que más lleva en el día. Si el dato no viene, no se muestra la línea. */
+function hoyHTML(D,o){var H=D.hoyPz;if(!H)return '';var v=+H[o]||0,mx=0;for(var k in H)mx=Math.max(mx,+H[k]||0);
+  return '<div class="hy" title="Piezas procesadas hoy en '+esc(NOMEST[o]||o)+'"><span class="hl">HOY</span><span class="hb"><i style="width:'+(mx?Math.max(v?3:0,v/mx*100):0)+'%;background:'+CEST[o]+'"></i></span><b>'+nf(v)+'</b><span class="hu">pz</span></div>';}
+
+/* ---------- 14-oct-2026: página CALIDAD MAFESA (reemplaza a la de Cynthia) ---------- */
+var CAL=window.__CAL__||null;
+var CDEP={cor:["CORTE","Corte"],tal:["TALADRO / TM-2P","Taladro"],dob:["DOBLEZ","Doblez"],lim:["LIMPIEZA","Limpieza & SQA"],cal:["INSPECCIÓN",null],ing:["PLANO / PROGRAMA",null],ext:["PROVEEDOR",null]};
+var CTIPO={scrap:"SCRAP",retrabajo:"RETRABAJO",retraso:"RETRASO",reclamo:"RECLAMO MAFESA"};
+var CMES=["ENE","FEB","MAR","ABR","MAY","JUN","JUL","AGO","SEP","OCT","NOV","DIC"];
+function cCol(id){var d=CDEP[id];return d&&d[1]?CEST[d[1]]:"#EAF1F9";}
+function cSem(n,rec){return rec?"#E5484D":n===0?"#25C083":n<=2?"#F2A93B":"#E5484D";}
+function money(n){return "$"+(+n||0).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2});}
+function quien(xs){var c={};xs.forEach(function(r){var k=r.operador||"Sin nombre";c[k]=(c[k]||0)+1;});
+  return Object.keys(c).sort(function(a,b){return c[b]-c[a];}).map(function(k){return [k,c[k]];});}
+function grafScrap(I,d){
+  var ini=null;I.forEach(function(r){var m=String(r.fecha||"").slice(0,7);if(m&&(!ini||m<ini))ini=m;});
+  var ms=[];for(var k=5;k>=0;k--){var dt=new Date(Date.UTC(d.a,d.mes-k,1));ms.push(dt.getUTCFullYear()+"-"+pad(dt.getUTCMonth()+1));}
+  var val=ms.map(function(m){return I.filter(function(r){return r.tipo==="scrap"&&String(r.fecha||"").slice(0,7)===m;}).reduce(function(a,r){return a+(+r.monto||0);},0);});
+  var W=760,H=230,L=14,R=14,T=34,B=34,mxv=Math.max.apply(null,val)||1,bw=(W-L-R)/ms.length,s="";
+  s+='<line x1="'+L+'" x2="'+(W-R)+'" y1="'+(H-B)+'" y2="'+(H-B)+'" stroke="#4A4636" stroke-width="2"/>';
+  ms.forEach(function(m,i){var x=L+i*bw+bw*.18,w=bw*.64,v=val[i],hh=(H-T-B)*v/mxv,y=H-B-hh,cur=i===ms.length-1,sin=ini&&m<ini;
+    if(sin){s+='<rect x="'+x+'" y="'+(H-B-30)+'" width="'+w+'" height="30" fill="none" stroke="#4A4636" stroke-dasharray="6 5" rx="4"/><text x="'+(x+w/2)+'" y="'+(H-B-36)+'" text-anchor="middle" font-size="14" fill="#6B6252">sin registro</text>';}
+    else{if(v>0)s+='<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+hh+'" rx="4" fill="'+(cur?"#D9B45A":"#8C7640")+'"/>';
+      s+='<text x="'+(x+w/2)+'" y="'+(v>0?y-8:H-B-8)+'" text-anchor="middle" font-size="'+(cur?22:18)+'" font-weight="700" fill="'+(v>0?"#F2D58A":"#4FE0A6")+'">'+(v>0?money(v):"$0.00")+'</text>';}
+    s+='<text x="'+(x+w/2)+'" y="'+(H-10)+'" text-anchor="middle" font-size="17" font-weight="'+(cur?800:400)+'" fill="'+(cur?"#EAF1F9":"#9C937F")+'">'+CMES[+m.slice(5)-1]+'</text>';});
+  return '<svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none">'+s+'</svg>';
+}
+function renderCal(C,hDisp){
+  var I=(C&&C.incidencias)||[],d=(typeof mx==="function")?mx():(function(){var n=new Date();return {mes:n.getMonth(),a:n.getFullYear()};})(),mes=d.a+"-"+pad(d.mes+1);
+  var M=I.filter(function(r){return String(r.fecha||"").slice(0,7)===mes;});
+  var ab=I.filter(function(r){return r.estado!=="cerrada";});
+  var pz=M.filter(function(r){return r.tipo==="scrap"||r.tipo==="retrabajo";}).reduce(function(a,r){return a+(+r.piezas||0);},0);
+  var rec=M.filter(function(r){return r.tipo==="reclamo";}).length;
+  var smes=M.reduce(function(a,r){return a+(r.tipo==="scrap"?(+r.monto||0):0);},0);
+  var sacu=I.filter(function(r){return String(r.fecha||"").slice(0,4)===String(d.a);}).reduce(function(a,r){return a+(r.tipo==="scrap"?(+r.monto||0):0);},0);
+  var MES=["ENERO","FEBRERO","MARZO","ABRIL","MAYO","JUNIO","JULIO","AGOSTO","SEPTIEMBRE","OCTUBRE","NOVIEMBRE","DICIEMBRE"][d.mes];
+  var st=String((C&&C.stamp)||"");
+  var h='<div class="ch"><h2>CALIDAD MAFESA · '+MES+' '+d.a+'</h2><span>Del Tablero de Calidad'+(st?' · datos al '+fmtF(st.slice(0,10))+' '+st.slice(11,16):'')+' · scrap en $ = solo material</span></div>';
+  h+='<div class="ck"><div class="'+(M.length?'':'verde')+'"><b>'+nf(M.length)+'</b><span>INCIDENCIAS DEL MES</span></div>'+
+     '<div class="'+(ab.length?'rojo':'verde')+'"><b>'+nf(ab.length)+'</b><span>ABIERTAS · SIN CERRAR</span></div>'+
+     '<div><b>'+nf(pz)+'</b><span>PZ CON SCRAP O RETRABAJO</span></div>'+
+     '<div class="'+(rec?'rojo':'verde')+'"><b>'+nf(rec)+'</b><span>RECLAMOS DE MAFESA</span></div>'+
+     '<div class="din"><b>'+money(smes)+'</b><span>SCRAP DEL MES</span></div>'+
+     '<div class="din"><b>'+money(sacu)+'</b><span>SCRAP ACUMULADO '+d.a+'</span></div></div>';
+  var mine=function(id){return M.filter(function(r){return r.origen===id;});};
+  var fl=["cor","tal","dob","lim","cal"].map(function(id,i){var xs=mine(id),n=xs.length,rc=xs.some(function(r){return r.tipo==="reclamo";});
+    var q=quien(xs).slice(0,3).map(function(p){return '<i>'+esc(p[0])+(p[1]>1?' <u>×'+p[1]+'</u>':'')+'</i>';}).join('');
+    return (i?'<div class="car">▶</div>':'')+'<div class="cn" style="border-top-color:'+cSem(n,rc)+'"><span class="nm" style="color:'+cCol(id)+'">'+CDEP[id][0]+'</span><b style="color:'+cSem(n,rc)+'">'+n+'</b><small>la originaron</small><div class="qn">'+q+'</div></div>';}).join('');
+  var ext=["ing","ext"].map(function(id){return '<span>'+CDEP[id][0]+': <b>'+mine(id).length+'</b></span>';}).join('');
+  h+='<div class="cm"><div class="cbox cflow"><div class="ctt">¿DÓNDE SE ORIGINAN Y QUIÉN? · INCIDENCIAS DEL MES</div><div class="cfl">'+fl+'</div><div class="cext">'+ext+'<span style="margin-left:auto">Verde 0 · ámbar 1-2 · rojo 3 o más</span></div></div>'+
+     '<div class="cbox cgraf"><div class="ctt">SCRAP EN $ POR MES · MATERIAL</div>'+grafScrap(I,d)+'</div></div>';
+  var c={};M.forEach(function(r){var k=r.causa||"Sin causa";if(!c[k])c[k]={n:0,o:r.origen};c[k].n++;});
+  var cs=Object.keys(c).map(function(k){return [k,c[k].n,c[k].o];}).sort(function(a,b){return b[1]-a[1];}).slice(0,6),mxn=cs.length?cs[0][1]:1;
+  var cau='<div class="cbox ccau"><div class="ctt">CAUSAS MÁS FRECUENTES DEL MES</div>'+(cs.length?cs.map(function(x){
+    return '<div class="cb"><span class="l">'+esc(x[0])+'</span><span class="t"><i style="width:'+Math.max(4,x[1]/mxn*100)+'%;background:'+cCol(x[2])+'"></i></span><b>'+x[1]+'</b></div>';}).join(''):'<div class="vacio">Sin incidencias este mes</div>')+'</div>';
+  var cap=6;
+  var ord=ab.slice().sort(function(a,b){return (b.tipo==="reclamo")-(a.tipo==="reclamo")||(a.fecha<b.fecha?-1:a.fecha>b.fecha?1:0);});
+  var lis='<div class="cbox cabl"><div class="ctt">INCIDENCIAS ABIERTAS · '+ab.length+'</div>'+(ord.length?ord.slice(0,cap).map(function(r){
+    var cu=/cobre/i.test(r.material||"");
+    return '<div class="cr" style="border-left-color:'+cCol(r.origen)+'"><span>'+esc(fmtF(r.fecha))+'</span>'+
+      '<span><span class="cmo">'+esc(r.mo||"—")+'</span><span class="mt'+(cu?' cu':'')+'">'+(cu?'CU':'AL')+'</span><div class="sk">'+esc(r.sku||"")+' · '+esc(r.producto||"")+'</div></span>'+
+      '<span><span class="tp '+esc(r.tipo)+'">'+(CTIPO[r.tipo]||esc(r.tipo))+'</span></span>'+
+      '<span class="es" style="color:'+cCol(r.origen)+'">'+((CDEP[r.origen]||[esc(r.origen)])[0])+'<div><u>Originó</u>'+esc(r.operador||"—")+'</div></span>'+
+      '<span><div class="cs">'+esc(r.causa||"")+'</div><div class="ac">'+esc(r.accionDetalle||r.accion||"")+'</div></span>'+
+      '<span class="pz">'+nf(+r.piezas||0)+'<span>piezas</span>'+(r.tipo==="scrap"&&r.monto!=null?'<em>'+money(r.monto)+'</em>':'')+'</span></div>';}).join('')+(ord.length>cap?'<div class="mas">+'+(ord.length-cap)+' abiertas más en el Tablero de Calidad</div>':''):'<div class="vacio">Sin incidencias abiertas ✓</div>')+'</div>';
+  h+='<div class="cab">'+cau+lis+'</div>';
+  return h;
+}
 function leyCli(D){return '<span class="leyt">'+((D&&D.clientes)||[]).map(function(c){return '<span><b class="tpill" style="background:'+c[1]+'">&nbsp;</b> '+esc(c[0])+'</span>';}).join("")+'<span style="color:#8FA3BA;font-style:italic">· Franja = cliente</span></span>';}
 var LEYT="";
 function render(D){try{setOps(D);LEYT=leyCli(D);}catch(e){}try{renderMat(D);}catch(e){}try{render0(D);}catch(e){}try{checarLimp();}catch(e){}}
@@ -679,7 +820,7 @@ function render0(D){
       pages.forEach(function(pg,i){bloques.push(["PROGRAMA DE ENTREGAS"+(pages.length>1?" · "+(i+1)+"/"+pages.length:""),pg,null,""]);});
     }
     if(D.proyecto==="racks")paginarCli(items);else paginar(items,"PROGRAMA DE ENTREGAS","");
-    paginar(limp,(D.limpTitulo||"SOLO FALTA LIMPIEZA & SQA · CYNTHIA")+" · "+limp.length+" órdenes · "+limp.reduce(function(a,r){return a+r.piezas;},0).toLocaleString("en-US")+" pz","limp");
+    /* 14-oct-2026: ya no va la página de Cynthia (solo falta Limpieza); en su lugar, CALIDAD MAFESA */
     $("pages").className="compacto";
   }else{
   var c1=partir(piso),c2=partir(cola.concat(listo));
@@ -688,9 +829,11 @@ function render0(D){
   c2.forEach(function(c,i){bloques.push(["POR ARRANCAR"+(c2.length>1?" · "+(i+1)+"/"+c2.length:""),c]);});
   $("pages").className="";
   }
+  if(CAL&&D.proyecto!=="racks")bloques.push(["CALIDAD MAFESA",null,"cal"]);
   if(D.entregasMes&&D.entregasMes.meses&&D.entregasMes.meses.length)bloques.push(["ENTREGAS POR MES",null,"mes"]);
   if(pagina>=bloques.length)pagina=0;
   $("pages").innerHTML=bloques.map(function(b,i){
+    if(b[2]==="cal"){var hc="";try{hc=renderCal(CAL,$("pages").clientHeight);}catch(e){}return '<div class="page pcal'+(i===pagina?" on":"")+'">'+hc+'</div>';}
     if(b[2]==="mes"){var hm="";try{hm=renderMes(D.entregasMes);}catch(e){}return '<div class="page pmes'+(i===pagina?" on":"")+'">'+hm+'</div>';}
     return '<div class="page'+(i===pagina?" on":"")+'"><div class="ptitle'+(b[3]?' '+b[3]:'')+'">'+b[0]+(datos&&datos.modo==="entregas"&&!b[3]?LEYT:"")+'</div>'+(datos&&datos.modo==="entregas"?HEADF().replace("LÍMITE","ENTREGA"):HEADF())+b[1].map(function(x){return x.sep?'<div class="sep cli'+(x.limp?' limp':'')+'"'+(x.color?' style="border-left-color:'+x.color+'"':'')+'>'+esc(x.sep)+'</div>':fila(x);}).join("")+'</div>';}).join("");
   var sp=$("stamp");sp.setAttribute("data-ts",D.stamp||"");
@@ -698,43 +841,27 @@ function render0(D){
   edad();
 }
 function edad(){
-  /* Semaforo de frescura, alineado a los 3 cortes de Cynthia (10:05 / 14:05 / 18:05, L-V).
-     Mide si LLEGO el corte que tocaba, no la edad de los datos.
-       verde = el ultimo corte esperado si llego
-       gris  = fuera de turno (antes de 7:30, despues de 19:00, fin de semana)
-       rojo  = paso un corte + 20 min de gracia y el dato no avanzo
-     Copia GitHub: todo en hora fija de CDMX (UTC-6), igual que mx(), sin depender del reloj de la TV.
-     Se trabaja con "fechas virtuales" (epoch - 6 h) y getters UTC. */
+  /* 14-oct-2026 (Moisés): ya no hay cortes a horas fijas (7/12/17 eliminados). El tablero
+     se alimenta EN VIVO del servidor (lee Katana cada 15 min), así que el semáforo mide la
+     EDAD del dato:
+       verde = dato de hace 35 min o menos
+       gris  = fuera de turno (antes de 7:30, después de 19:00, fin de semana)
+       rojo  = en turno y el dato tiene más de 35 min → algo se detuvo, avisar a Moisés */
   var sp=$("stamp"),ts=Date.parse(sp.getAttribute("data-ts"));
   if(!isFinite(ts)){sp.className="";sp.textContent=sp.getAttribute("data-base")||"";return;}
-  var OFF=6*3600000,CORTES=[[10,5],[14,5],[18,5]],GRACIA=20*60000,INI=7.5,FIN=19;
-  var now=new Date(Date.now()-OFF),DS=new Date(ts-OFF);
+  var MAXMIN=35,INI=7.5,FIN=19;
+  var OFF=6*3600000,now=new Date(Date.now()-OFF),DS=new Date(ts-OFF);
   function hm(d){return pad(d.getUTCHours())+":"+pad(d.getUTCMinutes());}
-  function hab(d){var w=d.getUTCDay();return w>=1&&w<=5;}
-  function dia(d,dd,h,mi){return new Date(Date.UTC(d.getUTCFullYear(),d.getUTCMonth(),d.getUTCDate()+(dd||0),h||0,mi||0,0,0));}
-  function corte(d,i){return dia(d,0,CORTES[i][0],CORTES[i][1]);}
   function cuando(d){
-    var n=Math.round((dia(d)-dia(now))/86400000);
-    return (n===0?"":n===-1?"ayer ":n===1?"mañana ":(d.getUTCDate()+"/"+(d.getUTCMonth()+1)+" "))+hm(d);
-  }
-  var ult=null,d=new Date(now.getTime());
-  for(var k=0;k<8&&!ult;k++){
-    if(hab(d))for(var i=CORTES.length-1;i>=0;i--){var c=corte(d,i);if(now-c>=GRACIA){ult=c;break;}}
-    if(!ult)d=dia(d,-1,23,59);
-  }
-  var prox=null,e=new Date(now.getTime());
-  for(var k2=0;k2<8&&!prox;k2++){
-    if(hab(e))for(var j=0;j<CORTES.length;j++){var c2=corte(e,j);if(c2.getTime()+GRACIA>now.getTime()){prox=c2;break;}}
-    if(!prox)e=dia(e,1,0,1);
-  }
-  var pt=prox?cuando(prox):"—";
-  var hnow=now.getUTCHours()+now.getUTCMinutes()/60;
-  if(!hab(now)||hnow>=FIN||hnow<INI){
-    sp.className="fuera";sp.textContent="Fuera de turno · últimos datos "+cuando(DS)+" · próximo corte "+pt;
-  }else if(!ult||DS.getTime()>=ult.getTime()-60000){
-    sp.className="ok";sp.textContent="Corte "+cuando(DS)+" ✓ · próximo "+pt;
+    var dd=(now-d)/86400000,mismo=d.getUTCDate()===now.getUTCDate()&&d.getUTCMonth()===now.getUTCMonth();
+    return (mismo?"":dd<2?"ayer ":(d.getUTCDate()+"/"+(d.getUTCMonth()+1)+" "))+hm(d);}
+  var w=now.getUTCDay(),hnow=now.getUTCHours()+now.getUTCMinutes()/60,min=Math.round((now-DS)/60000);
+  if(w<1||w>5||hnow>=FIN||hnow<INI){
+    sp.className="fuera";sp.textContent="Fuera de turno · últimos datos "+cuando(DS);
+  }else if(min<=MAXMIN){
+    sp.className="ok";sp.textContent="En vivo · Katana "+hm(DS)+" ✓";
   }else{
-    sp.className="viejo";sp.textContent="No llegó el corte de las "+hm(ult)+" · datos de "+cuando(DS);
+    sp.className="viejo";sp.textContent="⚠ SIN ACTUALIZAR desde "+cuando(DS)+" ("+(min<120?min+" min":Math.round(min/60)+" h")+") · avisar a Moisés";
   }
 }
 
@@ -904,9 +1031,23 @@ render(window.__DATOS__);
     pedir(["aviso.json",RAWG+"racks/aviso.json"],function(a){avisoPropio=true;aviso(a);});
   }
   cargarAviso();setInterval(cargarAviso,15000);              // el aviso, cada 15 s
+  /* 14-oct-2026: calidad.json (Tablero de Calidad MAFESA) se relee cada minuto */
+  function cargarCal(){pedir(["calidad.json",RAWG+"calidad.json"],function(c){if(c&&c.incidencias){CAL=c;if(datos)render(datos);}});}
+  cargarCal();setInterval(cargarCal,60000);
   cargar();setInterval(cargar,60000);                        // los datos, cada minuto
   var t0carga=Date.now();                                    // recarga completa diaria a las 6:00 (toma cambios de diseño)
   setInterval(function(){var d=mx();if(d.h===6&&d.m<5&&Date.now()-t0carga>3600000)location.reload();},60000);
+  /* 14-oct-2026: recarga sola cuando se publica un diseño nuevo (build.txt cambia). Revisa cada 5 min.
+     Para no ciclar si GitHub sirve la copia vieja, intenta una sola vez por cada sello nuevo. */
+  var MIBUILD=(document.querySelector(".build")||{}).textContent||"";
+  function checarBuild(){var x=new XMLHttpRequest();x.open("GET","build.txt?t="+Date.now(),true);
+    x.onload=function(){if(x.status!==200)return;var b=String(x.responseText||"").trim();
+      if(!/^v\d{4}-\d\d-\d\d[a-z]$/.test(b)||b===MIBUILD.trim())return;
+      var ya="";try{ya=sessionStorage.getItem("tv_rl")||"";}catch(e){}
+      if(ya===b)return;try{sessionStorage.setItem("tv_rl",b);}catch(e){}
+      location.reload();};
+    x.send();}
+  setInterval(checarBuild,300000);
 })();
 })();
 </script>

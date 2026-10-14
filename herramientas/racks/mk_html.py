@@ -49,7 +49,7 @@ rep('''pedir([BUZON+"/tablero","datos.json",RAWG+"datos.json"],function(j){''','
 rep('''pedir([BUZON+"/tablero/aviso","aviso.json",RAWG+"aviso.json"],''','''pedir(["aviso.json",RAWG+"racks/aviso.json"],''')
 rep('<title>','<title>',1)
 src=re.sub(r'<title>[^<]*</title>','<title>MO en proceso · Racks</title>',src,1)
-src=re.sub(r'<span class="build">v[^<]*</span>','<span class="build">r2026-10-13</span>',src,1)
+src=re.sub(r'<span class="build">v[^<]*</span>','<span class="build">r2026-10-14</span>',src,1)
 # CSS para N columnas (7 en racks)
 css='''
 /* ---- RACKS: 7 estaciones ---- */
@@ -65,5 +65,7 @@ css='''
 </style></head>'''
 assert src.count('</style></head>')==1
 src=src.replace('</style></head>',css)
+# 14-oct-2026: la página CALIDAD MAFESA del tablero de MAFESA NO va en Racks
+rep('if(CAL)bloques.push(["CALIDAD MAFESA",null,"cal"]);','if(CAL&&D.proyecto!=="racks")bloques.push(["CALIDAD MAFESA",null,"cal"]);')
 open('racks/index.html','w').write(src)
 print('ok',len(src))
