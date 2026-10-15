@@ -121,6 +121,21 @@ def hoja(app,est,proy,out,hoy,hora):
         for m_ in ms: m_['_est']='TM-2P' if a_=='app-tm2p' else ('Taladro' if a_=='app-taladro' else est)
         mos+=ms
     if len(apps)>1: mos.sort(key=lambda m_:(int(m_.get('sec') or 999),m_['_est']!='TM-2P'))   # orden de la TV; en la misma MO primero TM-2P
+    # ACOMODO15OCT (Moisés, 15-oct-2026): dos bloques (TM-2P y luego Taladro); en cada uno primero las que se pueden
+    # trabajar ya (orden de la TV, franja por día de entrega) y al final las que esperan otra estación ("espera Corte").
+    def _espera(m_):
+        prev=None
+        for e_,s_,me_ in (m_.get('ruta') or []):
+            if me_:
+                if s_ in ('prog','pausa'): return ''   # ya se está trabajando aquí
+                break
+            if s_!='done' and prev is None: prev=(e_,s_)
+        if not prev: return ''
+        return 'espera '+prev[0]+{'prog':' (en proceso)','pausa':' (en pausa)'}.get(prev[1],'')
+    BLOQ=len(apps)>1
+    if BLOQ:
+        for m_ in mos: m_['_esp']=_espera(m_)
+        mos.sort(key=lambda m_:(m_['_est']!='TM-2P',bool(m_['_esp']),int(m_.get('sec') or 999)))
     _pie=re.search(r'MOs de Katana al ([0-9]{1,2}-[a-z]{3}) ([0-9]{1,2}:[0-9]{2})',t)   # la hora del corte de datos, no la de impresión
     if _pie: hoy,hora=_pie.group(1),_pie.group(2)
     c=canvas.Canvas(out,pagesize=(W,H)); c.setTitle('Hoja de avance · '+est)
@@ -148,7 +163,25 @@ def hoja(app,est,proy,out,hoy,hora):
         for (h,_),w in zip(COLS,ws): c.drawCentredString(xs+w/2,y-10.5,h); xs+=w
         return y-15
     y=cab()
+    _pb=[None,None,None]   # bloque, grupo (lista/espera), día
     for i,m in enumerate(mos,1):
+        if BLOQ:   # ACOMODO15OCT: franjas de bloque, día de entrega y "esperan"
+            if y-40-RH<40: c.showPage(); y=cab(); _pb=[None,None,None]   # hoja nueva: repite el bloque
+            bl_=m['_est']; gr_=bool(m['_esp']); dd_=fd(m.get('ent') or m.get('deadline') or '')
+            fr_=[]
+            if bl_!=_pb[0]:
+                nb_=sum(1 for x_ in mos if x_['_est']==bl_); fr_.append(('B','%s · %d MO%s'%('TM-2P (CNC)' if bl_=='TM-2P' else 'Taladro',nb_,'' if nb_==1 else 's')))
+            if gr_ and (bl_!=_pb[0] or not _pb[1]): fr_.append(('E','Esperan otra estación · todavía no se pueden trabajar'))
+            elif not gr_ and (bl_!=_pb[0] or dd_!=_pb[2]): fr_.append(('D','Entrega '+dd_))
+            need_=sum(16 if k_=='B' else 12 for k_,_ in fr_)
+            if y-need_-RH<40: c.showPage(); y=cab()
+            for k_,tx_ in fr_:
+                if k_=='B':
+                    c.setFillColor(colors.HexColor(CEST_P[bl_])); c.rect(x0,y-16,TW,16,stroke=0,fill=1); c.setFillColor(colors.white); c.setFont('Helvetica-Bold',9); c.drawString(x0+6,y-11.5,tx_); y-=16
+                else:
+                    c.setFillColor(colors.HexColor('#EEF1F4') if k_=='D' else colors.HexColor('#FFF4DB')); c.rect(x0,y-12,TW,12,stroke=0,fill=1)
+                    c.setFillColor(INK if k_=='D' else colors.HexColor('#8A5A00')); c.setFont('Helvetica-Bold',7.4); c.drawString(x0+6,y-8.6,tx_); y-=12
+            _pb=[bl_,gr_,dd_]
         if y-RH<40:
             c.showPage(); y=cab()
         plan,e,h,f,sig=pz(m); er=m.get('_est',est)
@@ -185,6 +218,8 @@ def hoja(app,est,proy,out,hoy,hora):
                 xs+=ws[k]; continue
             c.setFillColor(colors.HexColor(CEST_P.get(er,'#1F2A37')) if k==4 else INK); c.setFont('Helvetica-Bold' if k==4 else fn,fs); c.drawString(xs+3,ty,ell(c,v,'Helvetica-Bold' if k==4 else fn,fs,ws[k]-6)); xs+=ws[k]
         if m.get('prio'): c.setFont('Helvetica-Bold',6.4); c.drawString(x0+sum(ws[:1])+3,y-21,'URGE')
+        if BLOQ and m.get('_esp'):   # ACOMODO15OCT
+            c.setFont('Helvetica-Bold',6.4); c.setFillColor(colors.HexColor('#B45309')); c.drawString(x0+sum(ws[:4])+3,y-21,ell(c,m['_esp'],'Helvetica-Bold',6.4,ws[4]+ws[5]-6)); c.setFillColor(INK)
         # Faltan X de Y + mini barra
         w=ws[6]; a_=f"{plan-e:,}"; b_=f" de {plan:,}"
         c.setFont('Helvetica-Bold',9.5); wa=pdfmetrics.stringWidth(a_,'Helvetica-Bold',9.5); c.drawString(xs+3,ty,a_)
