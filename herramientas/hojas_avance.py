@@ -1,5 +1,5 @@
 """Hojas de avance para anotar a pluma (temporal, pedido de Moisés 6-oct-2026) — una por estación MAFESA
-(Corte, Taladro y TM-2P en una sola hoja, Doblez, Limpieza & SQA), con las MOs que muestra cada app de estación.
+(Corte, Taladro y TM-2P en una sola hoja, Limpieza & SQA; Doblez ya no lleva hoja desde el 15-oct-2026), con las MOs que muestra cada app de estación.
 Uso: python3 hojas_avance.py --repo <clon de tablero-dimaco-k7q3> --out <carpeta> --fs DD-MM_HH-MM [--racks]
 Correr DESPUÉS de actualizar las estaciones (regla 22:00, paso 3) para que salgan con las MOs de ese corte.
 Archivos: "Hoja de avance - <Estación>_<FS>.pdf". Racks solo con --racks (por ahora Moisés pidió solo MAFESA)."""
@@ -16,7 +16,8 @@ except Exception as e: LOGO=None; print('sin logo',e)
 AP=argparse.ArgumentParser(); AP.add_argument('--repo',default='/home/claude/tablero-dimaco-k7q3'); AP.add_argument('--out',default='/home/claude/hojas/out'); AP.add_argument('--fs',default=''); AP.add_argument('--racks',action='store_true')
 ARGS=AP.parse_args(); REPO=ARGS.repo
 # TALTM11OCT (Moisés, 11-oct-2026, regla): Taladro y TM-2P van en UNA sola hoja — misma área y mismo líder (Fernando).
-EST=[('app-corte','Corte','MAFESA'),('app-taladro+app-tm2p','Taladro y TM-2P','MAFESA'),('app-doblez','Doblez','MAFESA'),('app-limpieza','Limpieza & SQA','MAFESA'),
+# SINDOBLEZ15OCT (Moisés, 15-oct-2026): "para doblez, ya no es necesario la hoja de avance".
+EST=[('app-corte','Corte','MAFESA'),('app-taladro+app-tm2p','Taladro y TM-2P','MAFESA'),('app-limpieza','Limpieza & SQA','MAFESA'),
      ('app-habilitado','Habilitado','RACKS'),('app-laser','Láser y Router','RACKS'),('app-armado1','Armado y Soldadura 1','RACKS'),('app-pintura','Pintura','RACKS'),('app-vestido','Rotulado y Vestido','RACKS')]
 MES=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic']
 def arr(t,key):
