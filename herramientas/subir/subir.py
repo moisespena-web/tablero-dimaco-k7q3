@@ -15,14 +15,14 @@ for it in a.items:
     f,_,d=it.partition('='); ns,_,ruta=d.partition(':')
     n=os.path.basename(f); shutil.copy(f,os.path.join(W,n)); dest.append({"archivo":n,"ns":ns,"ruta":ruta})
 json.dump(dest,open(os.path.join(W,'_destino.json'),'w'),ensure_ascii=False)
-tgz=os.path.join(W,'..',ID+'.tgz')
+W2=tempfile.mkdtemp(); tgz=os.path.join(W2,ID+'.tgz')
 with tarfile.open(tgz,'w:gz') as t:
     for n in os.listdir(W): t.add(os.path.join(W,n),arcname=n)
-k=os.path.join(W,'..',ID+'.k'); open(k,'w').write(os.urandom(32).hex())
+k=os.path.join(W2,ID+'.k'); open(k,'w').write(os.urandom(32).hex())
 enc=os.path.join(D,'pedido',ID+'.enc'); key=os.path.join(D,'pedido',ID+'.key')
 subprocess.run(['openssl','enc','-aes-256-cbc','-pbkdf2','-salt','-in',tgz,'-out',enc,'-pass','file:'+k],check=True)
 subprocess.run(['openssl','pkeyutl','-encrypt','-pubin','-inkey',os.path.join(D,'subir_pub.pem'),'-pkeyopt','rsa_padding_mode:oaep','-in',k,'-out',key],check=True)
-shutil.rmtree(W); os.remove(tgz); os.remove(k)
+shutil.rmtree(W); shutil.rmtree(W2)
 sh('git','add',enc,key); sh('git','commit','-m','Subir a Dropbox '+ID)
 for i in range(3):
     try: sh('git','pull','-q','--rebase'); sh('git','push','-q'); break
