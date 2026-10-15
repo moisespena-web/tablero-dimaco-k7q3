@@ -121,8 +121,8 @@ def hoja(app,est,proy,out,hoy,hora):
         for m_ in ms: m_['_est']='TM-2P' if a_=='app-tm2p' else ('Taladro' if a_=='app-taladro' else est)
         mos+=ms
     if len(apps)>1: mos.sort(key=lambda m_:(int(m_.get('sec') or 999),m_['_est']!='TM-2P'))   # orden de la TV; en la misma MO primero TM-2P
-    # ACOMODO15OCT (Moisés, 15-oct-2026): dos bloques (TM-2P y luego Taladro); en cada uno primero las que se pueden
-    # trabajar ya (orden de la TV, franja por día de entrega) y al final las que esperan otra estación ("espera Corte").
+    # ACOMODO15OCT (Moisés, 15-oct-2026, 2a versión): TODO EN 1 HOJA. Primero urgencias; luego cobre (primero las que ya
+    # tienen listo el corte); luego aluminio (primero las que ya tienen listo el corte). Dentro de cada grupo, orden de la TV.
     def _espera(m_):
         prev=None
         for e_,s_,me_ in (m_.get('ruta') or []):
@@ -132,10 +132,17 @@ def hoja(app,est,proy,out,hoy,hora):
             if s_!='done' and prev is None: prev=(e_,s_)
         if not prev: return ''
         return 'espera '+prev[0]+{'prog':' (en proceso)','pausa':' (en pausa)'}.get(prev[1],'')
+    def _sincorte(m_):
+        for e_,s_,me_ in (m_.get('ruta') or []):
+            if me_: return False
+            if e_=='Corte' and s_!='done': return True
+        return False
+    def _cu(m_): return (m_.get('ingSku') or '').upper().startswith('CU') or ' CU ' in ' '+(m_.get('nombre') or '').upper().replace('.',' ')+' '
+    def _grp(m_): return 0 if m_.get('prio') else (1 if _cu(m_) else 2)
     BLOQ=len(apps)>1
     if BLOQ:
-        for m_ in mos: m_['_esp']=_espera(m_)
-        mos.sort(key=lambda m_:(m_['_est']!='TM-2P',bool(m_['_esp']),int(m_.get('sec') or 999)))
+        for m_ in mos: m_['_esp']=_espera(m_); m_['_g']=_grp(m_)
+        mos.sort(key=lambda m_:(m_['_g'],_sincorte(m_),int(m_.get('sec') or 999),m_['_est']!='TM-2P'))
     _pie=re.search(r'MOs de Katana al ([0-9]{1,2}-[a-z]{3}) ([0-9]{1,2}:[0-9]{2})',t)   # la hora del corte de datos, no la de impresión
     if _pie: hoy,hora=_pie.group(1),_pie.group(2)
     c=canvas.Canvas(out,pagesize=(W,H)); c.setTitle('Hoja de avance · '+est)
@@ -163,26 +170,17 @@ def hoja(app,est,proy,out,hoy,hora):
         for (h,_),w in zip(COLS,ws): c.drawCentredString(xs+w/2,y-10.5,h); xs+=w
         return y-15
     y=cab()
-    _pb=[None,None,None]   # bloque, grupo (lista/espera), día
+    GN={0:'Urgentes',1:'Cobre',2:'Aluminio'}; _pg=[None]
+    if BLOQ:   # alto de renglón para que quepa en 1 hoja (mín. 28)
+        ng_=len({m_['_g'] for m_ in mos}); RH=max(28,min(34,int((y-36-12*ng_)/max(1,len(mos))))) 
     for i,m in enumerate(mos,1):
-        if BLOQ:   # ACOMODO15OCT: franjas de bloque, día de entrega y "esperan"
-            if y-40-RH<40: c.showPage(); y=cab(); _pb=[None,None,None]   # hoja nueva: repite el bloque
-            bl_=m['_est']; gr_=bool(m['_esp']); dd_=fd(m.get('ent') or m.get('deadline') or '')
-            fr_=[]
-            if bl_!=_pb[0]:
-                nb_=sum(1 for x_ in mos if x_['_est']==bl_); fr_.append(('B','%s · %d MO%s'%('TM-2P (CNC)' if bl_=='TM-2P' else 'Taladro',nb_,'' if nb_==1 else 's')))
-            if gr_ and (bl_!=_pb[0] or not _pb[1]): fr_.append(('E','Esperan otra estación · todavía no se pueden trabajar'))
-            elif not gr_ and (bl_!=_pb[0] or dd_!=_pb[2]): fr_.append(('D','Entrega '+dd_))
-            need_=sum(16 if k_=='B' else 12 for k_,_ in fr_)
-            if y-need_-RH<40: c.showPage(); y=cab()
-            for k_,tx_ in fr_:
-                if k_=='B':
-                    c.setFillColor(colors.HexColor(CEST_P[bl_])); c.rect(x0,y-16,TW,16,stroke=0,fill=1); c.setFillColor(colors.white); c.setFont('Helvetica-Bold',9); c.drawString(x0+6,y-11.5,tx_); y-=16
-                else:
-                    c.setFillColor(colors.HexColor('#EEF1F4') if k_=='D' else colors.HexColor('#FFF4DB')); c.rect(x0,y-12,TW,12,stroke=0,fill=1)
-                    c.setFillColor(INK if k_=='D' else colors.HexColor('#8A5A00')); c.setFont('Helvetica-Bold',7.4); c.drawString(x0+6,y-8.6,tx_); y-=12
-            _pb=[bl_,gr_,dd_]
-        if y-RH<40:
+        if BLOQ and m['_g']!=_pg[0]:   # franja de grupo
+            if y-12-RH<36: c.showPage(); y=cab()
+            n_=sum(1 for x_ in mos if x_['_g']==m['_g']); col_={0:'#F7E2DC',1:'#F3E3D6',2:'#E8EDF3'}[m['_g']]
+            c.setFillColor(colors.HexColor(col_)); c.rect(x0,y-12,TW,12,stroke=0,fill=1)
+            c.setFillColor(colors.HexColor({0:'#B42318',1:'#8A4A22',2:'#1F2A37'}[m['_g']])); c.setFont('Helvetica-Bold',7.6)
+            c.drawString(x0+6,y-8.8,'%s · %d %s'%(GN[m['_g']],n_,'renglón' if n_==1 else 'renglones')+('' if m['_g']==0 else ' · primero las que ya tienen listo el corte')); c.setFillColor(INK); y-=12; _pg[0]=m['_g']
+        if y-RH<(36 if BLOQ else 40):
             c.showPage(); y=cab()
         plan,e,h,f,sig=pz(m); er=m.get('_est',est)
         if m.get('prio'): c.setFillColor(colors.HexColor('#F7E2DC')); c.rect(x0,y-RH,TW,RH,stroke=0,fill=1)
@@ -232,7 +230,7 @@ def hoja(app,est,proy,out,hoy,hora):
         if e or h:
             c.setFont('Helvetica',5.6); c.setFillColor(MUT)
             txt=(f"{e:,} entregadas · " if e else '')+(f"{h:,} ya {HECHO.get(er,'hechas')}"+(f" → {sig}" if sig else '')+" · " if h else '')+f"{f:,} {PORH.get(er,'por hacer')}"
-            c.drawString(x0+sum(ws[:3])+3,y-RH+5,ell(c,txt,'Helvetica',5.6,ws[3]+ws[4]-6)); c.setFillColor(INK)
+            c.drawString(x0+sum(ws[:3])+3,y-RH+4,ell(c,txt,'Helvetica',5.6,(ws[3] if (BLOQ and m.get('_esp')) else ws[3]+ws[4])-6)); c.setFillColor(INK)
         xs+=w
         # casillas para escribir
         c.setStrokeColor(RULE); c.setLineWidth(.5)
