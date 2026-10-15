@@ -400,6 +400,34 @@ padding:20px 34px;box-shadow:0 0 70px rgba(229,72,77,.95);animation:alimpP 1s st
 .pcal .mt.cu{background:#D9773F}
 .pcal .vacio{font-size:22px;color:#4FE0A6;padding:14px 6px}
 .pcal .mas{font-size:16px;color:#9C937F;padding:2px 6px}
+
+/* --- CALCLARA 14-oct-2026 (Moisés: "no se distingue al rotar"): la página de CALIDAD va en CLARO ---
+   Todas las demás páginas son azul marino oscuro; Calidad cambia a fondo marfil con letra oscura,
+   franja verde con dorado arriba y tarjetas blancas. Se nota al instante cuando la TV cambia de página. */
+#stage:has(.pcal.on){background-color:#F3EEE2!important}
+#stage:has(.pcal.on) header h1,#stage:has(.pcal.on) #clock{color:#1E2228}
+#stage:has(.pcal.on) header p,#stage:has(.pcal.on) #cdate{color:#5B5547}
+#stage:has(.pcal.on) footer,#stage:has(.pcal.on) footer .lg{color:#3D3A33}
+#stage:has(.pcal.on) #logo{box-shadow:0 0 0 2px #D9CFB8}
+.pcal .ch{background:linear-gradient(90deg,#0E4D3A,#13684E);border-radius:14px;padding:10px 20px;box-shadow:0 4px 14px rgba(14,77,58,.25)}
+.pcal .ch h2{color:#F2D58A!important}
+.pcal .ch span{color:#D7EBDD!important}
+.pcal .ck>div,.pcal .cbox,.pcal .ccau,.pcal .cabl{background:#FFFFFF!important;border:2px solid #D9CFB8!important;box-shadow:0 2px 8px rgba(80,64,20,.08)}
+.pcal .ck b{color:#1E2228}
+.pcal .ck span,.pcal .ctt{color:#6B6252!important}
+.pcal .ck .rojo{border-color:#D12F35!important;background:#FFF1F1!important}.pcal .ck .rojo b{color:#C0262C}
+.pcal .ck .verde b{color:#1F9D5C}
+.pcal .ck .din{border-color:#B8892A!important;background:#FFF7E3!important}.pcal .ck .din b{color:#7A5A12}
+.pcal .cn{background:#F7F3EA!important}
+.pcal .cn small,.pcal .cn .qn i u,.pcal .cext,.pcal .cr .sk,.pcal .cr .ac,.pcal .cr .pz span,.pcal .cr .es div u,.pcal .mas{color:#6B6252!important}
+.pcal .cn .qn i,.pcal .cext b,.pcal .cr .es div{color:#1E2228!important}
+.pcal .car{color:#B9AE92}
+.pcal .cb .l{color:#2B2822}.pcal .cb b{color:#1E2228}
+.pcal .cb .t{background:#EDE6D6}
+.pcal .cr{background:#FBF8F1!important;color:#1E2228}
+.pcal .cr .pz{color:#1E2228}.pcal .cr .pz em{color:#7A5A12}
+.pcal .mt{background:#5E6B78}
+.pcal .vacio{color:#1F9D5C}
 /* HOYPZ 14-oct-2026: línea "HOY" en cada recuadro de estación */
 .hy{display:flex;align-items:center;gap:10px;margin-top:5px;padding-top:5px;border-top:1px dashed #2A3C52}
 .hy .hl{font-size:14px;font-weight:800;letter-spacing:2px;color:#C9D6E6}
@@ -427,7 +455,7 @@ padding:20px 34px;box-shadow:0 0 70px rgba(229,72,77,.95);animation:alimpP 1s st
   <div class="msg"></div>
   <span class="pctl"><button id="btnPrev" title="Página anterior">◀</button><button id="btnPausa" title="Pausar">⏸</button><button id="btnNext" title="Página siguiente">▶</button></span>
   <span id="sndIco">🔇</span>
-  <div id="stamp"></div><span class="build">v2026-10-14d</span><div class="bar"><i id="pb"></i></div>
+  <div id="stamp"></div><span class="build">v2026-10-14e</span><div class="bar"><i id="pb"></i></div>
  </footer>
  <div id="alimp" hidden></div>
  <div id="toasts"></div>
@@ -689,8 +717,9 @@ var CAL=window.__CAL__||null;
 var CDEP={cor:["CORTE","Corte"],tal:["TALADRO / TM-2P","Taladro"],dob:["DOBLEZ","Doblez"],lim:["LIMPIEZA","Limpieza & SQA"],cal:["INSPECCIÓN",null],ing:["PLANO / PROGRAMA",null],ext:["PROVEEDOR",null]};
 var CTIPO={scrap:"SCRAP",retrabajo:"RETRABAJO",retraso:"RETRASO",reclamo:"RECLAMO MAFESA"};
 var CMES=["ENE","FEB","MAR","ABR","MAY","JUN","JUL","AGO","SEP","OCT","NOV","DIC"];
-function cCol(id){var d=CDEP[id];return d&&d[1]?CEST[d[1]]:"#EAF1F9";}
-function cSem(n,rec){return rec?"#E5484D":n===0?"#25C083":n<=2?"#F2A93B":"#E5484D";}
+var CEST_CL={"Corte":"#1F6FC0","Taladro":"#6A4BCF","CNC":"#C2266E","Doblez":"#5F7A0E","Limpieza & SQA":"#0B8585"};   /* CALCLARA: tonos para fondo claro */
+function cCol(id){var d=CDEP[id];return d&&d[1]?(CEST_CL[d[1]]||CEST[d[1]]):"#1E2228";}
+function cSem(n,rec){return rec?"#D12F35":n===0?"#1F9D5C":n<=2?"#C77700":"#D12F35";}
 function money(n){return "$"+(+n||0).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2});}
 function quien(xs){var c={};xs.forEach(function(r){var k=r.operador||"Sin nombre";c[k]=(c[k]||0)+1;});
   return Object.keys(c).sort(function(a,b){return c[b]-c[a];}).map(function(k){return [k,c[k]];});}
@@ -699,12 +728,12 @@ function grafScrap(I,d){
   var ms=[];for(var k=5;k>=0;k--){var dt=new Date(Date.UTC(d.a,d.mes-k,1));ms.push(dt.getUTCFullYear()+"-"+pad(dt.getUTCMonth()+1));}
   var val=ms.map(function(m){return I.filter(function(r){return r.tipo==="scrap"&&String(r.fecha||"").slice(0,7)===m;}).reduce(function(a,r){return a+(+r.monto||0);},0);});
   var W=760,H=230,L=14,R=14,T=34,B=34,mxv=Math.max.apply(null,val)||1,bw=(W-L-R)/ms.length,s="";
-  s+='<line x1="'+L+'" x2="'+(W-R)+'" y1="'+(H-B)+'" y2="'+(H-B)+'" stroke="#4A4636" stroke-width="2"/>';
+  s+='<line x1="'+L+'" x2="'+(W-R)+'" y1="'+(H-B)+'" y2="'+(H-B)+'" stroke="#B9AE92" stroke-width="2"/>';
   ms.forEach(function(m,i){var x=L+i*bw+bw*.18,w=bw*.64,v=val[i],hh=(H-T-B)*v/mxv,y=H-B-hh,cur=i===ms.length-1,sin=ini&&m<ini;
-    if(sin){s+='<rect x="'+x+'" y="'+(H-B-30)+'" width="'+w+'" height="30" fill="none" stroke="#4A4636" stroke-dasharray="6 5" rx="4"/><text x="'+(x+w/2)+'" y="'+(H-B-36)+'" text-anchor="middle" font-size="14" fill="#6B6252">sin registro</text>';}
-    else{if(v>0)s+='<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+hh+'" rx="4" fill="'+(cur?"#D9B45A":"#8C7640")+'"/>';
-      s+='<text x="'+(x+w/2)+'" y="'+(v>0?y-8:H-B-8)+'" text-anchor="middle" font-size="'+(cur?22:18)+'" font-weight="700" fill="'+(v>0?"#F2D58A":"#4FE0A6")+'">'+(v>0?money(v):"$0.00")+'</text>';}
-    s+='<text x="'+(x+w/2)+'" y="'+(H-10)+'" text-anchor="middle" font-size="17" font-weight="'+(cur?800:400)+'" fill="'+(cur?"#EAF1F9":"#9C937F")+'">'+CMES[+m.slice(5)-1]+'</text>';});
+    if(sin){s+='<rect x="'+x+'" y="'+(H-B-30)+'" width="'+w+'" height="30" fill="none" stroke="#B9AE92" stroke-dasharray="6 5" rx="4"/><text x="'+(x+w/2)+'" y="'+(H-B-36)+'" text-anchor="middle" font-size="14" fill="#8A8170">sin registro</text>';}
+    else{if(v>0)s+='<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+hh+'" rx="4" fill="'+(cur?"#B8892A":"#D8C08A")+'"/>';
+      s+='<text x="'+(x+w/2)+'" y="'+(v>0?y-8:H-B-8)+'" text-anchor="middle" font-size="'+(cur?22:18)+'" font-weight="700" fill="'+(v>0?"#7A5A12":"#1F9D5C")+'">'+(v>0?money(v):"$0.00")+'</text>';}
+    s+='<text x="'+(x+w/2)+'" y="'+(H-10)+'" text-anchor="middle" font-size="17" font-weight="'+(cur?800:400)+'" fill="'+(cur?"#1E2228":"#6B6252")+'">'+CMES[+m.slice(5)-1]+'</text>';});
   return '<svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none">'+s+'</svg>';
 }
 function renderCal(C,hDisp){
