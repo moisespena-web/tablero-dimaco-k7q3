@@ -1,6 +1,24 @@
 {
- "stamp": "2026-10-14T12:00",
+ "stamp": "2026-10-14T20:46",
  "incidencias": [
+  {
+   "fecha": "2026-10-14",
+   "tipo": "scrap",
+   "origen": "cor",
+   "operador": "Alfredo",
+   "deteccion": "insp-cor",
+   "causa": "Solera equivocada (aleación, espesor o ancho)",
+   "mo": "MO-379",
+   "so": "SO-23, SO-25, SO-26",
+   "sku": "36B3480-0020",
+   "producto": "TERM AL. 1/4 x 1 x 2.812\"",
+   "material": "Aluminio",
+   "piezas": 330,
+   "estado": "abierta",
+   "accion": "Fabricar de nuevo (reposición)",
+   "accionDetalle": "Alfredo tuvo que cortar nuevamente con la medida correcta",
+   "monto": 1643.4
+  },
   {
    "fecha": "2026-10-13",
    "tipo": "scrap",
