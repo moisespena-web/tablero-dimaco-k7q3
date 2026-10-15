@@ -146,13 +146,18 @@ def hoja(app,est,proy,out,hoy,hora):
                 if not sku: c.setFont('Helvetica',7.4); c.drawString(xs+3,ty,'— sin material en Katana')
                 else:
                     c.setFont('Courier-Bold',7.2); c.drawString(xs+3,ty,ell(c,sku,'Courier-Bold',7.2,ws[k]-6))
-                    s=SURT.get(m['mo'])
-                    if s:
-                        c.setFont('Helvetica',6.6); c.setFillColor(MUT); c.drawString(xs+3,y-21,ell(c,'%d %s · ya surtida %s'%(n,unidad(uom,n),fd(s)),'Helvetica',6.6,ws[k]-6)); c.setFillColor(INK)
+                    # CORTEPEND15OCT (Moisés, 15-oct-2026): mientras la MO no termine Corte, el material SIGUE haciendo falta.
+                    # La hoja ya no usa surtido.json ("ya surtida" confundía): pide las soleras de las piezas que faltan por cortar.
+                    pl_=float(m.get('piezas') or 0); fc=f if pl_>0 else 0
+                    need=tot*fc/pl_ if pl_>0 else 0
+                    n=(math.ceil(need/SOL_IN-1e-9) if uom=='in' else math.ceil(need-1e-9)) if need>0 else 0
+                    if n<=0:
+                        c.setFont('Helvetica',6.6); c.setFillColor(MUT); c.drawString(xs+3,y-21,'corte terminado · nada que pedir'); c.setFillColor(INK)
                     else:
                         a_='%d %s'%(n,unidad(uom,n)); c.setFont('Helvetica-Bold',8.4); c.drawString(xs+3,y-21,a_)
-                        c.setFont('Helvetica',6.2); c.setFillColor(MUT); c.drawString(xs+5+pdfmetrics.stringWidth(a_,'Helvetica-Bold',8.4),y-21,ell(c,'(%s %s)'%(f"{tot:,.1f}".rstrip('0').rstrip('.'),uom),'Helvetica',6.2,40)); c.setFillColor(INK)
-                        q=ped.setdefault(sku,[0.0,uom,[]]); q[0]+=tot; q[2].append(m['mo'])
+                        det='(%s %s'%(f"{need:,.1f}".rstrip('0').rstrip('.'),uom)+(' · %s por cortar)'%f"{fc:,}" if fc<pl_ else ')')
+                        c.setFont('Helvetica',6.2); c.setFillColor(MUT); c.drawString(xs+5+pdfmetrics.stringWidth(a_,'Helvetica-Bold',8.4),y-21,ell(c,det,'Helvetica',6.2,ws[k]-10-pdfmetrics.stringWidth(a_,'Helvetica-Bold',8.4))); c.setFillColor(INK)
+                        q=ped.setdefault(sku,[0.0,uom,[]]); q[0]+=need; q[2].append(m['mo'])
                     # PZTRAMO15OCT (Moisés, 15-oct-2026): abajo de "N soleras / ya surtidas", las piezas que salen por tramo
                     # (tramo = solera de 144 in; largo por pieza = material de la MO en Katana ÷ piezas planeadas; sin merma de sierra).
                     pzs=float(m.get('piezas') or 0)
@@ -188,9 +193,9 @@ def hoja(app,est,proy,out,hoy,hora):
         y-=8; filas=sorted(ped.items()); hh=16+12*max(1,len(filas))
         if y-hh<40: c.showPage(); y=cab()-6
         c.setStrokeColor(INK); c.setLineWidth(.8); c.rect(x0,y-hh,TW,hh,stroke=1,fill=0)
-        c.setFillColor(INK); c.setFont('Helvetica-Bold',8.6); c.drawString(x0+6,y-11,'PEDIR A ALMACÉN — soleras de las MOs que aún no se surten (consolidado por material, 1 solera = 144 in, redondeado hacia arriba)')
+        c.setFillColor(INK); c.setFont('Helvetica-Bold',8.6); c.drawString(x0+6,y-11,'PEDIR A ALMACÉN — soleras para lo que falta por cortar (consolidado por material, 1 solera = 144 in, redondeado hacia arriba)')
         yy=y-24
-        if not filas: c.setFont('Helvetica',8); c.drawString(x0+10,yy,'Nada que pedir: todas las MOs de esta hoja ya tienen su material surtido.')
+        if not filas: c.setFont('Helvetica',8); c.drawString(x0+10,yy,'Nada que pedir: las MOs de esta hoja ya terminaron su corte.')
         for sku,(tot,uom,mlist) in filas:
             n=math.ceil(tot/SOL_IN-1e-9) if uom=='in' else math.ceil(tot-1e-9)
             c.setFont('Helvetica-Bold',9); c.drawString(x0+10,yy,'%d %s'%(n,unidad(uom,n)))
