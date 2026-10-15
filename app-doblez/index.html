@@ -114,7 +114,8 @@ function disponible(iso){var fin=new Date(iso+'T14:00:00'),t=new Date(),ms=0;
 /* piezas ya hechas en esta estación: terminadas en Katana + lapsos de la tablet; si las notas de la MO traen un avance mayor (ej. 'Doblez: Miguel 155/250'), manda ese */
 function notaPz(m){var t=m.notas||'',n=0;(t.match(new RegExp('^[ \\t]*Doblez[^\\n]*','gim'))||[]).forEach(function(l){var r=/(\d+)\s*\/\s*(\d+)/g,x;while((x=r.exec(l))){var a=l.charAt(x.index-1),b=l.charAt(r.lastIndex);if(/[\d\/]/.test(a)||/[\d\/]/.test(b))continue;n=+x[1];}});return n;} /* 4-oct-2026: toma el ultimo x/y de la linea de la estacion, sin confundir fechas (02/10/2026) */
 function hz(m){var e=m.entr||0;return Math.min(m.piezas,Math.max(Math.max(0,notaPz(m)-e),Math.max(0,(m.hechas||0)-e)+m.st.done));}
-/* PZ6OCT · 6-oct-2026 (Moisés): Faltan X de total + barra entregadas / listas -> siguiente estación / faltan aquí */
+/* PORHACER15OCT (Moisés, 15-oct-2026): el número grande de la estación es lo que falta EN ESTA estación ("Por maquinar 511 de 692"); la TV sigue con lo que falta entregar al cliente.
+   PZ6OCT · 6-oct-2026 (Moisés): Faltan X de total + barra entregadas / listas -> siguiente estación / faltan aquí */
 function fmtN(n){return (+n||0).toLocaleString('en-US');}
 function faltaPz(m){return Math.max(0,m.piezas-hz(m));}
 function sigEst(m){var r=m.ruta||[],i=-1;r.forEach(function(x,k){if(x&&(x[2]===true||(i<0&&/TM-2P/i.test(x[0]))))i=k;});
@@ -265,7 +266,7 @@ function vLista(){
   '<span style="text-align:right"><b style="font-size:17px">'+m.entrega+'</b> '+badge(m)+'</span></div>'+
   '<div style="font-size:12px;color:var(--tx2);margin:2px 0 4px">#'+m.sec+(m.estAct?' · está en <b style="color:'+m.color+'">'+E(m.estAct)+'</b>':'')+''+(m.so?' · <b>'+E(m.so)+'</b>':'')+(m.espera?' · <b style="color:#FFC45C">aún en '+E(m.espera)+'</b>':'')+'</div>'+
   '<div style="font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+E(m.nombre)+'</div>'+
-  '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;gap:6px"><span class="mono sku">'+m.sku+'</span><span style="text-align:right;white-space:nowrap"><span class="ks">Faltan </span><b style="font-size:22px">'+fmtN(m.piezas)+'</b><span class="ks"> de '+fmtN(m.plan)+'</span></span></div>'+barraPz(m)+
+  '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;gap:6px"><span class="mono sku">'+m.sku+'</span><span style="text-align:right;white-space:nowrap"><span class="ks">Por doblar </span><b style="font-size:22px">'+fmtN(faltaPz(m))+'</b><span class="ks"> de '+fmtN(m.plan)+'</span></span></div>'+barraPz(m)+
   '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:7px"><span class="st" style="'+estStyM(m)+'">'+E(estTxtM(m))+'</span>'+
   (st.status==='none'?'<span class="st" style="background:'+pv[1]+';border:1px solid '+pv[2]+';color:'+pv[3]+'">'+pv[0]+'</span>':'')+'</div></button>';}).join('')+
  '<div style="font-size:12px;color:var(--tx2);margin:6px 0 10px;line-height:1.4">'+(enLinea()?'CONECTADA A KATANA · la cola se actualiza sola.':'PILOTO · MOs de Katana al 14-oct 21:05. Lo capturado se guarda en este teléfono; todavía no escribe en Katana: el Ing. Moisés lo registra con el Resumen del turno.')+'</div>';}
@@ -280,7 +281,7 @@ function vDetalle(){var m=cur(),st=m.st,falt=Math.max(0,m.piezas-hz(m)),tramo=st
   '<button type="button" class="sec" style="font-weight:700" '+act('volver')+'>← Regresar</button>'+
   '<div style="flex-grow:1;text-align:right"><b style="font-size:18px">'+m.entrega+'</b> '+badge(m)+'</div></div>'+
  '<div class="card" style="padding:12px;background:'+fondo(m)+';border:'+borde(m)+';border-left:7px solid '+m.color+'">'+
-  '<div style="display:flex;justify-content:space-between;align-items:baseline"><span class="mono" style="font-size:30px;font-weight:700">'+m.mo+cuPill(m)+'</span><span><span class="ks">Faltan </span><b style="font-size:26px">'+fmtN(m.piezas)+'</b><span class="ks"> de '+fmtN(m.plan)+'</span></span></div>'+
+  '<div style="display:flex;justify-content:space-between;align-items:baseline"><span class="mono" style="font-size:30px;font-weight:700">'+m.mo+cuPill(m)+'</span><span><span class="ks">Por doblar </span><b style="font-size:26px">'+fmtN(faltaPz(m))+'</b><span class="ks"> de '+fmtN(m.plan)+'</span></span></div>'+
   '<div style="font-size:12px;color:var(--tx2);margin:2px 0 6px">#'+m.sec+(m.estAct?' · está en <b style="color:'+m.color+'">'+E(m.estAct)+'</b>':'')+'</div>'+
   '<div style="font-size:17px">'+E(m.nombre)+'</div><div style="margin-top:6px"><span class="mono sku">'+m.sku+'</span></div></div>'+
  '<div class="card" style="padding:12px;margin-top:10px">'+
