@@ -1,7 +1,25 @@
 {
- "stamp": "2026-10-14T23:14",
+ "stamp": "2026-10-15T11:14",
  "proyecto": "racks",
  "incidencias": [
+  {
+   "fecha": "2026-10-15",
+   "tipo": "scrap",
+   "origen": "ext",
+   "deteccion": "dis",
+   "causa": "Material de proveedor defectuoso",
+   "mo": "MO-436",
+   "so": "2625",
+   "producto": "Charolas Consolas",
+   "cliente": "GM",
+   "piezas": 16,
+   "estado": "abierta",
+   "accion": "Fabricar de nuevo (reposición)",
+   "accionDetalle": "Fernando fabricara las piezas",
+   "diasRetraso": 1,
+   "operador": "Compras",
+   "monto": 4665.6
+  },
   {
    "fecha": "2026-09-25",
    "tipo": "retrabajo",
