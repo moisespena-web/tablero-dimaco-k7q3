@@ -423,12 +423,16 @@ async function evento(k, est, env, b) {
     assigned_operators: conOp(row.assigned_operators),
     completed_by_operators: status === 'COMPLETED' ? conOp(row.completed_by_operators) : (row.completed_by_operators || []).map(o => ({ operator_id: o.operator_id })),
   };
-  if (status === 'COMPLETED') cuerpo.total_actual_time = Math.round(nuevo.seg);
+  // 14-oct-2026: Katana solo acepta total_actual_time cuando la operación YA está COMPLETED. Si viene de NOT_STARTED /
+  // IN_PROGRESS / PAUSED se hace en dos pasos: primero el estatus, luego el tiempo (antes se rechazaba y se perdía el registro).
+  const tiempoAparte = status === 'COMPLETED' && row.status !== 'COMPLETED';
+  if (status === 'COMPLETED' && !tiempoAparte) cuerpo.total_actual_time = Math.round(nuevo.seg);
   if (row.cost_parameter != null) cuerpo.cost_parameter = num(row.cost_parameter);
   if (row.custom_fields) cuerpo.custom_fields = row.custom_fields;
   let despues = row;
   if (status !== row.status || status === 'COMPLETED' || b.accion === 'start') {
-    const r = await k.patch('/manufacturing_order_operation_rows/' + rowId, cuerpo);
+    let r = await k.patch('/manufacturing_order_operation_rows/' + rowId, cuerpo);
+    if (tiempoAparte && nuevo.seg > 0) r = await k.patch('/manufacturing_order_operation_rows/' + rowId, { ...cuerpo, total_actual_time: Math.round(nuevo.seg) });
     despues = (r && r.id) ? r : await k.get('/manufacturing_order_operation_rows/' + rowId);
     fotoVencida();
   }

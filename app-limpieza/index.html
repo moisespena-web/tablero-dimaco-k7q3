@@ -195,7 +195,7 @@ function enviarCola(){if(!enLinea()||enviando||!S.cola.length){if(!S.cola.length
  enviando=true;var ev=S.cola[0];
  api('POST','/evento',{rowId:ev.rowId,accion:ev.accion,operador:ev.operador,pin:ev.pin||(CONX&&CONX.pin)||'',segundos:ev.segundos,piezas:ev.piezas||0,esperado:S.tReal[ev.rowId]}).then(function(r){enviando=false;
   if(r.ok){S.ultErr='';S.cola.shift();S.tReal[ev.rowId]=r.op.tiempoReal;ESPERA=30000;}
-  else if(r._status>=400&&r._status<500){S.cola.shift();S.errores.push({t:Date.now(),mo:ev.mo,accion:ev.accion,error:r.error||('HTTP '+r._status)});}
+  else if(r._status>=400&&r._status<500){S.cola.shift();S.errores.push({t:Date.now(),mo:ev.mo,accion:ev.accion,error:r.error||('HTTP '+r._status),ev:ev});}
   else{S.sync='err';S.ultErr=r.error||('HTTP '+r._status);guardar();render();otraVez();return;}
   S.sync=S.cola.length?'pend':'ok';guardar();if(!S.modal)render();if(S.cola.length)setTimeout(enviarCola,300);})
  .catch(function(){enviando=false;S.sync='err';S.ultErr='sin internet';if(!S.modal)render();otraVez();});}
@@ -240,7 +240,7 @@ function cargarCola(){if(!enLinea())return Promise.resolve();
 function vHeader(){var ef=maquinaHoy(),p=Math.min(100,Math.round(100*ef/(CAPDIA*3600000))),c=semaforo(p);
  return '<div class="hdr">'+(LOGO?'<img id="logo" '+act('logo')+' src="'+LOGO+'" alt="DIMACO">':'<div class="logoTxt" '+act('logo')+'>DIMACO</div>')+
  '<div style="flex-grow:1;min-width:0;border-left:6px solid '+MICOL+';padding-left:10px"><div style="font-size:19px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Estación <span style="color:'+MICOL+'">Limpieza &amp; SQA</span></div>'+
- '<div style="font-size:12px;color:var(--tx2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+E(opAct())+' · <b style="color:'+syncTxt()[1]+'">'+E(syncTxt()[0])+'</b></div></div>'+
+ '<div style="font-size:12px;color:var(--tx2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+E(opAct())+' · <b '+((S.errores||[]).length?act('verErr')+' style="cursor:pointer;text-decoration:underline;color:':'style="color:')+syncTxt()[1]+'">'+E(syncTxt()[0])+'</b></div></div>'+
  '<div style="text-align:right;flex:none"><div class="mono" id="reloj" style="font-size:24px;line-height:1">'+hm(Date.now())+'</div><div style="font-size:11px;color:var(--tx2)">'+fecha()+'</div></div></div>'+
  '<div class="kpi" style="margin-top:8px;border-color:'+c[1]+';background:'+c[0]+';display:flex;justify-content:space-between;align-items:baseline"><span class="lbl">LIMPIEZA HOY · TIEMPO EFECTIVO</span><span><b class="mono" id="efect" style="font-size:19px;color:'+c[2]+'">'+dur(ef)+'</b> <span class="ks">de '+String(CAPDIA).replace('.',',')+' h · <b style="color:'+c[2]+'">'+p+'%</b></span></span>'+
  '<i style="position:absolute;left:0;bottom:0;height:4px;width:'+p+'%;background:'+c[1]+'"></i></div>';}
@@ -332,6 +332,8 @@ function vModal(){if(!S.modal)return '';var m=cur(),st=m.st,falt=Math.max(0,m.pi
   '<div style="display:flex;gap:10px;align-items:center"><div class="mono" style="flex-grow:1;font-size:44px;font-weight:700;text-align:right;background:#0A1018;border:2px solid #3E8FD8;border-radius:12px;padding:4px 14px">'+(S.fin||'0')+'</div><div style="font-size:15px;line-height:1.5">Ya limpias <b>'+fmtN(hz(m))+'</b><br>Por limpiar <b>'+fmtN(falt)+'</b></div></div>'+
   '<div style="min-height:20px;font-size:15px;font-weight:700;color:#FF6369">'+E(S.finErr)+'</div>'+teclado('fin')+
   '<div style="display:flex;gap:10px"><button type="button" '+act('finOk')+' style="flex-grow:1;min-height:56px;border-radius:12px;border:0;background:#3E8FD8;color:#fff;font-size:20px;font-weight:700">Guardar</button><button type="button" class="sec" '+act('cerrar')+'>Cancelar</button></div>';}
+ else if(S.modal==='errores'){var L=(S.errores||[]).slice(-30).reverse();h='<div class="ttl">Registros que Katana no aceptó ('+L.length+')</div><div style="max-height:52vh;overflow:auto;font-size:15px;line-height:1.45">'+L.map(function(x){var d=new Date(x.t);return '<div style="border-bottom:1px solid #22344A;padding:6px 0"><b>'+E(x.mo||'')+'</b> · '+E(x.accion||'')+' · '+d.getHours()+':'+('0'+d.getMinutes()).slice(-2)+'<br><span style="color:#FFC45C">'+E(String(x.error||''))+'</span></div>';}).join('')+'</div>'+
+  '<div style="display:flex;gap:10px;margin-top:10px"><button type="button" '+act('reErr')+' style="flex-grow:1;min-height:56px;border-radius:12px;border:0;background:#3E8FD8;color:#fff;font-size:18px;font-weight:700">Reintentar enviarlos</button><button type="button" class="sec" '+act('cerrar')+'>Cerrar</button></div>';}
  else if(S.modal==='cero'){h='<div class="ttl">No terminaste piezas en este lapso. ¿Por qué?</div><div class="g2">'+['Se acabó el turno','Problema con la pieza','Ajuste de máquina','Otro'].map(function(t){return '<button type="button" '+act('motCero',t)+' style="min-height:70px;border-radius:12px;border:2px solid #22344A;background:#18263A;font-size:17px;font-weight:700">'+t+'</button>';}).join('')+'</div>';}
  else if(S.modal==='confirma'){h='<div class="ttl">¿Terminaste las '+m.piezas+' piezas?</div><div style="font-size:16px;line-height:1.4;color:#C9D6E6">El paso <b>'+E(m.paso||MAQ)+'</b> de <b>'+m.mo+'</b> se marca <b style="color:#7FE3BC">TERMINADO</b> '+(PAUSA_KATANA?'y aparece en el Resumen del turno para que el Ing. Moisés lo registre en Katana.':'y se registra en Katana al momento.')+'</div>'+
   '<div style="display:flex;gap:10px"><button type="button" '+act('confSi')+' style="flex-grow:1;min-height:60px;border-radius:12px;border:0;background:#25C083;color:#07121B;font-size:20px;font-weight:700">Sí, terminé</button><button type="button" class="sec" style="flex-grow:1;min-height:60px" '+act('confNo')+'>No, corregir</button></div>';}
@@ -415,6 +417,8 @@ A.logo=function(){var n=Date.now();toques=toques.filter(function(t){return n-t<3
 A.codOk=function(){if(S.cod.length<6){S.conxMsg='El código tiene al menos 6 dígitos';return;}CONX={codigo:S.cod};try{localStorage.setItem('dimaco_limpieza_conx',JSON.stringify(CONX));}catch(e){}
  S.conxMsg=SRV_URL?'Probando…':'Código guardado. El servidor todavía no está configurado en esta versión.';
  if(SRV_URL)api('GET','/estado').then(function(r){S.conxMsg=r.ok?'✓ Conectado a Katana':'✗ '+(r.error||'No autorizado');render();if(r.ok)cargarCola().then(enviarCola);}).catch(function(){S.conxMsg='✗ Sin conexión';render();});};
+A.verErr=function(){S.modal='errores';};
+A.reErr=function(){var vuelven=(S.errores||[]).filter(function(x){return x.ev;}).map(function(x){return x.ev;});S.errores=(S.errores||[]).filter(function(x){return !x.ev;});S.cola=vuelven.concat(S.cola);S.modal=null;S.sync=S.cola.length?'pend':'ok';guardar();enviarCola();};
 A.desconectar=function(){CONX=null;try{localStorage.removeItem('dimaco_limpieza_conx');}catch(e){}S.conxMsg='Teléfono desconectado.';S.sync='off';};
 
 document.getElementById('app').addEventListener('click',function(e){var b=e.target.closest('[data-a]');if(!b||b.disabled)return;
