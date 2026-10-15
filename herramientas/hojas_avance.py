@@ -107,7 +107,7 @@ def hoja(app,est,proy,out,hoy,hora):
     if _pie: hoy,hora=_pie.group(1),_pie.group(2)
     c=canvas.Canvas(out,pagesize=(W,H)); c.setTitle('Hoja de avance · '+est)
     x0=30; TW=W-60; fixed=sum(w for _,w in COLS); ws=[w or (TW-fixed) for _,w in COLS]
-    RH=26; pag=[0]
+    RH=34 if est=='Corte' else 26; pag=[0]   # PZTRAMO15OCT: Corte lleva un 3er renglón (piezas por tramo)
     def cab():
         pag[0]+=1; y=H-28
         if LOGO:
@@ -153,6 +153,12 @@ def hoja(app,est,proy,out,hoy,hora):
                         a_='%d %s'%(n,unidad(uom,n)); c.setFont('Helvetica-Bold',8.4); c.drawString(xs+3,y-21,a_)
                         c.setFont('Helvetica',6.2); c.setFillColor(MUT); c.drawString(xs+5+pdfmetrics.stringWidth(a_,'Helvetica-Bold',8.4),y-21,ell(c,'(%s %s)'%(f"{tot:,.1f}".rstrip('0').rstrip('.'),uom),'Helvetica',6.2,40)); c.setFillColor(INK)
                         q=ped.setdefault(sku,[0.0,uom,[]]); q[0]+=tot; q[2].append(m['mo'])
+                    # PZTRAMO15OCT (Moisés, 15-oct-2026): abajo de "N soleras / ya surtidas", las piezas que salen por tramo
+                    # (tramo = solera de 144 in; largo por pieza = material de la MO en Katana ÷ piezas planeadas; sin merma de sierra).
+                    pzs=float(m.get('piezas') or 0)
+                    if uom=='in' and pzs>0 and tot>0:
+                        lpz=tot/pzs; ppt=int(SOL_IN//lpz+1e-9)
+                        c.setFont('Helvetica-Bold',7.2); c.setFillColor(INK); c.drawString(xs+3,y-30,ell(c,'%s pz por tramo (%s in c/u)'%(f"{ppt:,}",f"{lpz:,.3f}".rstrip('0').rstrip('.')),'Helvetica-Bold',7.2,ws[k]-6))
                 xs+=ws[k]; continue
             c.setFillColor(colors.HexColor(CEST_P.get(er,'#1F2A37')) if k==4 else INK); c.setFont('Helvetica-Bold' if k==4 else fn,fs); c.drawString(xs+3,ty,ell(c,v,'Helvetica-Bold' if k==4 else fn,fs,ws[k]-6)); xs+=ws[k]
         if m.get('prio'): c.setFont('Helvetica-Bold',6.4); c.drawString(x0+sum(ws[:1])+3,y-21,'URGE')
