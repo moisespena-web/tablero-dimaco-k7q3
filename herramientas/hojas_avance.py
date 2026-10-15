@@ -17,7 +17,8 @@ AP=argparse.ArgumentParser(); AP.add_argument('--repo',default='/home/claude/tab
 ARGS=AP.parse_args(); REPO=ARGS.repo
 # TALTM11OCT (Moisés, 11-oct-2026, regla): Taladro y TM-2P van en UNA sola hoja — misma área y mismo líder (Fernando).
 # SINDOBLEZ15OCT (Moisés, 15-oct-2026): "para doblez, ya no es necesario la hoja de avance".
-EST=[('app-corte','Corte','MAFESA'),('app-taladro+app-tm2p','Taladro y TM-2P','MAFESA'),('app-limpieza','Limpieza & SQA','MAFESA'),
+# SOLO2_15OCT (Moisés, 15-oct-2026): solo Corte y Taladro y TM-2P (Limpieza & SQA ya no lleva hoja).
+EST=[('app-corte','Corte','MAFESA'),('app-taladro+app-tm2p','Taladro y TM-2P','MAFESA'),
      ('app-habilitado','Habilitado','RACKS'),('app-laser','Láser y Router','RACKS'),('app-armado1','Armado y Soldadura 1','RACKS'),('app-pintura','Pintura','RACKS'),('app-vestido','Rotulado y Vestido','RACKS')]
 MES=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic']
 def arr(t,key):
@@ -172,7 +173,7 @@ def hoja(app,est,proy,out,hoy,hora):
     y=cab()
     GN={0:'Urgentes',1:'Cobre',2:'Aluminio'}; _pg=[None]
     if BLOQ:   # alto de renglón para que quepa en 1 hoja (mín. 28)
-        ng_=len({m_['_g'] for m_ in mos}); RH=max(28,min(34,int((y-36-12*ng_)/max(1,len(mos))))) 
+        ng_=len({m_['_g'] for m_ in mos}); RH=max(25,min(34,int((y-36-12*ng_)/max(1,len(mos))))) 
     for i,m in enumerate(mos,1):
         if BLOQ and m['_g']!=_pg[0]:   # franja de grupo
             if y-12-RH<36: c.showPage(); y=cab()
