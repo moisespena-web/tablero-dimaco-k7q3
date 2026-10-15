@@ -92,9 +92,10 @@ export default {
         const t = await tablero(env);
         if (!t) return json({ ok: false, error: 'Falta DROPBOX_URL o la carpeta no tiene datos' }, 503);
         if (ruta === '/tablero/aviso') return json(t.aviso || {});
-        let v = null;
-        try { v = await tableroVivo(env, t, false); } catch (e) { v = null; }   // si Katana falla, el programa tal cual
+        let v = null, falla = '';
+        try { v = await tableroVivo(env, t, false); } catch (e) { v = null; falla = String(e && e.message || e).slice(0, 300); }   // si Katana falla, el programa tal cual
         const out = v || t;
+        out.diag = { falla: falla || (v && v.diagVivo) || '', ahora: new Date().toISOString() };   // DIAG 14-oct-2026: por qué no se recalculó
         try { if (out.datos && !out.datos.hoyPz) { const hp = await hoyTV(env); if (hp) out.datos = { ...out.datos, hoyPz: hp.pz, hoyFecha: hp.fecha }; } } catch (e) {}   // respaldo: contador viejo solo si no hay HOYK
         return json(out);
       } catch (e) { return json({ ok: false, error: String(e && e.message || e) }, 502); }
@@ -582,14 +583,15 @@ async function tableroVivo(env, t, forzar) {
   const edad = prev ? Date.now() - prev.calc : Infinity;
   const nuevoPrograma = !prev || prev.fuente !== t.fuente;
   const toca = forzar || nuevoPrograma || (sucio && edad > VIVO_MIN) || (enHorario(new Date()) && edad > VIVO_TURNO);
-  if (!toca) return prev.out;
+  if (!toca) return { ...prev.out, diagVivo: 'sin recalcular: edad ' + Math.round(edad / 1000) + ' s' };
   if (sucio) fotoVencida();   // que la foto de Katana traiga lo que la estación acaba de escribir
   const F = await foto(katana(env.KATANA_API_KEY));
   const datos = armarVivo(t.datos, F, new Date());
-  if (!datos) return prev ? prev.out : null;
+  if (!datos) return prev ? { ...prev.out, diagVivo: 'Katana devolvió 0 MOs abiertas (' + (F && F.mos ? F.mos.size : 'sin foto') + ')' } : null;
   try { const hp = await hoyKatana(env, datos); if (hp) { datos.hoyPz = hp.pz; datos.hoyFecha = hp.fecha; } } catch (e) {}   // HOYK
   const out = { datos, aviso: t.aviso || {}, fuente: t.fuente, leido: new Date().toISOString(), vivo: true };
-  await env.TV.put('vivo', JSON.stringify({ calc: Date.now(), fuente: t.fuente, out }));
+  try { await env.TV.put('vivo', JSON.stringify({ calc: Date.now(), fuente: t.fuente, out })); }
+  catch (e) { out.diagVivo = 'no se pudo guardar en KV: ' + String(e && e.message || e).slice(0, 200); }   // igual se sirve lo recién calculado
   if (sucio) { try { await env.TV.delete('sucio'); } catch (e) {} }
   return out;
 }
