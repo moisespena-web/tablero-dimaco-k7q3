@@ -1,5 +1,5 @@
 {
- "stamp": "2026-10-14T22:47",
+ "stamp": "2026-10-15T10:53",
  "incidencias": [
   {
    "fecha": "2026-10-14",
@@ -32,7 +32,7 @@
    "producto": "TERM AL. 1/4 x 1-1/2 7.75",
    "material": "Aluminio",
    "piezas": 50,
-   "estado": "cerrada",
+   "estado": "abierta",
    "accion": "Reforzar la inspección o agregar punto de revisión",
    "accionDetalle": "Miguel fabricara piezas nuevas",
    "monto": 1106.0
@@ -67,7 +67,7 @@
    "producto": "TERM AL. 1/4 x 1 x 23.75",
    "material": "Aluminio",
    "piezas": 4,
-   "estado": "cerrada",
+   "estado": "abierta",
    "accion": "Retrabajar la pieza",
    "accionDetalle": "Miguel revosara el doblez, y pedira apoyo a calidad para la validacion"
   },
@@ -84,7 +84,7 @@
    "producto": "TERM AL. 1/4 x 1 x 23.75",
    "material": "Aluminio",
    "piezas": 22,
-   "estado": "cerrada",
+   "estado": "abierta",
    "accion": "Fabricar de nuevo (reposición)",
    "accionDetalle": "Miguel fabricara las 22 pz nuevas para el 8 de octubre",
    "monto": 924.66
