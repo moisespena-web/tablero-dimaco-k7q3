@@ -1,5 +1,5 @@
 {
- "stamp": "2026-10-14T20:46",
+ "stamp": "2026-10-14T22:47",
  "incidencias": [
   {
    "fecha": "2026-10-14",
@@ -15,7 +15,7 @@
    "material": "Aluminio",
    "piezas": 330,
    "estado": "abierta",
-   "accion": "Fabricar de nuevo (reposición)",
+   "accion": "Retrabajar la pieza",
    "accionDetalle": "Alfredo tuvo que cortar nuevamente con la medida correcta",
    "monto": 1643.4
   },
@@ -32,10 +32,27 @@
    "producto": "TERM AL. 1/4 x 1-1/2 7.75",
    "material": "Aluminio",
    "piezas": 50,
-   "estado": "abierta",
+   "estado": "cerrada",
    "accion": "Reforzar la inspección o agregar punto de revisión",
    "accionDetalle": "Miguel fabricara piezas nuevas",
    "monto": 1106.0
+  },
+  {
+   "fecha": "2026-10-13",
+   "tipo": "retrabajo",
+   "origen": "cor",
+   "operador": "Emiliano",
+   "deteccion": "cor",
+   "causa": "Solera equivocada (aleación, espesor o ancho)",
+   "mo": "MO-418",
+   "so": "SO-34, SO-39",
+   "sku": "37A7829-0002",
+   "producto": "TERM CU 1/4 x 1 x 3.938",
+   "material": "Cobre",
+   "piezas": 39,
+   "estado": "abierta",
+   "accion": "Retrabajar la pieza",
+   "accionDetalle": "Emiliano volvió a cortar las soleras con el material correcto"
   },
   {
    "fecha": "2026-10-12",
@@ -50,7 +67,7 @@
    "producto": "TERM AL. 1/4 x 1 x 23.75",
    "material": "Aluminio",
    "piezas": 4,
-   "estado": "abierta",
+   "estado": "cerrada",
    "accion": "Retrabajar la pieza",
    "accionDetalle": "Miguel revosara el doblez, y pedira apoyo a calidad para la validacion"
   },
@@ -67,7 +84,7 @@
    "producto": "TERM AL. 1/4 x 1 x 23.75",
    "material": "Aluminio",
    "piezas": 22,
-   "estado": "abierta",
+   "estado": "cerrada",
    "accion": "Fabricar de nuevo (reposición)",
    "accionDetalle": "Miguel fabricara las 22 pz nuevas para el 8 de octubre",
    "monto": 924.66
