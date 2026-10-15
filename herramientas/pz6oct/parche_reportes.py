@@ -172,3 +172,7 @@ sys.argv=_bk
 _bk=sys.argv[:]; sys.argv=[_bk[0],D]
 _rp.run_path(os.path.join(os.path.dirname(os.path.abspath(__file__)),'parche_cynthia_pdf.py'),run_name='__main__')
 sys.argv=_bk
+# ===== 7a parte (Moisés, 15-oct-2026 · MATCORTE15OCT): Material a utilizar sale de MO en proceso y va a la hoja de avance de Corte =====
+_bk=sys.argv[:]; sys.argv=[_bk[0],D]
+_rp.run_path(os.path.join(os.path.dirname(os.path.abspath(__file__)),'parche_matcorte.py'),run_name='__main__')
+sys.argv=_bk

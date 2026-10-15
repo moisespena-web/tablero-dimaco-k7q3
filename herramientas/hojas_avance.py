@@ -1,6 +1,6 @@
 """Hojas de avance para anotar a pluma (temporal, pedido de Moisés 6-oct-2026) — una por estación MAFESA
 (Corte, Taladro y TM-2P en una sola hoja, Limpieza & SQA; Doblez ya no lleva hoja desde el 15-oct-2026), con las MOs que muestra cada app de estación.
-Uso: python3 hojas_avance.py --repo <clon de tablero-dimaco-k7q3> --out <carpeta> --fs DD-MM_HH-MM [--racks]
+Uso: python3 hojas_avance.py --repo <clon de tablero-dimaco-k7q3> --out <carpeta> --fs DD-MM_HH-MM --tv <tv_datos.json de build_entregas> [--racks]
 Correr DESPUÉS de actualizar las estaciones (regla 22:00, paso 3) para que salgan con las MOs de ese corte.
 Archivos: "Hoja de avance - <Estación>_<FS>.pdf". Racks solo con --racks (por ahora Moisés pidió solo MAFESA)."""
 import re,json,sys,datetime as dt
@@ -13,7 +13,7 @@ from reportlab.pdfbase import pdfmetrics
 try:
     from dimaco_brand import logo_reader; LOGO=logo_reader()
 except Exception as e: LOGO=None; print('sin logo',e)
-AP=argparse.ArgumentParser(); AP.add_argument('--repo',default='/home/claude/tablero-dimaco-k7q3'); AP.add_argument('--out',default='/home/claude/hojas/out'); AP.add_argument('--fs',default=''); AP.add_argument('--racks',action='store_true')
+AP=argparse.ArgumentParser(); AP.add_argument('--repo',default='/home/claude/tablero-dimaco-k7q3'); AP.add_argument('--out',default='/home/claude/hojas/out'); AP.add_argument('--fs',default=''); AP.add_argument('--racks',action='store_true'); AP.add_argument('--tv',default='',help='tv_datos.json de build_entregas (trae reqCorte, MATCORTE15OCT)')
 ARGS=AP.parse_args(); REPO=ARGS.repo
 # TALTM11OCT (Moisés, 11-oct-2026, regla): Taladro y TM-2P van en UNA sola hoja — misma área y mismo líder (Fernando).
 # SINDOBLEZ15OCT (Moisés, 15-oct-2026): "para doblez, ya no es necesario la hoja de avance".
@@ -189,7 +189,33 @@ def hoja(app,est,proy,out,hoy,hora):
             xs+=ws[k]
         c.setStrokeColor(colors.HexColor('#C9CED4')); c.line(x0,y-RH,x0+TW,y-RH); y-=RH
     # HOJ9OCT: sin renglones libres para MOs que lleguen después (Moisés, 9-oct-2026)
-    if est=='Corte':
+    # MATCORTE15OCT (Moisés, 15-oct-2026): el recuadro "Material a utilizar" (el de MO en proceso, con stock) reemplaza a "Pedir a almacén".
+    RQ=None
+    if est=='Corte' and ARGS.tv:
+        try: RQ=json.load(open(ARGS.tv)).get('reqCorte')
+        except Exception as e_: print('sin reqCorte',e_)
+    if est=='Corte' and RQ is not None:
+        cw=[w_*TW/760 for w_ in (150,130,110,110,90,170)]; hd=['Material (SKU)','Tipo','Medida','Solicitar','Sobrante','Soleras en stock']; rr_=15
+        hh=22+15+rr_*max(1,len(RQ))+14
+        y-=10
+        if y-hh<40: c.showPage(); y=cab()-6
+        c.setFillColor(INK); c.setFont('Helvetica-Bold',11); c.drawString(x0,y-10,'Material a utilizar'); y-=18
+        c.setFillColor(colors.HexColor('#E8EDF3')); c.rect(x0,y-15,sum(cw),15,stroke=0,fill=1); c.setFillColor(INK); c.setFont('Helvetica-Bold',8); xx=x0
+        for h_,w_ in zip(hd,cw): c.drawString(xx+5,y-10.5,h_); xx+=w_
+        y-=15
+        if not RQ:
+            c.setFont('Helvetica',8.4); c.drawString(x0+5,y-11,'Nada que pedir: las MOs de esta hoja ya terminaron su corte.'); y-=rr_
+        for m_ in RQ:
+            xx=x0; c.setFillColor(INK); c.setFont('Courier-Bold',8.4); c.drawString(xx+5,y-11,m_['sku']); xx+=cw[0]
+            c.setFont('Helvetica',8.4); c.drawString(xx+5,y-11,m_.get('tipo','')); xx+=cw[1]; c.drawString(xx+5,y-11,m_.get('medida','')); xx+=cw[2]
+            c.setFont('Helvetica-Bold',8.8); c.drawString(xx+5,y-11,'%s %s'%(f"{m_['cantidad']:,}",m_['unidad'])); xx+=cw[3]
+            c.setFont('Helvetica',8.4); c.drawString(xx+5,y-11,('%s"'%m_['sobrante']) if m_.get('sobrante') else '—'); xx+=cw[4]
+            c.setFont('Helvetica-Bold',8.6); c.setFillColor(colors.HexColor('#B42318') if m_.get('falta') else INK); c.drawString(xx+5,y-11,m_.get('stock','')); c.setFillColor(INK)
+            c.setStrokeColor(RULE); c.setLineWidth(.4); c.line(x0,y-rr_,x0+sum(cw),y-rr_); y-=rr_
+        mos_=sorted({mo for m_ in RQ for mo in m_.get('mos',[])},key=lambda s:int(s.split('-')[-1]) if s.split('-')[-1].isdigit() else 0)
+        c.setFont('Helvetica-Oblique',7); c.setFillColor(MUT)
+        c.drawString(x0,y-10,('MOs que aún no terminan Corte: '+', '.join(mos_)+'. ' if mos_ else '')+'Redondeado a piezas completas (1 pieza de solera = 144 in). En rojo: no alcanza el stock.'); c.setFillColor(INK); y-=14
+    elif est=='Corte':
         y-=8; filas=sorted(ped.items()); hh=16+12*max(1,len(filas))
         if y-hh<40: c.showPage(); y=cab()-6
         c.setStrokeColor(INK); c.setLineWidth(.8); c.rect(x0,y-hh,TW,hh,stroke=1,fill=0)
