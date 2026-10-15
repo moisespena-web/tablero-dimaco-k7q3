@@ -22,7 +22,11 @@ mos=[m for m in L('mo_*.json') if m['status'] in ('NOT_STARTED','IN_PROGRESS','P
 ops=L('ops_*.json'); ful=L('ful_*.json')
 var={v['id']:v for v in L('var_*.json')}
 # ---- columnas de racks (orden fijo de la planta) ----
-COLS=[('Corte','CORTE'),('Laser','LÁSER'),('Router','ROUTER'),('Doblez','DOBLEZ'),('Armado','ARMADO'),('Pintura','PINTURA'),('Vestido','VESTIDO')]
+# 14-oct-2026 (Moisés): columnas agrupadas en bloques, en este orden y cada bloque con su color:
+# HABILITADO (Corte, Doblez) · LÁSER Y ROUTER · MAQUINADOS (CNC) · ARMADO Y SOLDADURA · PINTURA Y VESTIDO. Diseño, cuando aparece, va antes.
+BLOQUES=[('DISEÑO',['Diseño'],'#C9D3DE'),('HABILITADO',['Corte','Doblez'],'#5AB0FF'),('LÁSER Y ROUTER',['Laser','Router'],'#FF9F43'),
+         ('MAQUINADOS',['CNC'],'#B79CFF'),('ARMADO Y SOLDADURA',['Armado'],'#FF7EB6'),('PINTURA Y VESTIDO',['Pintura','Vestido'],'#3FD9D9')]
+COLS=[('Diseño','DISEÑO'),('Corte','CORTE'),('Doblez','DOBLEZ'),('Laser','LÁSER'),('Router','ROUTER'),('CNC','MAQUINADOS'),('Armado','ARMADO'),('Pintura','PINTURA'),('Vestido','VESTIDO')]
 def col(name):
     n=(name or '').strip().lower()
     if 'laser' in n or 'láser' in n: return 'Laser'
@@ -32,6 +36,8 @@ def col(name):
     if n.startswith('armado') or 'soldadura' in n or 'dunnage' in n: return 'Armado'
     if n.startswith('pintura'): return 'Pintura'
     if n.startswith('vestido') or n.startswith('rotulado'): return 'Vestido'
+    if n.startswith('cnc') or n.startswith('maquin'): return 'CNC'
+    if n.startswith('diseñ') or n.startswith('disen'): return 'Diseño'
     return (name or '?').strip()
 # ---- SO por variante (las MOs no vienen ligadas a su SO: se cruza por variant_id) ----
 rows={}; v2so=collections.defaultdict(list)
@@ -110,7 +116,7 @@ for r in tv:
         H[k]+= r['piezas'] if s=='COMPLETED' else (min(r['piezas'],int(av.split('/')[0])) if av else 0)
 usadas=[c for c in COLS if T[c[0]]]+[(k,k.upper()) for k in T if k not in dict(COLS)]
 datos=dict(stamp=NOW.strftime('%Y-%m-%dT%H:%M:00-06:00'),modo='entregas',proyecto='racks',
-    ops=[list(c) for c in usadas],clientes=[[c,CCOL[c]] for c in clientes if any(r['cliente']==c for r in tv)],rows=tv,
+    ops=[list(c) for c in usadas],bloques=[[b,[k for k in ks if T[k]],c] for b,ks,c in BLOQUES if any(T[k] for k in ks)],clientes=[[c,CCOL[c]] for c in clientes if any(r['cliente']==c for r in tv)],rows=tv,
     avProc=[dict(p=lbl,h=H[k],t=T[k],pct=round(100*H[k]/T[k])) for k,lbl in usadas if T[k]],
     faltaPz=int(sum(pend_so.values())),
     soSinMO=[o['order_no']+' · '+cust.get(o['customer_id'],'?') for o in so

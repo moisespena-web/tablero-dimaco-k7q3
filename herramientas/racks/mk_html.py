@@ -26,12 +26,18 @@ var CEST={"Corte":"#5AB0FF","Laser":"#FF9F43","Router":"#B79CFF","Doblez":"#C9E2
 function lblc(o){return '<span style="color:'+(CEST[o]||"#FFFFFF")+'">'+LBL[o]+'</span>';}
 var ORD={};OPS.forEach(function(o,i){ORD[o]=i;});
 function setOps(D){if(!D||!D.ops||!D.ops.length)return;OPS=D.ops.map(function(x){return x[0];});LBL={};ORD={};
-  D.ops.forEach(function(x,i){LBL[x[0]]=x[1];ORD[x[0]]=i;});document.documentElement.style.setProperty("--nops",OPS.length);}''')
+  D.ops.forEach(function(x,i){LBL[x[0]]=x[1];ORD[x[0]]=i;});document.documentElement.style.setProperty("--nops",OPS.length);
+  BLQ=D.bloques||[];BLQ.forEach(function(b){b[1].forEach(function(o){CEST[o]=b[2];});});}
+/* 14-oct-2026 (Moisés): bloques de columnas (HABILITADO, LÁSER Y ROUTER, MAQUINADOS, ARMADO Y SOLDADURA, PINTURA Y VESTIDO), cada uno con su color */
+var BLQ=[];
+function BLQF(){if(!BLQ.length)return "";return '<div class="row head blq"><div class="stripe"></div><div class="mo"></div><div class="desc"></div><div class="pz"></div><div class="ops">'+
+  BLQ.map(function(b){return '<div class="bq'+(b[1].length<2?' uno':'')+'" style="grid-column:span '+b[1].length+';border-color:'+b[2]+';color:'+b[2]+'">'+esc(b[0])+'</div>';}).join("")+'</div><div class="dl"></div></div>';}''')
+rep('var NOMEST={"Corte":"Corte","Taladro":"Taladro","CNC":"TM-2P",','var NOMEST={"Corte":"Corte","Taladro":"Taladro","CNC":"Maquinados","Diseño":"Diseño",')
 rep('''function tipoDe(r){
   var s=r.ops.map''','''function tipoDe(r){
   if(r.color)return [r.cliente||"",r.color];
   var s=r.ops.map''')
-rep('''var HEAD='<div class="row head">''','''function HEADF(){return '<div class="row head">''')
+rep('''var HEAD='<div class="row head">''','''function HEADF(){return BLQF()+'<div class="row head">''')
 rep(''''</div><div class="dl">LÍMITE</div></div>';''',''''</div><div class="dl">LÍMITE</div></div>';}''')
 # 11-oct-2026: la leyenda de MAFESA cambió a la de COBRE; en racks se renombra y se usa la de clientes
 rep('''var LEYT='<span class="leyt">''','''var LEYT0='<span class="leyt">''')
@@ -49,7 +55,7 @@ rep('''pedir([BUZON+"/tablero","datos.json",RAWG+"datos.json"],function(j){''','
 rep('''pedir([BUZON+"/tablero/aviso","aviso.json",RAWG+"aviso.json"],''','''pedir(["aviso.json",RAWG+"racks/aviso.json"],''')
 rep('<title>','<title>',1)
 src=re.sub(r'<title>[^<]*</title>','<title>MO en proceso · Racks</title>',src,1)
-src=re.sub(r'<span class="build">v[^<]*</span>','<span class="build">r2026-10-14</span>',src,1)
+src=re.sub(r'<span class="build">v[^<]*</span>','<span class="build">r2026-10-14b</span>',src,1)
 # CSS para N columnas (7 en racks)
 css='''
 /* ---- RACKS: 7 estaciones ---- */
@@ -62,6 +68,10 @@ css='''
 #pages.compacto .op{font-size:14px;letter-spacing:0}
 .app{font-size:27px}.apn{font-size:13px;letter-spacing:0}
 #pages.compacto .tipo.soc{font-size:16px}
+#pages.compacto .row.head.blq{min-height:0;height:32px;flex:none;padding-top:0;padding-bottom:0;background:none;border:none}
+.row.head.blq .bq{border:2px solid;border-bottom:none;border-radius:8px 8px 0 0;font-size:14px;font-weight:800;letter-spacing:1px;
+  display:flex;align-items:center;justify-content:center;text-align:center;height:30px;line-height:1.05;overflow:hidden;background:rgba(255,255,255,.04)}
+.row.head.blq .bq.uno{font-size:11px;letter-spacing:.3px}
 </style></head>'''
 assert src.count('</style></head>')==1
 src=src.replace('</style></head>',css)
@@ -83,5 +93,10 @@ rep('<span class="mt\'+(cu?\' cu\':\'\')+\'">\'+(cu?\'CU\':\'AL\')+\'</span>', '
 rep("esc(r.sku||\"\")+' · '+esc(r.producto||\"\")", "(r.so?'SO '+esc(r.so)+' · ':'')+esc(r.producto||\"\")")
 rep('bloques.push(["CALIDAD MAFESA",null,"cal"]);','bloques.push(["CALIDAD RACKS",null,"cal"]);')
 rep('pedir(["calidad.json",RAWG+"calidad.json"],','pedir(["calidad.json",RAWG+"racks/calidad.json"],')
+# 14-oct-2026 (Moisés): ícono y nombre propios para el Dock/iPhone (antes heredaba los de MAFESA)
+src=re.sub(r'<meta name="apple-mobile-web-app-title" content="[^"]*">','<meta name="apple-mobile-web-app-title" content="Tablero Racks">',src,count=1)
+src=re.sub(r'<link rel="apple-touch-icon" href="[^"]*">','<link rel="apple-touch-icon" href="icon.png?v=r1014">',src,count=1)
+src=re.sub(r'<link rel="icon" type="image/png" href="[^"]*">','<link rel="icon" type="image/png" href="icon.png?v=r1014">',src,count=1)
+rep('CAB=26+28+10','CAB=26+28+10+34')   # + la fila de bloques (14-oct-2026)
 open('racks/index.html','w').write(src)
 print('ok',len(src))
