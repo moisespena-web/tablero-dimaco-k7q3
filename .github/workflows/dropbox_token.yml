@@ -6,6 +6,11 @@ name: Dropbox · sacar token (una sola vez)
 # El token nunca queda legible en el repo ni en los logs.
 on:
   workflow_dispatch:
+    inputs:
+      codigo:
+        description: 'Código de Dropbox (opcional; si va vacío usa el secreto DROPBOX_CODE). Sin el App secret no sirve a nadie y caduca en minutos.'
+        required: false
+        default: ''
 permissions:
   contents: write
 jobs:
@@ -17,7 +22,7 @@ jobs:
         env:
           K: ${{ secrets.DROPBOX_APP_KEY }}
           S: ${{ secrets.DROPBOX_APP_SECRET }}
-          C: ${{ secrets.DROPBOX_CODE }}
+          C: ${{ inputs.codigo != '' && inputs.codigo || secrets.DROPBOX_CODE }}
         run: |
           set -eu
           D=herramientas/subir
