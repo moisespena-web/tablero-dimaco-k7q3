@@ -228,7 +228,7 @@ function normop(row) {
 
 // KAT429 · Foto compartida de Katana: una sola lectura sirve a todas las estaciones durante FOTO_TTL.
 const FOTO_TTL = 60e3, FOTO_VIEJA = 15 * 60e3;
-let FOTO = null, FOTO_PROM = null;
+let FOTO = null, FOTO_PROM = null, RECS = null;
 function fotoVencida() { if (FOTO) FOTO = { ...FOTO, vencida: true }; }   // tras un evento: renovar en la próxima consulta
 async function foto(k) {
   if (FOTO && !FOTO.vencida && Date.now() - FOTO.t < FOTO_TTL) return FOTO;
@@ -244,8 +244,14 @@ async function foto(k) {
       const desde = new Date(Date.parse(min) - 864e5).toISOString();
       const ops = (await k.todas('/manufacturing_order_operation_rows?created_at_min=' + encodeURIComponent(desde)))
         .filter(o => !o.deleted_at && moMap.has(o.manufacturing_order_id));
-      const rec = (await k.todas('/manufacturing_order_recipe_rows?created_at_min=' + encodeURIComponent(desde)))
-        .filter(r => !r.deleted_at && moMap.has(r.manufacturing_order_id));
+      // 14-oct-2026 (LIGERO): las recetas casi no cambian → se leen cada 30 min (o si hay una MO nueva sin receta), no cada minuto.
+      // Así cada lectura de Katana pesa la mitad y no rebasa el tiempo de cómputo del plan de Cloudflare.
+      const faltaRec = !RECS || Date.now() - RECS.t > 30 * 60e3 || RECS.desde > desde || mos.some(m => !RECS.ids.has(m.id) && Date.parse(m.created_at || 0) > RECS.t - 60e3);
+      if (faltaRec) {
+        const rows = (await k.todas('/manufacturing_order_recipe_rows?created_at_min=' + encodeURIComponent(desde))).filter(r => !r.deleted_at);
+        RECS = { t: Date.now(), desde, rows, ids: new Set(rows.map(r => r.manufacturing_order_id)) };
+      }
+      const rec = RECS.rows.filter(r => moMap.has(r.manufacturing_order_id));
       const opsPor = new Map(), recPor = new Map();
       for (const o of ops) { if (!opsPor.has(o.manufacturing_order_id)) opsPor.set(o.manufacturing_order_id, []); opsPor.get(o.manufacturing_order_id).push(o); }
       for (const r of rec) { if (!recPor.has(r.manufacturing_order_id)) recPor.set(r.manufacturing_order_id, []); recPor.get(r.manufacturing_order_id).push(r); }
