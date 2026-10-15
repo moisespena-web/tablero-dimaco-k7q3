@@ -93,8 +93,26 @@ def unidad(uom,n):
     return {'hoja':'hoja','hojas':'hoja'}.get(uom,uom or 'pz')+('' if n==1 or not uom else ('s' if not (uom or '').endswith('s') else ''))
 # COLOR11OCT · color fijo por estación (Moisés 11-oct-2026: lo de la TV va en todo; tono oscuro para papel)
 CEST_P={'Corte':'#1F6FD1','Taladro':'#6E4BD8','TM-2P':'#D6337F','Doblez':'#6F8C00','Limpieza & SQA':'#0E9C9C','Limpieza':'#0E9C9C'}
+# IMG15OCT (Moisés, 15-oct-2026): miniatura del SKU como en la tablet (mismas imágenes: app-tm2p/piezas.js y piezas-extra.js)
+_IMGS=None
+def imgs():
+    global _IMGS
+    if _IMGS is None:
+        import base64,io
+        from reportlab.lib.utils import ImageReader
+        _IMGS={}
+        for f_ in ('app-tm2p/piezas.js','piezas-extra.js'):
+            try: s_=open(os.path.join(REPO,f_)).read()
+            except Exception: continue
+            for k_,b_ in re.findall(r'"([0-9A-Z][0-9A-Za-z.\-]+)"\s*:\s*"data:image/[a-z]+;base64,([A-Za-z0-9+/=]+)"',s_):
+                if k_ in _IMGS: continue
+                try: _IMGS[k_]=ImageReader(io.BytesIO(base64.b64decode(b_)))
+                except Exception: pass
+        print('miniaturas',len(_IMGS))
+    return _IMGS
 def hoja(app,est,proy,out,hoy,hora):
     COLS=COLS0 if est!='Corte' else [x if x[0]!='Operación' else ('Solera a pedir',112) for x in COLS0]
+    if est=='Taladro y TM-2P': COLS=COLS[:7]+[('Dibujo',72)]+COLS[7:]   # IMG15OCT
     SURT=surtido() if est=='Corte' else {}; ped={}
     mos=[]; apps=app.split('+')
     for a_ in apps:
@@ -107,7 +125,7 @@ def hoja(app,est,proy,out,hoy,hora):
     if _pie: hoy,hora=_pie.group(1),_pie.group(2)
     c=canvas.Canvas(out,pagesize=(W,H)); c.setTitle('Hoja de avance · '+est)
     x0=30; TW=W-60; fixed=sum(w for _,w in COLS); ws=[w or (TW-fixed) for _,w in COLS]
-    RH=34 if est=='Corte' else 26; pag=[0]   # PZTRAMO15OCT: Corte lleva un 3er renglón (piezas por tramo)
+    RH=34 if est in ('Corte','Taladro y TM-2P') else 26; pag=[0]   # PZTRAMO15OCT: Corte lleva un 3er renglón (piezas por tramo)
     def cab():
         pag[0]+=1; y=H-28
         if LOGO:
@@ -184,7 +202,13 @@ def hoja(app,est,proy,out,hoy,hora):
         # casillas para escribir
         c.setStrokeColor(RULE); c.setLineWidth(.5)
         for k in range(7,len(ws)):
-            if COLS[k][0]=='Notas': c.line(xs+4,y-RH+6,xs+ws[k]-4,y-RH+6)
+            if COLS[k][0]=='Dibujo':   # IMG15OCT
+                im_=imgs().get(m.get('sku') or '')
+                if im_:
+                    iw_,ih_=im_.getSize(); bw_,bh_=ws[k]-6,RH-6; sc_=min(bw_/iw_,bh_/ih_); dw_,dh_=iw_*sc_,ih_*sc_
+                    c.drawImage(im_,xs+3+(bw_-dw_)/2,y-RH+3+(bh_-dh_)/2,width=dw_,height=dh_,mask='auto')
+                else: c.setFont('Helvetica',6); c.setFillColor(MUT); c.drawCentredString(xs+ws[k]/2,y-RH/2-2,'sin dibujo'); c.setFillColor(INK)
+            elif COLS[k][0]=='Notas': c.line(xs+4,y-RH+6,xs+ws[k]-4,y-RH+6)
             else: c.rect(xs+2,y-RH+3,ws[k]-4,RH-6,stroke=1,fill=0)
             xs+=ws[k]
         c.setStrokeColor(colors.HexColor('#C9CED4')); c.line(x0,y-RH,x0+TW,y-RH); y-=RH
