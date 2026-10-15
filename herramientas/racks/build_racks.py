@@ -18,7 +18,14 @@ MAFESA=111818362
 NOW=dt.datetime.fromisoformat(a.now); HOY=NOW.date()
 cust={c['id']:c['name'] for c in L('customers.json')}
 so=[o for o in L('so_*.json') if o['customer_id']!=MAFESA and o['status'] in ('NOT_SHIPPED','PARTIALLY_DELIVERED')]
-mos=[m for m in L('mo_*.json') if m['status'] in ('NOT_STARTED','IN_PROGRESS','PARTIALLY_COMPLETED','BLOCKED')]
+# 15-oct-2026 (Moisés): SO en STAND BY (detenida hasta nuevo aviso del cliente) NO va en la TV.
+# Marca: escribir "STAND BY" en "Additional info" de la SO en Katana (también acepta standby / stand-by / en pausa por cliente).
+# Para reactivarla, se borra la marca. Sus MOs tampoco salen (salvo que el mismo producto tenga otra SO activa),
+# ni cuentan en "Faltan pz" ni en "SO sin MO". También se puede marcar una MO sola con "STAND BY" en sus notas.
+STANDBY=re.compile(r'stand\s*-?\s*by|pausa por cliente',re.I)
+standby=[o for o in so if STANDBY.search(o.get('additional_info') or '')]
+so=[o for o in so if o not in standby]
+mos=[m for m in L('mo_*.json') if m['status'] in ('NOT_STARTED','IN_PROGRESS','PARTIALLY_COMPLETED','BLOCKED') and not STANDBY.search(m.get('additional_info') or '')]
 ops=L('ops_*.json'); ful=L('ful_*.json')
 var={v['id']:v for v in L('var_*.json')}
 # ---- columnas de racks (orden fijo de la planta) ----
@@ -119,6 +126,7 @@ datos=dict(stamp=NOW.strftime('%Y-%m-%dT%H:%M:00-06:00'),modo='entregas',proyect
     ops=[list(c) for c in usadas],bloques=[[b,[k for k in ks if T[k]],c] for b,ks,c in BLOQUES if any(T[k] for k in ks)],clientes=[[c,CCOL[c]] for c in clientes if any(r['cliente']==c for r in tv)],rows=tv,
     avProc=[dict(p=lbl,h=H[k],t=T[k],pct=round(100*H[k]/T[k])) for k,lbl in usadas if T[k]],
     faltaPz=int(sum(pend_so.values())),
+    standby=[o['order_no']+' · '+cust.get(o['customer_id'],'?') for o in standby],
     soSinMO=[o['order_no']+' · '+cust.get(o['customer_id'],'?') for o in so
              if pend_so[o['id']]>0 and not any(m['variant_id'] in {r['variant_id'] for r in o['sales_order_rows']} for m in mos)])
 json.dump(dict(datos=datos),open(a.out,'w'),ensure_ascii=False)
