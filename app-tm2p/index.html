@@ -200,6 +200,7 @@ function enviarCola(){if(!enLinea()||enviando||!S.cola.length){if(!S.cola.length
   S.sync=S.cola.length?'pend':'ok';guardar();if(!S.modal)render();if(S.cola.length)setTimeout(enviarCola,300);})
  .catch(function(){enviando=false;S.sync='err';S.ultErr='sin internet';if(!S.modal)render();otraVez();});}
 function syncTxt(){if(PAUSA_KATANA)return ['Katana en pausa · solo captura en iPad','#8FA3BA'];if(!enLinea())return S.cola.length?['⚠ SIN CONECTAR · '+S.cola.length+' por enviar a Katana','#FF6369']:['Modo teléfono','#8FA3BA'];
+ var rz=(S.errores||[]).filter(function(x){return Date.now()-x.t<12*3600e3;});if(S.sync==='ok'&&rz.length){var u=rz[rz.length-1];return ['⚠ Katana rechazó '+rz.length+' · último '+u.mo+': '+String(u.error||'').slice(0,70),'#FFC45C'];}
  return {ok:['● Katana al día','#4FE0A6'],pend:['● Enviando ('+S.cola.length+')','#FFC45C'],err:['● Sin enviar · '+S.cola.length+' pendientes'+(S.ultErr?' · '+String(S.ultErr).slice(0,70):''),'#FF6369'],off:['● Conectando…','#8FA3BA']}[S.sync]||['','#8FA3BA'];}
 
 
