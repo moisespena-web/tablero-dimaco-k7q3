@@ -1,0 +1,35 @@
+name: Dropbox · sacar token (una sola vez)
+# Moisés, 14-oct-2026: para que la regla nocturna suba PDF/Excel a Dropbox sin la iMac.
+# Se corre UNA vez a mano (Actions → "Dropbox · sacar token" → Run workflow) después de poner los
+# secretos DROPBOX_APP_KEY, DROPBOX_APP_SECRET y DROPBOX_CODE. Cambia el código por un refresh token,
+# lo CIFRA con herramientas/subir/subir_pub.pem y lo deja en herramientas/subir/refresh.enc(.key).
+# El token nunca queda legible en el repo ni en los logs.
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  token:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Código → refresh token cifrado
+        env:
+          K: ${{ secrets.DROPBOX_APP_KEY }}
+          S: ${{ secrets.DROPBOX_APP_SECRET }}
+          C: ${{ secrets.DROPBOX_CODE }}
+        run: |
+          set -eu
+          D=herramientas/subir
+          R=$(curl -sS https://api.dropboxapi.com/oauth2/token -d code="$C" -d grant_type=authorization_code -u "$K:$S")
+          T=$(printf '%s' "$R" | python3 -c 'import json,sys;print(json.load(sys.stdin).get("refresh_token",""))')
+          if [ -z "$T" ]; then printf '%s' "$R" | python3 -c 'import json,sys;d=json.load(sys.stdin);print("ERROR:",d.get("error"),d.get("error_description"))'; exit 1; fi
+          echo "::add-mask::$T"
+          W=$(mktemp -d); printf '%s' "$T" > "$W/t"; openssl rand -hex 32 > "$W/k"
+          openssl enc -aes-256-cbc -pbkdf2 -salt -in "$W/t" -out $D/refresh.enc -pass file:"$W/k"
+          openssl pkeyutl -encrypt -pubin -inkey $D/subir_pub.pem -pkeyopt rsa_padding_mode:oaep -in "$W/k" -out $D/refresh.key
+          rm -rf "$W"
+          git config user.name "Dropbox DIMACO"; git config user.email "actions@users.noreply.github.com"
+          git add $D/refresh.enc $D/refresh.key; git commit -m "Dropbox: refresh token cifrado"
+          for i in 1 2 3; do git pull --rebase -q && git push && break; sleep 5; done
+          echo "Listo: token guardado cifrado. Ya puedes borrar el secreto DROPBOX_CODE."

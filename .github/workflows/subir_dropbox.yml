@@ -1,0 +1,65 @@
+name: Subir archivos a Dropbox (cifrado)
+# Moisés, 14-oct-2026: la regla nocturna corre en la nube y el conector de Dropbox solo sube texto.
+# La regla deja en herramientas/subir/pedido/<id>.enc + <id>.key un tar CIFRADO con los PDF/Excel y un
+# _destino.json [{"archivo","ns","ruta"}]. Este robot lo descifra (secreto SUBIR_PRIV), sube cada archivo a
+# Dropbox (API, refresh token cifrado en herramientas/subir/refresh.enc) y deja entrega/<id>.json con el
+# resultado (sin datos). El repo es público: nada queda legible.
+on:
+  push:
+    paths: ['herramientas/subir/pedido/*.key']
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: subir-dropbox
+  cancel-in-progress: false
+jobs:
+  subir:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Descifrar y subir
+        env:
+          PRIV: ${{ secrets.SUBIR_PRIV }}
+          K: ${{ secrets.DROPBOX_APP_KEY }}
+          S: ${{ secrets.DROPBOX_APP_SECRET }}
+        run: |
+          set -eu
+          D=herramientas/subir
+          git config user.name "Dropbox DIMACO"; git config user.email "actions@users.noreply.github.com"
+          W=$(mktemp -d); printf '%s\n' "$PRIV" > "$W/priv.pem"; chmod 600 "$W/priv.pem"
+          openssl pkeyutl -decrypt -inkey "$W/priv.pem" -pkeyopt rsa_padding_mode:oaep -in $D/refresh.key -out "$W/rk"
+          RT=$(openssl enc -d -aes-256-cbc -pbkdf2 -in $D/refresh.enc -pass file:"$W/rk")
+          echo "::add-mask::$RT"
+          AT=$(curl -sS https://api.dropboxapi.com/oauth2/token -d grant_type=refresh_token -d refresh_token="$RT" -u "$K:$S" | python3 -c 'import json,sys;print(json.load(sys.stdin)["access_token"])')
+          echo "::add-mask::$AT"
+          shopt -s nullglob
+          for KEY in $D/pedido/*.key; do
+            ID=$(basename "$KEY" .key); ENC=$D/pedido/$ID.enc
+            P=$(mktemp -d)
+            openssl pkeyutl -decrypt -inkey "$W/priv.pem" -pkeyopt rsa_padding_mode:oaep -in "$KEY" -out "$P/k"
+            openssl enc -d -aes-256-cbc -pbkdf2 -in "$ENC" -out "$P/p.tgz" -pass file:"$P/k"
+            mkdir "$P/f"; tar -C "$P/f" -xzf "$P/p.tgz"
+            AT="$AT" python3 - "$P/f" > $D/entrega/$ID.json <<'PY'
+          import json,os,sys,urllib.request
+          base=sys.argv[1]; AT=os.environ['AT']; out=[]
+          for it in json.load(open(os.path.join(base,'_destino.json'))):
+              arg={"path":it["ruta"],"mode":"overwrite","autorename":False,"mute":True}
+              h={"Authorization":"Bearer "+AT,"Content-Type":"application/octet-stream","Dropbox-API-Arg":json.dumps(arg,ensure_ascii=True)}
+              if it.get("ns"): h["Dropbox-API-Path-Root"]=json.dumps({".tag":"namespace_id","namespace_id":str(it["ns"])})
+              data=open(os.path.join(base,it["archivo"]),'rb').read()
+              try:
+                  r=urllib.request.urlopen(urllib.request.Request("https://content.dropboxapi.com/2/files/upload",data=data,headers=h),timeout=120)
+                  m=json.load(r); out.append({"archivo":it["archivo"],"ok":True,"size":m.get("size")})
+              except urllib.error.HTTPError as e:
+                  out.append({"archivo":it["archivo"],"ok":False,"error":e.read().decode()[:300]})
+              except Exception as e:
+                  out.append({"archivo":it["archivo"],"ok":False,"error":str(e)[:300]})
+          print(json.dumps(out,ensure_ascii=False,indent=1))
+          PY
+            git rm -q "$KEY" "$ENC"; git add $D/entrega/$ID.json; rm -rf "$P"
+          done
+          rm -rf "$W"
+          git commit -m "Dropbox: archivos subidos" || exit 0
+          for i in 1 2 3; do git pull --rebase -q && git push && break; sleep 5; done
