@@ -29,3 +29,6 @@ old='RAWG="https://raw.githubusercontent.com/moisespena-web/tablero-dimaco-k7q3/
 assert s.count(old)==1
 s=s.replace(old,'RAWG="https://raw.githubusercontent.com/moisespena-web/tablero-dimaco-k7q3/main/",ultStamp=(window.__DATOS__&&window.__DATOS__.stamp)||"";')
 open(p,'w').write(s); print('stamp ok')
+# 15-oct-2026 (Moisés): paso 3 automático — diseño ORDEN DE ATAQUE de la página de producción (diseno_tv.py, en esta misma carpeta)
+import os, runpy
+runpy.run_path(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'diseno_tv.py'))
