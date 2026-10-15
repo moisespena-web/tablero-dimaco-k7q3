@@ -71,7 +71,7 @@ def ell(c,t,f,s,w):
     return t
 INK=colors.HexColor('#111111'); MUT=colors.HexColor('#666666'); RULE=colors.HexColor('#9AA0A6')
 W,H=landscape(letter)
-COLS0=[('#',18),('MO',48),('SKU',70),('Pieza',122),('Operación',60),('Entrega',40),('Faltan',62),
+COLS0=[('#',18),('MO',48),('SKU',70),('Pieza',122),('Operación',60),('Entrega',40),('Por hacer',62),
       ('',58),('',58),('',58),('Notas',0)]   # HOJ9OCT: 3 cuadros sin leyenda + Notas con renglón libre
 # SOL9OCT (Moisés, 9-oct-2026): la hoja de Corte lleva SIEMPRE las soleras a pedir a almacén.
 # Por MO: material + soleras redondeadas hacia arriba (1 solera = 144 in; lámina u otra UOM: unidades completas).
@@ -160,7 +160,7 @@ def hoja(app,est,proy,out,hoy,hora):
         c.drawRightString(x0+TW,y-6,'Fecha: ____ / ____ / ______'); c.drawRightString(x0+TW,y-22,'Operador: ______________________')
         y-=44
         c.setFont('Helvetica',7.6); c.setFillColor(MUT)
-        c.drawString(x0,y,'"Faltan X de Y" = lo que falta entregar de la MO, igual que en Katana, la TV y la estación.')
+        c.drawString(x0,y,'"Por hacer X de Y" = piezas que faltan en ESTA estación, de las Y de la MO. Abajo de la pieza: entregadas, ya hechas aquí y por hacer.')
         y-=8
         xs=x0
         if est=='Taladro y TM-2P':
@@ -219,7 +219,7 @@ def hoja(app,est,proy,out,hoy,hora):
         if BLOQ and m.get('_esp'):   # ACOMODO15OCT
             c.setFont('Helvetica-Bold',6.4); c.setFillColor(colors.HexColor('#B45309')); c.drawString(x0+sum(ws[:4])+3,y-21,ell(c,m['_esp'],'Helvetica-Bold',6.4,ws[4]+ws[5]-6)); c.setFillColor(INK)
         # Faltan X de Y + mini barra
-        w=ws[6]; a_=f"{plan-e:,}"; b_=f" de {plan:,}"
+        w=ws[6]; a_=f"{f:,}"; b_=f" de {plan:,}"   # PORHACER15OCT: lo que falta en ESTA estación
         c.setFont('Helvetica-Bold',9.5); wa=pdfmetrics.stringWidth(a_,'Helvetica-Bold',9.5); c.drawString(xs+3,ty,a_)
         c.setFont('Helvetica',6.8); c.setFillColor(MUT); c.drawString(xs+3+wa,ty,b_); c.setFillColor(INK)
         bx=xs+3; bw=w-6; T=plan or 1
@@ -227,7 +227,7 @@ def hoja(app,est,proy,out,hoy,hora):
             ww=bw*n_/T
             if ww>0: c.setFillColor(colors.HexColor(col)); c.rect(bx,y-RH+5,ww,4,stroke=0,fill=1); bx+=ww
         c.setFillColor(INK)
-        if e or h:
+        if True:   # PORHACER15OCT: siempre dice cuántas faltan en esta estación
             c.setFont('Helvetica',5.6); c.setFillColor(MUT)
             txt=(f"{e:,} entregadas · " if e else '')+(f"{h:,} ya {HECHO.get(er,'hechas')}"+(f" → {sig}" if sig else '')+" · " if h else '')+f"{f:,} {PORH.get(er,'por hacer')}"
             c.drawString(x0+sum(ws[:3])+3,y-RH+4,ell(c,txt,'Helvetica',5.6,(ws[3] if (BLOQ and m.get('_esp')) else ws[3]+ws[4])-6)); c.setFillColor(INK)
