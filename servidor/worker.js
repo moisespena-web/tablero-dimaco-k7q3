@@ -469,7 +469,7 @@ function hechoCols(r) {
 async function hoyKatana(env, D) {
   if (!env.TV || !D || !D.rows) return null;
   const iso = horaMX(new Date()).iso, key = 'base:' + iso, cur = {};
-  for (const r of D.rows) cur[r.id] = { plan: r.plan || 0, c: hechoCols(r) };
+  for (const r of D.rows) cur[r.id] = { plan: r.plan || 0, entr: r.entr || 0, c: hechoCols(r) };
   let base = await env.TV.get(key, 'json');
   if (!base) { base = cur; await env.TV.put(key, JSON.stringify(cur), { expirationTtl: 3 * 86400 }); }
   const pz = { 'Corte': 0, 'Taladro': 0, 'CNC': 0, 'Doblez': 0, 'Limpieza & SQA': 0 };
@@ -477,7 +477,9 @@ async function hoyKatana(env, D) {
     const b = base[id], c = cur[id];
     for (const col of new Set([...Object.keys(b ? b.c : {}), ...Object.keys(c ? c.c : {})])) {
       if (!(col in pz)) continue;
-      const v0 = b ? (b.c[col] || 0) : 0, v1 = c ? (c.c[col] || 0) : (b ? b.plan : 0);
+      // lo ya entregado cuenta como hecho en todas las columnas (sin renglón en la nota, el avance arranca en lo entregado)
+      const ent = c ? c.entr : (b && b.entr || 0);
+      const v0 = b ? Math.max(b.c[col] || 0, ent) : 0, v1 = c ? Math.max(c.c[col] || 0, ent) : (b ? b.plan : 0);
       pz[col] += Math.max(0, v1 - v0);
     }
   }
