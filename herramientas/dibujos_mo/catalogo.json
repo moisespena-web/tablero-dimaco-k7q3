@@ -455,5 +455,23 @@
   "imgs": [
    "37A10685A-0001-1.png"
   ]
+ },
+ "36A6463-0008": {
+  "desc": "STRAP .032 x 1.000 x 12.500 (cobre)",
+  "plano": "2 barrenos (.313) a .625 de cada extremo · sin doblez",
+  "ref": "36A6463 · P.7–P.9",
+  "nota": "",
+  "imgs": [
+   "36A6463-0008-1.png"
+  ]
+ },
+ "36A6463-0009": {
+  "desc": "STRAP .032 x 1.000 x 20.000 (cobre)",
+  "plano": "2 barrenos (.313) a .625 de cada extremo · sin doblez",
+  "ref": "36A6463 · P.7–P.9",
+  "nota": "",
+  "imgs": [
+   "36A6463-0009-1.png"
+  ]
  }
 }
