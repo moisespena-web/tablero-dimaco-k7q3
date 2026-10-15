@@ -572,7 +572,7 @@ async function leerZip(b, quiero) {
 /* ======================= TVVIVO (10-oct-2026) =======================
    Programa de la última corrida (orden, Laura, cobre, fechas de entrega, material) + estado real de Katana.
    Misma lógica que build_entregas.py del skill tablero-entregas-mafesa para lo que cambia durante el día. */
-const VIVO_TTL = 15 * 60e3, VIVO_MIN = 60e3, VIVO_TURNO = 4 * 60e3;   // 14-oct-2026: en horario se recalcula cada 4 min
+const VIVO_TTL = 15 * 60e3, VIVO_MIN = 60e3;   // 14-oct-2026: el recálculo lo hace el cron cada 5 min; las consultas de la TV/estaciones solo leen (y recalculan si el cron lleva >12 min sin correr o si una estación acaba de capturar)
 const MAF_REC = new Set(['Corte Mafesa', 'Taladro Mafesa', 'TM-2P', 'Cuadrado Mafesa', 'Doblez Mafesa', 'Limpieza & SQA']);
 const ORDOPS = ['Corte', 'Taladro', 'CNC', 'Doblez', 'Limpieza & SQA'];
 const TIPOS_TV = { 'Corte': 1, 'Corte|Taladro': 2, 'Corte|Doblez|Taladro': 3, 'CNC|Corte': 4, 'CNC|Corte|Doblez': 5 };
@@ -594,7 +594,7 @@ async function tableroVivo(env, t, forzar) {
   const sucio = await env.TV.get('sucio');
   const edad = prev ? Date.now() - prev.calc : Infinity;
   const nuevoPrograma = !prev || prev.fuente !== t.fuente;
-  const toca = forzar || nuevoPrograma || (sucio && edad > VIVO_MIN) || (enHorario(new Date()) && edad > VIVO_TURNO);
+  const toca = forzar || nuevoPrograma || (sucio && edad > VIVO_MIN) || (enHorario(new Date()) && edad > (forzar ? 0 : 12 * 60e3));
   if (!toca) return { ...prev.out, diagVivo: 'sin recalcular: edad ' + Math.round(edad / 1000) + ' s' };
   if (sucio) fotoVencida();   // que la foto de Katana traiga lo que la estación acaba de escribir
   const F = await foto(katana(env.KATANA_API_KEY));

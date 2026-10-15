@@ -219,8 +219,10 @@ function mapaMO(k,dr,idx){var hoy=diaKey(Date.now()),cols=[],ruta=[];
   ent:(dr&&dr.entrega)||k.deadline||hoy,deadline:k.deadline||hoy,prio:!!(dr&&(dr.grp==='urge'||dr.prio)),paso:k.op.paso,recurso:k.op.recurso,planeado:k.op.planeado,
   rowId:k.op.rowId,tiempoReal:k.op.tiempoReal,ruta:ruta,ingSku:ing.sku||'',ingNombre:ing.nombre||'',ingTot:ing.total||0,ingUom:ing.uom||'',
   notas:k.notas||'Sin notas.',so:(dr&&dr.so)||'',espera:ESPERA&&antes.length?antes[0][0]:''});}
+/* 14-oct-2026: ninguna respuesta lenta deja la estación en "Conectando…": la cola espera máx. 25 s; el tablero y los operadores, 8 s */
+function conTiempo(p,ms,dflt){return Promise.race([p,new Promise(function(r){setTimeout(function(){r(dflt);},ms);})]);}
 function cargarCola(){if(!enLinea())return Promise.resolve();
- return Promise.all([api('GET','/cola'),tvJSON().catch(function(){return null;}),api('GET','/operadores').catch(function(){return null;})])
+ return Promise.all([conTiempo(api('GET','/cola'),25000,{ok:false,error:'el servidor tardó demasiado'}),conTiempo(tvJSON().catch(function(){return null;}),8000,null),conTiempo(api('GET','/operadores').catch(function(){return null;}),8000,null)])
  .then(function(res){var c=res[0],d=res[1],ops=res[2];
   if(!c||!c.ok){S.sync='err';S.conxMsg=(c&&c.error)||'Sin respuesta del servidor';if(!S.modal)render();return;}
   if(ops&&ops.ok&&ops.operadores&&ops.operadores.length)OPS=ops.operadores;
