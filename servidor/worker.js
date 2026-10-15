@@ -141,7 +141,11 @@ export default {
       }
       return json({ ok: false, error: 'Ruta no encontrada' }, 404);
     } catch (e) {
-      const st = e && e.status === 503 ? 503 : 502;
+      // 14-oct-2026: si Katana RECHAZA el cambio (4xx), se responde 422 con el motivo: la estación lo aparta en "errores"
+      // y sigue con los demás, en vez de reintentar para siempre y atorar toda la fila ("Sin red · N por enviar").
+      const rechazo = e && e.status >= 400 && e.status < 500 && e.status !== 429 && !e.saturado;
+      const st = e && e.status === 503 ? 503 : (rechazo ? 422 : 502);
+      console.error('ERROR ' + (est && est.nombre) + ' ' + req.method + ' ' + ruta + ' · ' + (e && e.status) + ' · ' + String(e && e.message || e));
       const r = json({ ok: false, saturado: !!(e && e.saturado), error: String(e && e.message || e) }, st);
       if (st === 503) r.headers.set('Retry-After', '60');
       return r;
