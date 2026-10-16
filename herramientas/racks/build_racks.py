@@ -37,16 +37,17 @@ ops=L('ops_*.json'); ful=L('ful_*.json')
 var={v['id']:v for v in L('var_*.json')}
 # ---- columnas de racks (orden fijo de la planta) ----
 # 14-oct-2026 (Moisés): columnas agrupadas en bloques, en este orden y cada bloque con su color:
-# HABILITADO (Corte, Doblez) · LÁSER Y ROUTER · MAQUINADOS (CNC) · ARMADO Y SOLDADURA · PINTURA Y VESTIDO. Diseño, cuando aparece, va antes.
+# HABILITADO (Corte, Doblez) · LÁSER Y ROUTER · MAQUINADOS (CNC) · ARMADO Y SOLDADURA · R&R (Reparación de racks, 16-oct-2026: refurbish y reparaciones, equipo aparte de Armado) · PINTURA Y VESTIDO. Diseño, cuando aparece, va antes.
 BLOQUES=[('DISEÑO',['Diseño'],'#C9D3DE'),('HABILITADO',['Corte','Doblez'],'#5AB0FF'),('LÁSER Y ROUTER',['Laser','Router'],'#FF9F43'),
-         ('MAQUINADOS',['CNC'],'#B79CFF'),('ARMADO Y SOLDADURA',['Armado'],'#FF7EB6'),('PINTURA Y VESTIDO',['Pintura','Vestido'],'#3FD9D9')]
-COLS=[('Diseño','DISEÑO'),('Corte','CORTE'),('Doblez','DOBLEZ'),('Laser','LÁSER'),('Router','ROUTER'),('CNC','MAQUINADOS'),('Armado','ARMADO'),('Pintura','PINTURA'),('Vestido','VESTIDO')]
+         ('MAQUINADOS',['CNC'],'#B79CFF'),('ARMADO Y SOLDADURA',['Armado'],'#FF7EB6'),('R&R · REPARACIÓN',['RR'],'#E8B04A'),('PINTURA Y VESTIDO',['Pintura','Vestido'],'#3FD9D9')]
+COLS=[('Diseño','DISEÑO'),('Corte','CORTE'),('Doblez','DOBLEZ'),('Laser','LÁSER'),('Router','ROUTER'),('CNC','MAQUINADOS'),('Armado','ARMADO'),('RR','R&R'),('Pintura','PINTURA'),('Vestido','VESTIDO')]
 def col(name):
     n=(name or '').strip().lower()
     if 'laser' in n or 'láser' in n: return 'Laser'
     if n.startswith('router'): return 'Router'
     if n.startswith('corte'): return 'Corte'
     if n.startswith('doblez'): return 'Doblez'
+    if n.startswith('r&r') or n.startswith('repar') or 'refurb' in n: return 'RR'   # 16-oct-2026: R&R = Reparación de racks (refurbish y reparaciones)
     if n.startswith('armado') or 'soldadura' in n or 'dunnage' in n: return 'Armado'
     if n.startswith('pintura'): return 'Pintura'
     if n.startswith('vestido') or n.startswith('rotulado'): return 'Vestido'

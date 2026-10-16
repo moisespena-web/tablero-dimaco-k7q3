@@ -32,7 +32,7 @@ function setOps(D){if(!D||!D.ops||!D.ops.length)return;OPS=D.ops.map(function(x)
 var BLQ=[];
 function BLQF(){if(!BLQ.length)return "";return '<div class="row head blq"><div class="stripe"></div><div class="mo"></div><div class="desc"></div><div class="pz"></div><div class="ops">'+
   BLQ.map(function(b){return '<div class="bq'+(b[1].length<2?' uno':'')+'" style="grid-column:span '+b[1].length+';border-color:'+b[2]+';color:'+b[2]+'">'+esc(b[0])+'</div>';}).join("")+'</div><div class="dl"></div></div>';}''')
-rep('var NOMEST={"Corte":"Corte","Taladro":"Taladro","CNC":"TM-2P",','var NOMEST={"Corte":"Corte","Taladro":"Taladro","CNC":"Maquinados","Diseño":"Diseño",')
+rep('var NOMEST={"Corte":"Corte","Taladro":"Taladro","CNC":"TM-2P",','var NOMEST={"Corte":"Corte","Taladro":"Taladro","CNC":"Maquinados","Diseño":"Diseño","RR":"R&R",')
 rep('''function tipoDe(r){
   var s=r.ops.map''','''function tipoDe(r){
   if(r.color)return [r.cliente||"",r.color];

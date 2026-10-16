@@ -112,14 +112,14 @@ function rkLado(D){
   var cnt=B.map(function(b){var n=0,pz=0;rows.forEach(function(r){var e=estacion(r);if(e&&b[1].indexOf(e)>=0){n++;pz+=pzMO(r).pend;}});return {t:b[0],c:b[2],n:n,pz:pz};});
   var mx=0;cnt.forEach(function(x){mx=Math.max(mx,x.n);});
   if(cnt.length)h+='<div class="rkcard"><div class="rkct">DÓNDE ESTÁN LAS '+rows.length+' MOs</div>'+cnt.map(function(x){
-    return '<div class="rkln"><span style="color:'+x.c+'">'+esc(x.t.charAt(0)+x.t.slice(1).toLowerCase())+'</span><span class="rkbar">'+(x.n?'<i style="width:'+(100*x.n/mx).toFixed(1)+'%;background:'+x.c+'"></i>':'')+'</span><span class="rknu">'+x.n+'</span></div>';}).join("")+'</div>';
+    return '<div class="rkln"><span style="color:'+x.c+'">'+esc((x.t.charAt(0)+x.t.slice(1).toLowerCase()).replace(/R&r/g,'R&R'))+'</span><span class="rkbar">'+(x.n?'<i style="width:'+(100*x.n/mx).toFixed(1)+'%;background:'+x.c+'"></i>':'')+'</span><span class="rknu">'+x.n+'</span></div>';}).join("")+'</div>';
   var top=null;cnt.forEach(function(x){if(x.n&&(!top||x.n>top.n))top=x;});
   if(top)h+='<div class="rkbt" style="border-color:'+top.c+';background:'+top.c+'26"><span class="l" style="color:'+top.c+'">CUELLO DE BOTELLA</span>'+
     '<span class="g">'+esc(top.t)+' · '+top.n+' de '+rows.length+' MOs</span><span class="s">'+nf(top.pz)+' pz esperando aquí. Reforzar este departamento.</span></div>';
   var AP=D.avProc||[];
   if(AP.length){var lk={};(D.ops||[]).forEach(function(o){lk[o[1]]=o[0];});
     h+='<div class="rkcard"><div class="rkct">AVANCE POR PROCESO</div>'+AP.map(function(x){var c=CEST[lk[x.p]]||"#8A93A6",nm=String(x.p);
-      return '<div class="rkap"><span style="color:'+c+'">'+esc(nm.charAt(0)+nm.slice(1).toLowerCase())+'</span><span class="rkbar">'+(x.pct?'<i style="width:'+Math.max(2,x.pct)+'%;background:'+c+'"></i>':'')+'</span><span class="rknu">'+nf(x.h)+'/'+nf(x.t)+'</span></div>';}).join("")+'</div>';}
+      return '<div class="rkap"><span style="color:'+c+'">'+esc((nm.charAt(0)+nm.slice(1).toLowerCase()).replace(/R&r/g,'R&R'))+'</span><span class="rkbar">'+(x.pct?'<i style="width:'+Math.max(2,x.pct)+'%;background:'+c+'"></i>':'')+'</span><span class="rknu">'+nf(x.h)+'/'+nf(x.t)+'</span></div>';}).join("")+'</div>';}
   var SS=D.soSinMO||[];
   if(SS.length){var g={},ord=[];SS.forEach(function(x){var a=String(x).split(" · "),c=a[1]||"";if(!g[c]){g[c]=[];ord.push(c);}g[c].push(a[0]);});
     h+='<div class="rkcard" style="flex:1;min-height:0;overflow:hidden"><div class="rkct">'+SS.length+' SO SIN MO</div><div class="rkso">'+
