@@ -15,6 +15,7 @@
  *   CODIGO_VESTIDO  (secreto)  código del teléfono de la Estación Rotulado y Vestido
  *   CODIGO_ARMADO1  (secreto)  código del teléfono de la Estación Armado y Soldadura 1
  *   CODIGO_TALADRO  (secreto)  código del teléfono de la Estación Taladro (MAFESA)
+ *   CODIGO_M65      (secreto)  código del equipo de la Estación M65 (MAFESA · 16-oct-2026, 1er SKU 37A9755-0004 / MO-422)
  *   PINES           (secreto)  ya no se usa: desde el 12-oct-2026 la TM-2P no pide operador ni PIN (se puede borrar)
  *   ORIGEN          (texto)    https://moisespena-web.github.io   (opcional)
  *
@@ -67,6 +68,7 @@ const ESTACIONES = {
   vestido:  { nombre: 'Rotulado y Vestido', recursos: ['Vestido', 'Colocación Dunnage'], etiqueta: () => 'Vestido', conPin: false, operador: 'Operador' },
   armado1:  { nombre: 'Armado y Soldadura 1', recursos: ['Armado y Soldadura'], etiqueta: () => 'Armado y Soldadura', conPin: false, operador: 'Operador' },
   taladro:  { nombre: 'Taladro', recursos: ['Taladro Mafesa', 'Ø'], etiqueta: () => 'Taladro', conPin: false, operador: 'Operador' },
+  m65:      { nombre: 'M65', recursos: ['M65'], etiqueta: () => 'M65', conPin: false, operador: 'Operador' },   // 16-oct-2026 (Moisés): estación nueva, sustituye a Taladro en 37A9755-0004
 };
 
 export default {
@@ -123,6 +125,7 @@ export default {
     else if (iguales(codigo, env.CODIGO_VESTIDO || '')) est = ESTACIONES.vestido;
     else if (iguales(codigo, env.CODIGO_ARMADO1 || '')) est = ESTACIONES.armado1;
     else if (iguales(codigo, env.CODIGO_TALADRO || '')) est = ESTACIONES.taladro;
+    else if (iguales(codigo, env.CODIGO_M65 || '')) est = ESTACIONES.m65;
     if (!est) return json({ ok: false, error: 'Dispositivo no autorizado' }, 401);
     if (!env.KATANA_API_KEY) return json({ ok: false, error: 'Falta KATANA_API_KEY en el servidor' }, 500);
 
@@ -469,7 +472,7 @@ function resumen(r, av) {
    "Procesadas" = trabajo de esa estación: una pieza que pasa por 4 estaciones cuenta en cada una.
    El contador arranca en 0 cada día; los días anteriores al 14-oct-2026 no existen (antes nadie guardaba el dato por día).
    Lectura y escritura no son atómicas en KV: con capturas simultáneas de dos estaciones podría perderse un lapso (raro). */
-const HOY_COL = { 'Corte': 'Corte', 'Taladro': 'Taladro', 'TM-2P': 'CNC', 'Doblez': 'Doblez', 'Limpieza & SQA': 'Limpieza & SQA' };
+const HOY_COL = { 'Corte': 'Corte', 'Taladro': 'Taladro', 'M65': 'M65', 'TM-2P': 'CNC', 'Doblez': 'Doblez', 'Limpieza & SQA': 'Limpieza & SQA' };
 async function sumarHoy(env, est, n) {
   n = Math.round(n || 0);
   if (!env || !env.TV || !(n > 0)) return;
@@ -496,7 +499,7 @@ async function hoyKatana(env, D) {
   for (const r of D.rows) cur[r.id] = { plan: r.plan || 0, entr: r.entr || 0, c: hechoCols(r) };
   let base = await env.TV.get(key, 'json');
   if (!base) { base = cur; await env.TV.put(key, JSON.stringify(cur), { expirationTtl: 3 * 86400 }); }
-  const pz = { 'Corte': 0, 'Taladro': 0, 'CNC': 0, 'Doblez': 0, 'Limpieza & SQA': 0 };
+  const pz = { 'Corte': 0, 'Taladro': 0, 'M65': 0, 'CNC': 0, 'Doblez': 0, 'Limpieza & SQA': 0 };
   for (const id of new Set([...Object.keys(base), ...Object.keys(cur)])) {
     const b = base[id], c = cur[id];
     for (const col of new Set([...Object.keys(b ? b.c : {}), ...Object.keys(c ? c.c : {})])) {
@@ -607,8 +610,8 @@ async function leerZip(b, quiero) {
    Programa de la última corrida (orden, Laura, cobre, fechas de entrega, material) + estado real de Katana.
    Misma lógica que build_entregas.py del skill tablero-entregas-mafesa para lo que cambia durante el día. */
 const VIVO_TTL = 15 * 60e3, VIVO_MIN = 60e3;   // 14-oct-2026: el recálculo lo hace el cron cada 5 min; las consultas de la TV/estaciones solo leen (y recalculan si el cron lleva >12 min sin correr o si una estación acaba de capturar)
-const MAF_REC = new Set(['Corte Mafesa', 'Taladro Mafesa', 'TM-2P', 'Cuadrado Mafesa', 'Doblez Mafesa', 'Limpieza & SQA']);
-const ORDOPS = ['Corte', 'Taladro', 'CNC', 'Doblez', 'Limpieza & SQA'];
+const MAF_REC = new Set(['Corte Mafesa', 'Taladro Mafesa', 'M65', 'TM-2P', 'Cuadrado Mafesa', 'Doblez Mafesa', 'Limpieza & SQA']);
+const ORDOPS = ['Corte', 'Taladro', 'M65', 'CNC', 'Doblez', 'Limpieza & SQA'];   // M65: 16-oct-2026
 const TIPOS_TV = { 'Corte': 1, 'Corte|Taladro': 2, 'Corte|Doblez|Taladro': 3, 'CNC|Corte': 4, 'CNC|Corte|Doblez': 5 };
 
 function horaMX(d) {
@@ -659,7 +662,7 @@ function avanceTV(info) {   // igual que avance() de build_entregas.py: {columna
     const mh = ln.match(/^\s*([^:\n]+):(.*)$/); if (!mh) continue;
     const fr = [...mh[2].matchAll(/(?<![\d/])(\d+)\s*\/\s*(\d+)(?![\d/])/g)]; if (!fr.length) continue;
     const mm = fr[fr.length - 1], et = mh[1].trim().toLowerCase();
-    const col = et.startsWith('tm-2p') ? 'CNC' : et.startsWith('doblez') ? 'Doblez' : et.startsWith('taladro') ? 'Taladro'
+    const col = et.startsWith('tm-2p') ? 'CNC' : et.startsWith('doblez') ? 'Doblez' : et.startsWith('taladro') ? 'Taladro' : et.startsWith('m65') ? 'M65'
       : et.startsWith('corte') ? 'Corte' : et.startsWith('limpieza') ? 'Limpieza & SQA' : null;
     if (col) av[col] = mm[1] + '/' + mm[2];
   }
@@ -713,7 +716,7 @@ function armarVivo(D0, F, ahora) {
     const k = COLP[op] || op, q = r.piezas, av = (r.av || {})[op];
     T[k] = (T[k] || 0) + q; Hh[k] = (Hh[k] || 0) + (st === 'COMPLETED' ? q : (av ? Math.min(q, parseInt(av, 10)) : 0));
   }
-  D.avProc = ['Corte', 'Taladro', 'TM-2P', 'Doblez', 'Limpieza'].filter(k => T[k]).map(k => ({ p: k, h: Hh[k], t: T[k], pct: Math.round(100 * Hh[k] / T[k]) }));
+  D.avProc = ['Corte', 'Taladro', 'M65', 'TM-2P', 'Doblez', 'Limpieza'].filter(k => T[k]).map(k => ({ p: k, h: Hh[k], t: T[k], pct: Math.round(100 * Hh[k] / T[k]) }));
   const limp = rows.filter(r => r.grp === 'limp'), skAll = new Set(rows.map(r => r.sku)), skL = new Set(limp.map(r => r.sku));
   D.alertaLimpieza = limp.length ? { n: limp.length, skus: skL.size, total: skAll.size, pct: Math.round(100 * skL.size / Math.max(1, skAll.size)) } : null;
   D.programa = D0.stamp || '';   // hora de la corrida que dejó el orden

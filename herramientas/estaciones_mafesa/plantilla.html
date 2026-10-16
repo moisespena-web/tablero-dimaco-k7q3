@@ -73,7 +73,7 @@ function vAvp(){if(!AVP||!AVP.t)return '';var p=AVP.pct,c=p>=70?['#0C3024','#25C
 function nuevo(){return {status:'none',done:0,worked:0,runStart:null,pauseStart:null,paused:0,motivos:[],op:null,tramoStart:null,log:[]};}
 var TIPOS=[["Tipo 1",["Corte","Limpieza & SQA"],"#17A67F"],["Tipo 2",["Corte","Taladro","Limpieza & SQA"],"#3E8FD8"],["Tipo 3",["Corte","Taladro","Doblez","Limpieza & SQA"],"#7C74D6"],["Tipo 4",["Corte","CNC","Limpieza & SQA"],"#D1663C"],["Tipo 5",["Corte","CNC","Doblez","Limpieza & SQA"],"#D19A2E"]];
 var DATA=@@DATA@@;
-var MICOL={'Corte':'#5AB0FF','Taladro':'#B79CFF','TM-2P':'#FF7EB6','Doblez':'#C9E24F','Limpieza & SQA':'#3FD9D9'}[MAQ]||'#8A93A6';
+var MICOL={'Corte':'#5AB0FF','Taladro':'#B79CFF','M65':'#F5D547','TM-2P':'#FF7EB6','Doblez':'#C9E24F','Limpieza & SQA':'#3FD9D9'}[MAQ]||'#8A93A6';
 var DIAS=['domingo','lunes','martes','miércoles','jueves','viernes','sábado'],MESES=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'],MES3=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
 function E(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
 function pad(n){return (n<10?'0':'')+n;}
@@ -87,7 +87,7 @@ function fechaCorta(iso){var p=iso.split('-');return (+p[2])+'-'+MES3[+p[1]-1];}
 function tipoDe(ruta){var n=ruta.map(function(r){return {'TM-2P':'CNC','Limpieza':'Limpieza & SQA'}[r[0]]||r[0];}).sort().join('|');
  for(var i=0;i<TIPOS.length;i++){if(TIPOS[i][1].slice().sort().join('|')===n)return [TIPOS[i][0].toUpperCase(),TIPOS[i][2]];}return ['MIXTO','#8A93A6'];}
 /* Color fijo por estación (Moisés, 11-oct-2026; los mismos de la TV) */
-var CEST={'Corte':'#5AB0FF','Taladro':'#B79CFF','TM-2P':'#FF7EB6','Doblez':'#C9E24F','Limpieza':'#3FD9D9'};
+var CEST={'Corte':'#5AB0FF','Taladro':'#B79CFF','M65':'#F5D547','TM-2P':'#FF7EB6','Doblez':'#C9E24F','Limpieza':'#3FD9D9'};
 function cest(n){return CEST[n]||'#8A93A6';}
 function esCu(k){return k.cu!=null?!!k.cu:/\bCU\b/i.test(k.nombre||'');}
 function fondo(m){return m.prio?'#2A2F3A':(m.cu?'#3B2516':'#121C29');}
@@ -206,7 +206,7 @@ function syncTxt(){if(PAUSA_KATANA)return ['Katana en pausa · solo captura en i
 
 
 /* ============ COLA EN VIVO (6-oct-2026): con el teléfono conectado, las MOs se bajan de Katana por el servidor ============ */
-var COLN={'Corte':'Corte','Taladro':'Taladro','CNC':'TM-2P','Doblez':'Doblez','Limpieza & SQA':'Limpieza'};
+var COLN={'Corte':'Corte','Taladro':'Taladro','M65':'M65','CNC':'TM-2P','Doblez':'Doblez','Limpieza & SQA':'Limpieza'};
 function mapaMO(k,dr,idx){var hoy=diaKey(Date.now()),cols=[],ruta=[];
  (k.ruta||[]).forEach(function(o){var c=COLN[o.nombre]||o.nombre;if(cols.indexOf(c)<0)cols.push(c);});
  cols.forEach(function(c){var ops=(k.ruta||[]).filter(function(o){return (COLN[o.nombre]||o.nombre)===c;}),

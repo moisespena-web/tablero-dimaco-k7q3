@@ -14,6 +14,7 @@ A=AP.parse_args(); R=A.repo
 CFG={
  'corte':  dict(hecho='cortadas',porh='por cortar',app='Corte',tith='Corte',maq='Corte',op='Operador',nota='Corte(?![ \\t]*L[aá]ser)',lista='LISTA PARA CORTAR',kpi='CORTE',cola='COLA DE CORTE · ORDEN DE LA TV',rec='Corte Mafesa',vista='VISTA DE CORTE',verbo='cortaste',parada='CORTE PARADO',ger='cortando',limp='1e12',wa=True,waest='Corte',pzd=False,pin=False,avp='Corte',espera=False,katana=True),   # 14-oct-2026 (Moisés): EN VIVO
  'taladro':dict(hecho='taladradas',porh='por taladrar',app='Taladro',tith='Taladro',maq='Taladro',op='Operador',nota='Taladro',lista='LISTA PARA TALADRAR',kpi='TALADRO',cola='COLA DE TALADRO · ORDEN DE LA TV',rec='Taladro Mafesa',vista='VISTA DE TALADRO',verbo='taladraste',parada='TALADRO PARADO',ger='taladrando',limp='1e12',wa=True,waest='Taladro',pzd=False,pin=False,avp='Taladro',espera=False,katana=True),   # 14-oct-2026 (Moisés): EN VIVO
+ 'm65':    dict(hecho='hechas en M65',porh='por M65',app='M65',tith='M65',maq='M65',op='Operador',nota='M65',lista='LISTA PARA M65',kpi='M65',cola='COLA DE M65 · ORDEN DE LA TV',rec='M65',vista='VISTA DE M65',verbo='hiciste',parada='M65 PARADA',ger='trabajando',limp='1e12',wa=True,waest='M65',pzd=False,pin=False,avp='M65',espera=False,katana=True),   # 16-oct-2026 (Moisés): estación nueva; 1er SKU 37A9755-0004 (MO-422), sustituye a Taladro
  'tm2p':   dict(hecho='maquinadas',porh='por maquinar',app='TM-2P',tith='TM-2P',maq='TM-2P',op='Operador',nota='TM-2P',lista='LISTA PARA TM-2P',kpi='TM-2P',cola='COLA DE LA TM-2P · ORDEN DE LA TV',rec='TM-2P',vista='VISTA DE TM-2P',verbo='terminaste',parada='TM-2P PARADA',ger='trabajando',limp='1e12',wa=True,waest='TM-2P',pzd=False,pin=False,avp='TM-2P',espera=False,katana=True),   # 14-oct-2026 (Moisés): EN VIVO
  'doblez': dict(hecho='dobladas',porh='por doblar',app='Estación Doblez',tith='Doblez',maq='Doblez',op='Miguel',nota='Doblez',lista='LISTA PARA DOBLAR',kpi='DOBLEZ',cola='COLA DE DOBLEZ · ORDEN DE LA TV',rec='Doblez Mafesa',vista='VISTA DEL DOBLEZ',verbo='doblaste',parada='DOBLADORA PARADA',ger='doblando',limp='1e12',wa=True,waest='Dobladora',pzd=True,pin=False,avp='Doblez',espera=False,katana=True),   # 14-oct-2026 (Moisés): Doblez EN VIVO con Miguel (2a estación después de Limpieza)
  'limpieza':dict(hecho='limpias',porh='por limpiar',app='Limpieza & SQA',tith='Limpieza &amp; SQA',maq='Limpieza & SQA',op='Cynthia',nota='Limpieza',lista='LISTA PARA LIMPIEZA',kpi='LIMPIEZA',cola='COLA DE LIMPIEZA &amp; SQA · LISTAS PRIMERO',rec='Limpieza & SQA',vista='VISTA DE LIMPIEZA',verbo='limpiaste',parada='LIMPIEZA PARADA',ger='limpiando',limp='1e12',wa=False,waest='Limpieza & SQA',pzd=True,pin=False,avp='Limpieza',espera=True,katana=True,pregfin='¿Cuántas piezas inspeccionaste AHORA?',ayudafin='<div style="font-size:16px;font-weight:700;color:#FFC94D">Escribe solo las que inspeccionaste en este rato, NO las que faltan.</div>'),   # 13-oct-2026 (Moisés): prueba EN VIVO con Cynthia en su iPhone
@@ -29,6 +30,7 @@ def arr_at(t,i):
             d-=1
             if d==0: return j+1
 def datos_de(slug):
+    if not os.path.exists(f'{R}/app-{slug}/index.html'): return []   # estación nueva (M65, 16-oct-2026)
     t=open(f'{R}/app-{slug}/index.html').read()
     m=re.search(r'var DATA=\[',t)
     if m:
@@ -42,6 +44,7 @@ def tm2p_a_data(x):
         recursoMal=False,ruta=ruta,ingSku=x.get('ingSku',''),ingNombre=x.get('ingNombre',''),ingTot=x.get('ingIn',0),ingUom='in',notas=x.get('notas','') or 'Sin notas.',
         hechas=x.get('hechas',0),entregadas=x.get('entregadas'),rowId=x.get('rowId')).items() if v is not None or k=='rowId'}
 def pie_de(slug):
+    if not os.path.exists(f'{R}/app-{slug}/index.html'): return ''
     t=open(f'{R}/app-{slug}/index.html').read(); m=re.search(r'MOs de Katana al ([0-9]{1,2}-[a-z]{3} [0-9]{1,2}:[0-9]{2})',t)
     return m.group(1) if m else ''
 
@@ -56,6 +59,6 @@ for slug,c in CFG.items():
          '@@HECHO@@':c['hecho'],'@@PORH@@':c['porh'],'@@PORHC@@':c['porh'][0].upper()+c['porh'][1:],'@@PORHU@@':c['porh'].upper(),'@@PIE@@':pie_de(slug) or '—','@@DATA@@':json.dumps(datos_de(slug),ensure_ascii=False)}
     for k,v in rep.items(): t=t.replace(k,v)
     falta=re.findall(r'@@[A-Z]+@@',t); assert not falta,(slug,falta)
-    open(f'{R}/app-{slug}/index.html','w').write(t); print('ok',slug,len(json.loads(rep['@@DATA@@'])),'MOs')
+    os.makedirs(f'{R}/app-{slug}',exist_ok=True); open(f'{R}/app-{slug}/index.html','w').write(t); print('ok',slug,len(json.loads(rep['@@DATA@@'])),'MOs')
     if not os.path.exists(f'{R}/app-{slug}/aviso.json'):
         open(f'{R}/app-{slug}/aviso.json','w').write('{"texto": "", "nivel": "aviso", "actualizado": "2026-10-06T00:00:00.000Z"}\n')

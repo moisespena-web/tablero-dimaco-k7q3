@@ -90,7 +90,7 @@ justify-content:center;letter-spacing:1px}
 .pz{width:130px;flex:none;text-align:right}
 .pz b{font-size:38px}
 .pz span{font-size:18px;color:var(--tx2);margin-left:4px}
-.ops{width:720px;flex:none;display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.ops{width:780px;flex:none;display:grid;grid-template-columns:repeat(6,1fr);gap:8px}
 .op{display:flex;align-items:center;justify-content:center;gap:7px;height:52px;
 border-radius:9px;background:#0E1723;border:1px solid var(--line);font-size:18px;
 color:var(--tx2);letter-spacing:1px;white-space:nowrap}
@@ -321,7 +321,7 @@ padding:20px 34px;box-shadow:0 0 70px rgba(229,72,77,.95);animation:alimpP 1s st
 /* --- 4-oct: avance por proceso, MOs abiertas, SO/CR por renglon --- */
 .kpis{grid-template-columns:.95fr 1.05fr 2.6fr .62fr}
 .kpi.avp{padding:4px 14px}
-.apl{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:7px;margin-top:4px}
+.apl{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:7px;margin-top:4px}
 .apr{display:flex;flex-direction:column;gap:2px;background:#0E1723;border:1px solid var(--line);border-radius:9px;padding:4px 7px 6px;min-width:0}
 .apn{font-size:14px;color:#C9D6E6;white-space:nowrap;letter-spacing:.5px}
 .app{font-size:31px;font-weight:800;line-height:1;font-variant-numeric:tabular-nums}
@@ -455,7 +455,7 @@ padding:20px 34px;box-shadow:0 0 70px rgba(229,72,77,.95);animation:alimpP 1s st
   <div class="msg"></div>
   <span class="pctl"><button id="btnPrev" title="Página anterior">◀</button><button id="btnPausa" title="Pausar">⏸</button><button id="btnNext" title="Página siguiente">▶</button></span>
   <span id="sndIco">🔇</span>
-  <div id="stamp"></div><span class="build">v2026-10-14e</span><div class="bar"><i id="pb"></i></div>
+  <div id="stamp"></div><span class="build">v2026-10-16m65</span><div class="bar"><i id="pb"></i></div>
  </footer>
  <div id="alimp" hidden></div>
  <div id="toasts"></div>
@@ -539,12 +539,12 @@ function crearSonidos(getCtx){
 
 (function(){
 "use strict";
-var OPS=["Corte","Taladro","CNC","Doblez","Limpieza & SQA"];
-var LBL={"Corte":"CORTE","Taladro":"TALADRO","CNC":"TM-2P","Doblez":"DOBLEZ","Limpieza & SQA":"LIMPIEZA"};
+var OPS=["Corte","Taladro","M65","CNC","Doblez","Limpieza & SQA"];
+var LBL={"Corte":"CORTE","Taladro":"TALADRO","M65":"M65","CNC":"TM-2P","Doblez":"DOBLEZ","Limpieza & SQA":"LIMPIEZA"};
 /* Color fijo por estación (Moisés, 11-oct-2026): el nombre de cada proceso siempre en su color, en toda la TV */
-var CEST={"Corte":"#5AB0FF","Taladro":"#B79CFF","CNC":"#FF7EB6","Doblez":"#C9E24F","Limpieza & SQA":"#3FD9D9"};
+var CEST={"Corte":"#5AB0FF","Taladro":"#B79CFF","M65":"#F5D547","CNC":"#FF7EB6","Doblez":"#C9E24F","Limpieza & SQA":"#3FD9D9"};
 function lblc(o){return '<span style="color:'+CEST[o]+'">'+LBL[o]+'</span>';}
-var ORD={"Corte":0,"Taladro":1,"CNC":2,"Doblez":3,"Limpieza & SQA":4};
+var ORD={"Corte":0,"Taladro":1,"M65":2,"CNC":3,"Doblez":4,"Limpieza & SQA":5};
 var TIPOS=[["Tipo 1",["Corte","Limpieza & SQA"],"#17A67F"],
  ["Tipo 2",["Corte","Taladro","Limpieza & SQA"],"#3E8FD8"],
  ["Tipo 3",["Corte","Taladro","Doblez","Limpieza & SQA"],"#7C74D6"],
@@ -587,11 +587,11 @@ function pzMO(r){var y=0;for(var k in (r.av||{})){var a=avN(r.av[k]);if(a)y=Math
   return {plan:plan,entr:entr,pend:pend,listas:h,faltan:Math.max(0,pend-h),est:est?(NOMEST[est]||est):"",sig:sig};}
 function listasOp(r,op){var a=avN(r.av&&r.av[op]);if(!a)return "";var p=pzMO(r);var n=Math.max(0,a[0]-p.entr);return nf(n)+" "+hechoDe(NOMEST[op]||op);}
 /* PZ7OCT · 6-oct-2026 23:06 (Moisés): el número grande es el Remaining de Katana (FALTAN = planeadas − entregadas). */
-var HECHO={"Corte":"cortadas","Taladro":"taladradas","TM-2P":"maquinadas","Doblez":"dobladas","Limpieza":"limpias","Láser":"cortadas en láser","Router":"ruteadas","Armado":"armadas","Pintura":"pintadas","Vestido":"vestidas"};
-var PORH={"Corte":"por cortar","Taladro":"por taladrar","TM-2P":"por maquinar","Doblez":"por doblar","Limpieza":"por limpiar","Láser":"por cortar en láser","Router":"por rutear","Armado":"por armar","Pintura":"por pintar","Vestido":"por vestir"};
+var HECHO={"Corte":"cortadas","Taladro":"taladradas","M65":"hechas en M65","TM-2P":"maquinadas","Doblez":"dobladas","Limpieza":"limpias","Láser":"cortadas en láser","Router":"ruteadas","Armado":"armadas","Pintura":"pintadas","Vestido":"vestidas"};
+var PORH={"Corte":"por cortar","Taladro":"por taladrar","M65":"por M65","TM-2P":"por maquinar","Doblez":"por doblar","Limpieza":"por limpiar","Láser":"por cortar en láser","Router":"por rutear","Armado":"por armar","Pintura":"por pintar","Vestido":"por vestir"};
 function hechoDe(e){return HECHO[e]||"hechas";}function porDe(e){return PORH[e]||"por hacer";}
 /* PZ6OCT2 · barra gruesa + leyenda como en las estaciones */
-var NOMEST={"Corte":"Corte","Taladro":"Taladro","CNC":"TM-2P","Doblez":"Doblez","Limpieza & SQA":"Limpieza","Laser":"Láser","Router":"Router","Armado":"Armado","Pintura":"Pintura","Vestido":"Vestido"};
+var NOMEST={"Corte":"Corte","Taladro":"Taladro","M65":"M65","CNC":"TM-2P","Doblez":"Doblez","Limpieza & SQA":"Limpieza","Laser":"Láser","Router":"Router","Armado":"Armado","Pintura":"Pintura","Vestido":"Vestido"};
 function barraTV(p){var T=p.plan||1,w=function(n){return (100*n/T).toFixed(2)+"%";};
   if(p.entr+p.listas<=0)return '<div class="pzbar pzabs"><i style="width:100%;background:#2E3D52"></i></div>';
   var b='<div class="pzw"><div class="pzbar"><i style="width:'+w(p.entr)+';background:#25A35A"></i><i style="width:'+w(p.listas)+';background:#3E8FD8"></i><i style="width:'+w(p.faltan)+';background:#2E3D52"></i></div>';
@@ -694,7 +694,7 @@ function avProcHTML(A){
 /* Franja de flujo (Moisés, 11-oct-2026 · opción C): por estación MOs, piezas en espera, avance por proceso
    (el que antes iba arriba), alertas de vencidas y cobre; la de menor avance se marca como la más atrasada. */
 function flujoHTML(D,abiertas,carga){
-  var AV={},PN={"Corte":"Corte","Taladro":"Taladro","TM-2P":"CNC","Doblez":"Doblez","Limpieza":"Limpieza & SQA"};
+  var AV={},PN={"Corte":"Corte","Taladro":"Taladro","M65":"M65","TM-2P":"CNC","Doblez":"Doblez","Limpieza":"Limpieza & SQA"};
   (D.avProc||[]).forEach(function(x){if(PN[x.p])AV[PN[x.p]]=x.pct;});
   var st={};OPS.forEach(function(o){st[o]={mo:0,venc:0,cu:0};});
   abiertas.forEach(function(r){var e=estacion(r);if(!e||!st[e])return;st[e].mo++;if(vencida(r))st[e].venc++;if(esCu(r))st[e].cu++;});
@@ -717,7 +717,7 @@ var CAL=window.__CAL__||null;
 var CDEP={cor:["CORTE","Corte"],tal:["TALADRO / TM-2P","Taladro"],dob:["DOBLEZ","Doblez"],lim:["LIMPIEZA","Limpieza & SQA"],cal:["INSPECCIÓN",null],ing:["PLANO / PROGRAMA",null],ext:["PROVEEDOR",null]};
 var CTIPO={scrap:"SCRAP",retrabajo:"RETRABAJO",retraso:"RETRASO",reclamo:"RECLAMO MAFESA"};
 var CMES=["ENE","FEB","MAR","ABR","MAY","JUN","JUL","AGO","SEP","OCT","NOV","DIC"];
-var CEST_CL={"Corte":"#1F6FC0","Taladro":"#6A4BCF","CNC":"#C2266E","Doblez":"#5F7A0E","Limpieza & SQA":"#0B8585"};   /* CALCLARA: tonos para fondo claro */
+var CEST_CL={"Corte":"#1F6FC0","Taladro":"#6A4BCF","M65":"#9C7F00","CNC":"#C2266E","Doblez":"#5F7A0E","Limpieza & SQA":"#0B8585"};   /* CALCLARA: tonos para fondo claro */
 function cCol(id){var d=CDEP[id];return d&&d[1]?(CEST_CL[d[1]]||CEST[d[1]]):"#1E2228";}
 function cSem(n,rec){return rec?"#D12F35":n===0?"#1F9D5C":n<=2?"#C77700":"#D12F35";}
 function money(n){return "$"+(+n||0).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2});}
