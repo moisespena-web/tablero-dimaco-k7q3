@@ -72,6 +72,19 @@ jobs:
                 fi
               fi
 
+              # --- racks/aviso.json (16-oct-2026: botón Aviso TV del artifact de Racks) ---
+              # Archivos racksaviso-*.json (prefijo distinto a propósito: nunca se mezclan con el aviso de MAFESA).
+              RAV=""
+              for f in $(find d -name 'racksaviso-*.json' 2>/dev/null | sort -r); do
+                if python3 -c "import json,sys; json.load(open(sys.argv[1]))" "$f" 2>/dev/null; then
+                  RAV="$f"; break
+                fi
+              done
+              if [ -n "$RAV" ] && [ -d racks ] && ! cmp -s "$RAV" racks/aviso.json; then
+                cp "$RAV" racks/aviso.json
+                CAMBIO=1
+              fi
+
               # --- datos.json (se valida que traiga renglones) ---
               if [ -n "$D" ] && python3 -c "import json,sys; j=json.load(open(sys.argv[1])); assert j['datos']['rows']" "$D" 2>/dev/null; then
                 if ! cmp -s "$D" datos.json; then
@@ -85,6 +98,7 @@ jobs:
               if [ "$CAMBIO" = "1" ]; then
                 [ -f datos.json ] && git add datos.json
                 [ -f aviso.json ] && git add aviso.json
+                [ -f racks/aviso.json ] && git add racks/aviso.json
                 if ! git diff --cached --quiet; then
                   git commit -q -m "Tablero $(date -u '+%Y-%m-%d %H:%M') UTC"
                   git pull --rebase --autostash -q || true
