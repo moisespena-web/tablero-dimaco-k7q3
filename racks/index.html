@@ -1175,7 +1175,7 @@ render(window.__DATOS__);
   }
   /* --- el aviso se relee cada 15 s (buzón primero, luego aviso.json de GitHub) --- */
   function cargarAviso(){
-    pedir(["aviso.json",RAWG+"racks/aviso.json"],function(a){avisoPropio=true;aviso(a);});
+    pedir([BUZON+"/tablero/racks/aviso","aviso.json",RAWG+"racks/aviso.json"],function(a){avisoPropio=true;aviso(a);});
   }
   cargarAviso();setInterval(cargarAviso,15000);              // el aviso, cada 15 s
   /* 14-oct-2026: calidad.json (Tablero de Calidad MAFESA) se relee cada minuto */

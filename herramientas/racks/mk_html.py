@@ -52,7 +52,7 @@ rep('''function renderMat(D){var m=$('mat');''','''function renderMat(D){var m=$
 # datos: racks/datos.json (sin buzón de MAFESA)
 # avisos (9-oct-2026, Moisés): Racks tiene SUS PROPIOS avisos en racks/aviso.json; ya NO lee el aviso de MAFESA
 rep('''pedir([BUZON+"/tablero","datos.json",RAWG+"datos.json"],function(j){''','''pedir(["datos.json",RAWG+"racks/datos.json"],function(j){''')
-rep('''pedir([BUZON+"/tablero/aviso","aviso.json",RAWG+"aviso.json"],''','''pedir(["aviso.json",RAWG+"racks/aviso.json"],''')
+rep('''pedir([BUZON+"/tablero/aviso","aviso.json",RAWG+"aviso.json"],''','''pedir([BUZON+"/tablero/racks/aviso","aviso.json",RAWG+"racks/aviso.json"],''')   # 16-oct-2026: buzón de Cloudflare primero (igual que MAFESA)
 rep('<title>','<title>',1)
 src=re.sub(r'<title>[^<]*</title>','<title>MO en proceso · Racks</title>',src,1)
 src=re.sub(r'<span class="build">v[^<]*</span>','<span class="build">r2026-10-14b</span>',src,1)

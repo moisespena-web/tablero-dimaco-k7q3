@@ -24,6 +24,7 @@
  *
  * Rutas:  GET /estado · GET /operadores · GET /cola · POST /pin · POST /evento
  *         GET /tablero (público: programa + estado real de Katana) · GET /tablero/aviso
+ *         GET /tablero/racks/aviso (16-oct-2026: aviso de la TV RACKS, archivos racksaviso-*.json; 404 si no hay)
  *
  * Qué escribe en Katana (solo en la operación cuyo Resource es el de la estación):
  *   start      → IN_PROGRESS + operador asignado
@@ -98,6 +99,15 @@ export default {
         out.diag = { falla: falla || (v && v.diagVivo) || '', ahora: new Date().toISOString() };   // DIAG 14-oct-2026: por qué no se recalculó
         try { if (out.datos && !out.datos.hoyPz) { const hp = await hoyTV(env); if (hp) out.datos = { ...out.datos, hoyPz: hp.pz, hoyFecha: hp.fecha }; } } catch (e) {}   // respaldo: contador viejo solo si no hay HOYK
         return json(out);
+      } catch (e) { return json({ ok: false, error: String(e && e.message || e) }, 502); }
+    }
+
+    // --- 16-oct-2026 (Moisés): aviso de la TV RACKS, igual de rápido que el de MAFESA (botón Aviso TV del artifact de Racks) ---
+    if (req.method === 'GET' && ruta === '/tablero/racks/aviso') {
+      try {
+        const a = await racksAviso(env);
+        if (!a) return json({ ok: false, error: 'sin aviso de racks' }, 404);   // 404: la TV usa su respaldo (GitHub)
+        return json(a);
       } catch (e) { return json({ ok: false, error: String(e && e.message || e) }, 502); }
     }
 
@@ -547,6 +557,26 @@ async function tablero(env) {
   const out = { datos, aviso: aviso || {}, fuente: archivo, leido: new Date().toISOString() };
   await cache.put(key, new Response(JSON.stringify(out), { headers: { 'Content-Type': 'application/json', 'Cache-Control': 'max-age=20' } }));
   return out;
+}
+
+/* 16-oct-2026: aviso de la TV RACKS. Mismo ZIP de la carpeta "Tablero TV", pero solo los racksaviso-*.json
+   (prefijo distinto: nunca se mezcla con el aviso de MAFESA). Toma el más nuevo que sea JSON válido. Caché 20 s. */
+async function racksAviso(env) {
+  if (!env.DROPBOX_URL) return null;
+  const cache = caches.default, key = new Request('https://tablero.cache/racks-aviso-v1');
+  const hit = await cache.match(key);
+  if (hit) { const j = await hit.json(); return j.aviso || null; }
+  let u = String(env.DROPBOX_URL).replace('dl=0', 'dl=1');
+  if (!/[?&]dl=1/.test(u)) u += (u.includes('?') ? '&' : '?') + 'dl=1';
+  const r = await fetch(u, { redirect: 'follow' });
+  if (!r.ok) throw new Error('Dropbox respondió ' + r.status);
+  const files = await leerZip(new Uint8Array(await r.arrayBuffer()), n => /(^|\/)racksaviso-[^/]*\.json$/.test(n));
+  const base = n => n.split('/').pop();
+  const ns = Object.keys(files).sort((a, b) => base(a) < base(b) ? 1 : -1);
+  let aviso = null;
+  for (const n of ns) { try { const j = JSON.parse(files[n]); if (j && typeof j === 'object') { aviso = j; break; } } catch (e) {} }
+  await cache.put(key, new Response(JSON.stringify({ aviso }), { headers: { 'Content-Type': 'application/json', 'Cache-Control': 'max-age=20' } }));
+  return aviso;
 }
 
 async function leerZip(b, quiero) {
