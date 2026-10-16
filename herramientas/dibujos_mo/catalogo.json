@@ -473,5 +473,42 @@
   "imgs": [
    "36A6463-0009-1.png"
   ]
+ },
+ "37A7525-0001": {
+  "desc": "TERMINAL .250 x 2.000 x 5.000",
+  "plano": "2 barrenos (.563)",
+  "ref": "37A7525 · P.1",
+  "nota": "",
+  "imgs": [
+   "37A7525-0001-1.png"
+  ]
+ },
+ "37A7525-0003": {
+  "desc": "TERMINAL .250 x 3.000 x 5.000",
+  "plano": "3 barrenos (.563)",
+  "ref": "37A7525 · P.3",
+  "nota": "",
+  "imgs": [
+   "37A7525-0003-1.png"
+  ]
+ },
+ "37A14322-0001": {
+  "desc": "HV BUS COBRE .250 x 2.000 x 34.500",
+  "plano": "5 barrenos (2 de .313 + 3 de .438)",
+  "ref": "37A14322 · P.1",
+  "nota": "",
+  "imgs": [
+   "37A14322-0001-1.png"
+  ]
+ },
+ "37A14279-0001": {
+  "desc": "COPPER TAP .250 x 1.500 x 3.125",
+  "plano": "1 barreno (.438) · 1 doblez 90° (N.S.)",
+  "ref": "37A14279 · P.1 + vista doblada",
+  "nota": "",
+  "imgs": [
+   "37A14279-0001-1.png",
+   "37A14279-0001-2.png"
+  ]
  }
 }
