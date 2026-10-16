@@ -68,7 +68,7 @@ const ESTACIONES = {
   vestido:  { nombre: 'Rotulado y Vestido', recursos: ['Vestido', 'Colocación Dunnage'], etiqueta: () => 'Vestido', conPin: false, operador: 'Operador' },
   armado1:  { nombre: 'Armado y Soldadura 1', recursos: ['Armado y Soldadura'], etiqueta: () => 'Armado y Soldadura', conPin: false, operador: 'Operador' },
   taladro:  { nombre: 'Taladro', recursos: ['Taladro Mafesa', 'Ø'], etiqueta: () => 'Taladro', conPin: false, operador: 'Operador' },
-  m65:      { nombre: 'M65', recursos: ['M65'], etiqueta: () => 'M65', conPin: false, operador: 'Operador' },   // 16-oct-2026 (Moisés): estación nueva, sustituye a Taladro en 37A9755-0004
+  m65:      { nombre: 'M65', recursos: ['M65'], etiqueta: () => 'M65', conPin: false, operador: 'Mario y Miguel' },   // 16-oct-2026 (Moisés): estación nueva, sustituye a Taladro en 37A9755-0004
 };
 
 export default {
@@ -403,16 +403,18 @@ async function evento(k, est, env, b) {
     return { ok: true, repetido: true, mo: mo.order_no, op: resumen(row, prev) };
   }
 
-  let opId = null;
+  // 16-oct-2026 (M65): "Mario y Miguel" = dos operadores de Katana; se asignan los dos.
+  const opIds = [];
   try {
     const ops = await k.getCache('/operators?limit=250', 3600e3);
-    const hit = ((ops && ops.data) || []).find(o => (o.operator_name || o.name || '').trim().toLowerCase() === operador.trim().toLowerCase());
-    if (hit) opId = hit.id;
+    for (const nom of operador.split(/\s+y\s+/i)) {
+      const hit = ((ops && ops.data) || []).find(o => (o.operator_name || o.name || '').trim().toLowerCase() === nom.trim().toLowerCase());
+      if (hit) opIds.push(hit.id);
+    }
   } catch (e) { if (e && e.saturado) throw e; }
   const conOp = lista => {
     const out = (lista || []).map(o => ({ operator_id: o.operator_id }));
-    const ya = (lista || []).some(o => (opId && o.operator_id === opId) || (o.name || '').toLowerCase() === operador.toLowerCase());
-    if (!ya && opId) out.push({ operator_id: opId });
+    for (const id of opIds) if (!out.some(o => o.operator_id === id)) out.push({ operator_id: id });
     return out;
   };
 
