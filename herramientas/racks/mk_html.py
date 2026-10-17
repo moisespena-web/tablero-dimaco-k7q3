@@ -12,12 +12,12 @@ rep('<p>⚡ PROYECTO: Busbar para transformadores eléctricos</p>','<p>🏗️ P
 i=src.index('<script>window.__DATOS__=');j=src.index('</script>',i)
 src=src[:i]+'<script>window.__DATOS__='+json.dumps(D,ensure_ascii=False)+';'+src[j:]
 # columnas dinamicas
-rep('''var OPS=["Corte","Taladro","CNC","Doblez","Limpieza & SQA"];
-var LBL={"Corte":"CORTE","Taladro":"TALADRO","CNC":"TM-2P","Doblez":"DOBLEZ","Limpieza & SQA":"LIMPIEZA"};
+rep('''var OPS=["Corte","Taladro","M65","CNC","Doblez","Limpieza & SQA"];
+var LBL={"Corte":"CORTE","Taladro":"TALADRO","M65":"M65","CNC":"TM-2P","Doblez":"DOBLEZ","Limpieza & SQA":"LIMPIEZA"};
 /* Color fijo por estación (Moisés, 11-oct-2026): el nombre de cada proceso siempre en su color, en toda la TV */
-var CEST={"Corte":"#5AB0FF","Taladro":"#B79CFF","CNC":"#FF7EB6","Doblez":"#C9E24F","Limpieza & SQA":"#3FD9D9"};
+var CEST={"Corte":"#5AB0FF","Taladro":"#B79CFF","M65":"#F5D547","CNC":"#FF7EB6","Doblez":"#C9E24F","Limpieza & SQA":"#3FD9D9"};
 function lblc(o){return '<span style="color:'+CEST[o]+'">'+LBL[o]+'</span>';}
-var ORD={"Corte":0,"Taladro":1,"CNC":2,"Doblez":3,"Limpieza & SQA":4};''',
+var ORD={"Corte":0,"Taladro":1,"M65":2,"CNC":3,"Doblez":4,"Limpieza & SQA":5};''',
 '''/* RACKS: las columnas vienen en los datos (D.ops = [[clave,etiqueta],...]); la franja es el color del cliente */
 var OPS=["Corte","Laser","Router","Doblez","Armado","Pintura","Vestido"];
 var LBL={"Corte":"CORTE","Laser":"LÁSER","Router":"ROUTER","Doblez":"DOBLEZ","Armado":"ARMADO","Pintura":"PINTURA","Vestido":"VESTIDO"};
@@ -32,7 +32,7 @@ function setOps(D){if(!D||!D.ops||!D.ops.length)return;OPS=D.ops.map(function(x)
 var BLQ=[];
 function BLQF(){if(!BLQ.length)return "";return '<div class="row head blq"><div class="stripe"></div><div class="mo"></div><div class="desc"></div><div class="pz"></div><div class="ops">'+
   BLQ.map(function(b){return '<div class="bq'+(b[1].length<2?' uno':'')+'" style="grid-column:span '+b[1].length+';border-color:'+b[2]+';color:'+b[2]+'">'+esc(b[0])+'</div>';}).join("")+'</div><div class="dl"></div></div>';}''')
-rep('var NOMEST={"Corte":"Corte","Taladro":"Taladro","CNC":"TM-2P",','var NOMEST={"Corte":"Corte","Taladro":"Taladro","CNC":"Maquinados","Diseño":"Diseño","RR":"R&R",')
+rep('var NOMEST={"Corte":"Corte","Taladro":"Taladro","M65":"M65","CNC":"TM-2P",','var NOMEST={"Corte":"Corte","Taladro":"Taladro","M65":"M65","CNC":"Maquinados","Diseño":"Diseño","RR":"R&R",')
 rep('''function tipoDe(r){
   var s=r.ops.map''','''function tipoDe(r){
   if(r.color)return [r.cliente||"",r.color];
