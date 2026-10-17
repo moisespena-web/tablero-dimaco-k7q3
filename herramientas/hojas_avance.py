@@ -18,7 +18,8 @@ ARGS=AP.parse_args(); REPO=ARGS.repo
 # TALTM11OCT (Moisés, 11-oct-2026, regla): Taladro y TM-2P van en UNA sola hoja — misma área y mismo líder (Fernando).
 # SINDOBLEZ15OCT (Moisés, 15-oct-2026): "para doblez, ya no es necesario la hoja de avance".
 # SOLO2_15OCT (Moisés, 15-oct-2026): solo Corte y Taladro y TM-2P (Limpieza & SQA ya no lleva hoja).
-EST=[('app-corte','Corte','MAFESA'),('app-taladro+app-tm2p','Taladro y TM-2P','MAFESA'),
+EST=[('app-corte','Corte','MAFESA'),('app-taladro+app-tm2p','Taladro y TM-2P','MAFESA'),('app-m65','M65','MAFESA'),   # M65 (Moisés, 17-oct-2026): hoja de avance M65
+    
      ('app-habilitado','Habilitado','RACKS'),('app-laser','Láser y Router','RACKS'),('app-armado1','Armado y Soldadura 1','RACKS'),('app-pintura','Pintura','RACKS'),('app-vestido','Rotulado y Vestido','RACKS')]
 MES=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic']
 def arr(t,key):
@@ -42,8 +43,8 @@ def nota_pz(notas,clave):
             n=int(m.group(1))
     return n
 # PZ7OCT (Moisés, 6-oct-2026 23:06): "Faltan X de Y" = Remaining de Katana (planeadas − entregadas), igual que TV y estaciones.
-HECHO={'Corte':'cortadas','Taladro':'taladradas','TM-2P':'maquinadas','Doblez':'dobladas','Limpieza':'limpias','Limpieza & SQA':'limpias'}
-PORH={'Corte':'por cortar','Taladro':'por taladrar','TM-2P':'por maquinar','Doblez':'por doblar','Limpieza':'por limpiar','Limpieza & SQA':'por limpiar'}
+HECHO={'Corte':'cortadas','Taladro':'taladradas','M65':'hechas en M65','TM-2P':'maquinadas','Doblez':'dobladas','Limpieza':'limpias','Limpieza & SQA':'limpias'}
+PORH={'Corte':'por cortar','Taladro':'por taladrar','M65':'por M65','TM-2P':'por maquinar','Doblez':'por doblar','Limpieza':'por limpiar','Limpieza & SQA':'por limpiar'}
 def actual(m):
     r=m.get('ruta') or []; i=-1
     for k,x in enumerate(r):
@@ -93,7 +94,7 @@ def unidad(uom,n):
     if uom=='in': return 'solera' if n==1 else 'soleras'
     return {'hoja':'hoja','hojas':'hoja'}.get(uom,uom or 'pz')+('' if n==1 or not uom else ('s' if not (uom or '').endswith('s') else ''))
 # COLOR11OCT · color fijo por estación (Moisés 11-oct-2026: lo de la TV va en todo; tono oscuro para papel)
-CEST_P={'Corte':'#1F6FD1','Taladro':'#6E4BD8','TM-2P':'#D6337F','Doblez':'#6F8C00','Limpieza & SQA':'#0E9C9C','Limpieza':'#0E9C9C'}
+CEST_P={'Corte':'#1F6FD1','Taladro':'#6E4BD8','M65':'#A68A00','TM-2P':'#D6337F','Doblez':'#6F8C00','Limpieza & SQA':'#0E9C9C','Limpieza':'#0E9C9C'}
 # IMG15OCT (Moisés, 15-oct-2026): miniatura del SKU como en la tablet (mismas imágenes: app-tm2p/piezas.js y piezas-extra.js)
 _IMGS=None
 def imgs():
@@ -113,7 +114,7 @@ def imgs():
     return _IMGS
 def hoja(app,est,proy,out,hoy,hora):
     COLS=COLS0 if est!='Corte' else [x if x[0]!='Operación' else ('Solera a pedir',112) for x in COLS0]
-    if est=='Taladro y TM-2P': COLS=COLS[:7]+[('Dibujo',72)]+COLS[7:]   # IMG15OCT
+    if est in ('Taladro y TM-2P','M65'): COLS=COLS[:7]+[('Dibujo',72)]+COLS[7:]   # IMG15OCT (M65 17-oct)
     SURT=surtido() if est=='Corte' else {}; ped={}
     mos=[]; apps=app.split('+')
     for a_ in apps:
@@ -148,7 +149,7 @@ def hoja(app,est,proy,out,hoy,hora):
     if _pie: hoy,hora=_pie.group(1),_pie.group(2)
     c=canvas.Canvas(out,pagesize=(W,H)); c.setTitle('Hoja de avance · '+est)
     x0=30; TW=W-60; fixed=sum(w for _,w in COLS); ws=[w or (TW-fixed) for _,w in COLS]
-    RH=34 if est in ('Corte','Taladro y TM-2P') else 26; pag=[0]   # PZTRAMO15OCT: Corte lleva un 3er renglón (piezas por tramo)
+    RH=34 if est in ('Corte','Taladro y TM-2P','M65') else 26; pag=[0]   # PZTRAMO15OCT: Corte lleva un 3er renglón (piezas por tramo)
     def cab():
         pag[0]+=1; y=H-28
         if LOGO:
