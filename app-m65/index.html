@@ -134,7 +134,7 @@ function barraPz(m){var T=m.plan||m.piezas||1,e=m.entr||0,h=hz(m),f=faltaPz(m),s
 /* PZ7OCT · 6-oct-2026 23:06 (Moisés): TV, estaciones y Katana dicen lo mismo. El número grande es el Remaining de Katana
    (m.piezas = planeadas − entregadas); si el teléfono no trae estado propio, manda el de Katana (EN PAUSA / EN PROCESO). */
 function kSt(m){var r=(m.ruta||[]).filter(function(x){return x&&x[2];})[0];return r?r[1]:'none';}
-function stK(m){if(m.st.status!=='none')return m.st.status;var k=kSt(m);return k==='pausa'?'pausa':((k==='prog'||hz(m)>0)?'prog':'none');}
+function stK(m){if(m.st.nok&&m.st.status==='none'&&kSt(m)!=='done'&&pendPz(m)===0)return 'nok';if(m.st.status!=='none')return m.st.status;var k=kSt(m);return k==='pausa'?'pausa':((k==='prog'||hz(m)>0)?'prog':'none');}
 function estTxtM(m){return estTxt({status:stK(m)});}
 function estStyM(m){return estSty({status:stK(m),op:''});}
 /* 5-oct-2026 (Moisés): MOs con entregas parciales en Katana (Partially completed) — la estación muestra solo lo PENDIENTE.
@@ -155,7 +155,7 @@ S.mos.forEach(pendEnt);setTimeout(leerTV,800);setInterval(leerTV,120000);   /* T
 /* AUTORECARGA (Moisés, 12-oct-2026: "que las estaciones se recarguen junto con la TV"): cada 2 min revisa si en GitHub hay
    una versión nueva de esta estación (otro "MOs de Katana al ..."); si la hay, guarda lo capturado y recarga sola.
    Nunca recarga con una ventana abierta (captura de piezas, pausa, PIN...): espera a que se cierre. Además recarga a las 7:00, 12:00, 16:00 y 18:40 (hora de México). */
-var PIE_ACT='19-oct 14:05',T0CARGA=Date.now();
+var PIE_ACT='19-oct 14:40',T0CARGA=Date.now();
 function mxHM(){var d=new Date(Date.now()-6*3600000);return {h:d.getUTCHours(),m:d.getUTCMinutes()};}
 function recargar(){if(S.modal)return;try{guardar();}catch(e){}location.reload();}
 function revisarVersion(){fetch(location.pathname+'?v='+Date.now(),{cache:'no-store'}).then(function(r){return r.ok?r.text():'';}).then(function(t){
@@ -165,8 +165,8 @@ var HRECARGA=[[7,0],[12,0],[16,0],[18,40]];   /* horarios fijos de recarga (Mois
 setInterval(function(){var d=mxHM();if(Date.now()-T0CARGA<600000)return;HRECARGA.forEach(function(h){var x=d.h*60+d.m-(h[0]*60+h[1]);if(x>=0&&x<5)recargar();});},60000);
 function faltanMs(m){return Math.max(0,m.piezas-hz(m))*m.planeado*1000;}
 function semaforo(p){return p<=40?['#2A1418','#E5484D','#FF6369']:(p<=70?['#33250A','#F2A93B','#FFC45C']:['#0C3024','#25C083','#4FE0A6']);}
-function estTxt(st){return {none:'NO INICIADA',prog:'EN PROCESO',pausa:'EN PAUSA',done:'TERMINADA ✓'}[st.status];}
-function estSty(st){var c={none:['#0E1723','#3A4B62','#8FA3BA'],prog:['#3A2A0C','#8A6413','#FFD37A'],pausa:['#2A1418','#7A2A2E','#FFB3B6'],done:['#0E3628','#1B7A56','#7FE3BC']}[st.status];
+function estTxt(st){return {none:'NO INICIADA',prog:'EN PROCESO',pausa:'EN PAUSA',done:'TERMINADA ✓',nok:'⚠ NO LLEGÓ A KATANA · REGÍSTRALA DE NUEVO'}[st.status];}
+function estSty(st){var c={none:['#0E1723','#3A4B62','#8FA3BA'],prog:['#3A2A0C','#8A6413','#FFD37A'],pausa:['#2A1418','#7A2A2E','#FFB3B6'],done:['#0E3628','#1B7A56','#7FE3BC'],nok:['#3A1210','#E5484D','#FF8A8D']}[st.status];
  return 'background:'+c[0]+';border:1px solid '+c[1]+';color:'+c[2];}
 /* ¿ya puede doblar? = todas las operaciones antes de Doblez terminadas */
 function previa(m){var i=-1;m.ruta.forEach(function(r,j){if(r[2])i=j;});var pend=m.ruta.slice(0,i).filter(function(r){return r[1]!=='done';});
@@ -238,7 +238,7 @@ function cargarCola(){if(!enLinea())return Promise.resolve();
   var rows=(d&&d.datos&&d.datos.rows)||[],pos={};rows.forEach(function(r,i){pos[r.mo]=i;});rows.forEach(function(r){if(r.mo&&r.piezas!=null)TVPZ[r.mo]=+r.piezas;});
   var selMo=S.mos[S.sel]&&S.mos[S.sel].mo;S.mos.forEach(function(m){S.stK[m.mo]=m.st;});
   var lista=c.mos.map(function(k){var i=pos[k.mo]!=null?pos[k.mo]:-1,m=mapaMO(k,i>=0?rows[i]:null,i);
-   m.st=Object.assign(nuevo(),S.stK[k.mo]||{});if(S.tReal[m.rowId]==null)S.tReal[m.rowId]=m.tiempoReal;return m;});
+   m.st=Object.assign(nuevo(),S.stK[k.mo]||{});if(S.tReal[m.rowId]==null)S.tReal[m.rowId]=m.tiempoReal;/* NOLLEGO19OCT (Moisés, MO-443): el iPad la tenía TERMINADA pero Katana no la recibió → se reabre para volver a registrarla */if(m.st.status==='done'&&kSt(m)!=='done'&&pendPz(m)===0){m.st.status='none';m.st.nok=true;}return m;});
   lista.sort(function(a,b){if(ESPERA&&(!!a.espera)!==(!!b.espera))return a.espera?1:-1;var ia=pos[a.mo]!=null?pos[a.mo]:9999,ib=pos[b.mo]!=null?pos[b.mo]:9999;return ia-ib||(a.ent<b.ent?-1:a.ent>b.ent?1:0);});
   lista.forEach(pendEnt);if(!lista.length&&S.mos.length&&!c.mos.length){}S.mos=lista;var ni=-1;lista.forEach(function(m,i){if(m.mo===selMo)ni=i;});
   if(ni<0){S.sel=0;if(S.pantalla==='detalle'&&!S.modal)S.pantalla='lista';}else S.sel=ni;
@@ -277,7 +277,7 @@ function vLista(){
   '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;gap:6px"><span class="mono sku">'+m.sku+'</span><span style="text-align:right;white-space:nowrap"><span class="ks">Por M65 </span><b style="font-size:22px">'+fmtN(faltaPz(m))+'</b><span class="ks"> de '+fmtN(m.plan)+'</span></span></div>'+barraPz(m)+
   '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:7px"><span class="st" style="'+estStyM(m)+'">'+E(estTxtM(m))+'</span>'+
   (st.status==='none'?'<span class="st" style="background:'+pv[1]+';border:1px solid '+pv[2]+';color:'+pv[3]+'">'+pv[0]+'</span>':'')+'</div></button>';}).join('')+
- '<div style="font-size:12px;color:var(--tx2);margin:6px 0 10px;line-height:1.4">'+(enLinea()?'CONECTADA A KATANA · la cola se actualiza sola.':'PILOTO · MOs de Katana al 19-oct 14:05. Lo capturado se guarda en este teléfono; todavía no escribe en Katana: el Ing. Moisés lo registra con el Resumen del turno.')+'</div>';}
+ '<div style="font-size:12px;color:var(--tx2);margin:6px 0 10px;line-height:1.4">'+(enLinea()?'CONECTADA A KATANA · la cola se actualiza sola.':'PILOTO · MOs de Katana al 19-oct 14:40. Lo capturado se guarda en este teléfono; todavía no escribe en Katana: el Ing. Moisés lo registra con el Resumen del turno.')+'</div>';}
 function bigBtn(bg,fg,on){return 'background:'+bg+';color:'+fg+';opacity:'+(on?1:.25);}
 function vDetalle(){var m=cur(),st=m.st,falt=Math.max(0,m.piezas-hz(m)),tramo=st.tramoStart?trab(st):0,img=PZ[m.sku],pv=previa(m);
  var noStart=!(st.status==='none'||st.status==='pausa'),noPausa=st.status!=='prog',noFin=!(st.status==='prog'||st.status==='pausa');
