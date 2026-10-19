@@ -215,7 +215,7 @@ function vLista(){
   '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;gap:6px"><span class="mono sku">'+m.sku+'</span><span style="text-align:right;white-space:nowrap"><span class="ks">Faltan </span><b style="font-size:22px">'+fmtN(m.piezas)+'</b><span class="ks"> de '+fmtN(m.plan)+'</span></span></div>'+barraPz(m)+
   '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:7px"><span class="st" style="'+estStyM(m)+'">'+E(estTxtM(m))+'</span>'+
   (st.status==='none'?'<span class="st" style="background:'+pv[1]+';border:1px solid '+pv[2]+';color:'+pv[3]+'">'+pv[0]+'</span>':'')+'</div></button>';}).join('');}).join('')+
- '<div style="font-size:12px;color:var(--tx2);margin:6px 0 10px;line-height:1.4">'+(enLinea()?'CONECTADA A KATANA · la cola se actualiza sola.':'PILOTO · MOs de Katana al 3-oct 23:11. Lo capturado se guarda en este teléfono; todavía no escribe en Katana: el Ing. Moisés lo registra con el Resumen del turno.')+'</div>';}
+ '<div style="font-size:12px;color:var(--tx2);margin:6px 0 10px;line-height:1.4">'+(enLinea()?'CONECTADA A KATANA · la cola se actualiza sola.':'PILOTO · MOs de Katana en vivo (19-oct 14:55). Lo capturado se guarda en este teléfono; todavía no escribe en Katana: el Ing. Moisés lo registra con el Resumen del turno.')+'</div>';}
 function bigBtn(bg,fg,on){return 'background:'+bg+';color:'+fg+';opacity:'+(on?1:.25);}
 function vDetalle(){var m=cur(),st=m.st,falt=Math.max(0,m.piezas-hz(m)),tramo=st.tramoStart?trab(st):0,img=PZ[m.sku],pv=previa(m);
  var noStart=!(st.status==='none'||st.status==='pausa'),noPausa=st.status!=='prog',noFin=!(st.status==='prog'||st.status==='pausa');
@@ -403,6 +403,37 @@ function vigilar(){var n=Date.now(),m=enMarcha();
 var WL=null;function wake(){try{if(navigator.wakeLock&&document.visibilityState==='visible'&&!WL)navigator.wakeLock.request('screen').then(function(l){WL=l;l.addEventListener('release',function(){WL=null;});}).catch(function(){});}catch(e){}}
 document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible'){wake();leerAviso();vigilar();render();}});
 document.addEventListener('click',function(){try{ACX=ACX||new (window.AudioContext||window.webkitAudioContext)();if(ACX.state==='suspended')ACX.resume();}catch(e){}wake();},true);
+
+/* RACKSVIVO19OCT (Moisés, 19-oct-2026: "todas las estaciones conectadas en vivo"): con el código de este equipo, la lista de MOs
+   se baja de Katana por el servidor (igual que las estaciones MAFESA) y el orden/cliente sale del Tablero TV de Racks. */
+var BASE0=DATA[0]||{};
+function colR(o){var n=String(o.nombre||o.paso||'').trim(),r=String(o.recurso||'').trim(),u=(n+' '+r).toUpperCase();
+ if(/L[AÁ]SER/.test(u))return 'Láser';if(/ROUTER/.test(u))return 'Router';if(/^CORTE|SIERRA/.test(u))return 'Corte';if(/^ARMADO|SOLDADURA/.test(u))return 'Armado';
+ if(/VESTIDO|ROTULADO|DUNNAGE/.test(u))return 'Vestido';if(/PINTURA/.test(u))return 'Pintura';if(/DOBLEZ/.test(u))return 'Doblez';return n||r;}
+function stR(s){return s==='COMPLETED'?'done':(s==='IN_PROGRESS'||s==='PAUSED')?'prog':'none';}
+function mapaR(k,row,idx){var cols=[],ruta=[];(k.ruta||[]).forEach(function(o){var c=colR(o);if(cols.indexOf(c)<0)cols.push(c);});
+ var mia=colR({nombre:k.op.paso,recurso:k.op.recurso});
+ cols.forEach(function(c){var ops=(k.ruta||[]).filter(function(o){return colR(o)===c;}),s=ops.every(function(o){return o.status==='COMPLETED';})?'done':(ops.some(function(o){return o.status!=='NOT_STARTED'&&o.status!=='COMPLETED';})?'prog':'none');ruta.push([c,s,c===mia]);});
+ var ing=(k.ingredientes||[])[0]||{},hoy=diaKey(Date.now()),paso=('armado1'==='laser')?(mia==='Router'?'Router':'Láser'):(BASE0.paso||k.op.paso);
+ return armar({mo:k.mo,sec:idx>=0?idx+1:'–',nombre:k.nombre||'',sku:k.sku||'—',piezas:k.piezas,entregadas:k.entregadas,ent:(row&&row.entrega)||k.deadline||hoy,deadline:k.deadline||hoy,
+  prio:!!(row&&(row.prio||row.grp==='urge')),grupo:BASE0.grupo,tipo:BASE0.tipo||'RACK',color:BASE0.color,paso:paso,opName:k.op.paso,recurso:k.op.recurso,planeado:k.op.planeado||0,recursoMal:false,
+  rowId:k.op.rowId,tiempoReal:k.op.tiempoReal,ruta:ruta,ingSku:ing.sku||'',ingNombre:ing.nombre||'Sin receta en Katana',ingTot:ing.total||0,ingUom:ing.uom||'',
+  notas:k.notas||'Sin notas.',hechas:k.hechas||0,cliente:(row&&row.cliente)||''});}
+function racksJSON(){return fetch('../racks/datos.json?x='+Date.now(),{cache:'no-store'}).then(function(r){return r.json();}).catch(function(){return null;});}
+function conTiempoR(p,ms,d){return Promise.race([p,new Promise(function(r){setTimeout(function(){r(d);},ms);})]);}
+function cargarColaR(){if(!enLinea())return;
+ Promise.all([conTiempoR(api('GET','/cola'),50000,{ok:false,error:'el servidor tardó demasiado'}),conTiempoR(racksJSON(),8000,null)]).then(function(res){var c=res[0],d=res[1];
+  if(!c||!c.ok){S.sync='err';S.conxMsg=(c&&c.error)||'Sin respuesta del servidor';if(!S.modal)render();return;}
+  var rows=(d&&d.datos&&d.datos.rows)||[],pos={};rows.forEach(function(r,i){pos[r.mo]=i;});
+  var selMo=S.mos[S.sel]&&S.mos[S.sel].mo;S.mos.forEach(function(m){S.stK[m.mo]=m.st;});
+  var lista=c.mos.map(function(k){var i=pos[k.mo]!=null?pos[k.mo]:-1,m=mapaR(k,i>=0?rows[i]:null,i);m.st=Object.assign(nuevo(),S.stK[k.mo]||{});
+   if(S.tReal[m.rowId]==null)S.tReal[m.rowId]=m.tiempoReal;return m;});
+  lista.sort(function(a,b){var ia=pos[a.mo]!=null?pos[a.mo]:9999,ib=pos[b.mo]!=null?pos[b.mo]:9999;return ia-ib||(a.ent<b.ent?-1:a.ent>b.ent?1:0);});
+  lista.forEach(pendEnt);S.mos=lista;var ni=-1;lista.forEach(function(m,i){if(m.mo===selMo)ni=i;});
+  if(ni<0){S.sel=0;if(S.pantalla==='detalle'&&!S.modal)S.pantalla='lista';}else S.sel=ni;
+  S.katHora=Date.now();guardarEnv();S.sync=S.cola.length?'pend':'ok';S.conxMsg='';if(!S.modal)render();guardar();if(S.cola.length)enviarCola();})
+ .catch(function(){S.sync='err';S.conxMsg='Sin conexión';if(!S.modal)render();});}
+setTimeout(cargarColaR,1500);setInterval(function(){if(enLinea()&&!S.modal)cargarColaR();},120000);
 cargar();if(PA.ult==null){PA.ult=Date.now();guardarPA();}render();leerAviso();setInterval(leerAviso,15000);vigilar();setInterval(function(){vigilar();var p=document.querySelector('.par b');if(p)p.textContent='⛔ ARMADO Y SOLDADURA 1 PARADO · '+durTxt(paradaMs());},20000);wake();
 /* logo: el mismo del tablero de TV */
 fetch('../',{cache:'no-store'}).then(function(r){return r.text();}).then(function(t){var m=t.match(/id="logo"\s+src="(data:image\/[^"]+)"/)||t.match(/src="(data:image\/png;base64,[^"]+)"/);if(m){LOGO=m[1];render();}}).catch(function(){});
