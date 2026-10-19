@@ -100,7 +100,12 @@ function disponible(iso){var fin=new Date(iso+'T14:00:00'),t=new Date(),ms=0;
 function notaPz(m){var r=new RegExp('\\bPintura'+'[^\\n]*?(\\d+)\\s*/\\s*\\d+','gi'),x,n=0;var t=m.notas||'';while((x=r.exec(t)))n=+x[1];return n;}
 /* DOBLECONTEO19OCT (Moisés, 19-oct-2026): los lapsos ya enviados a Katana ya vienen en las notas; solo se suman los que siguen
    en la cola (o rechazados por Katana). Antes se sumaban dos veces (MO-441: 121 cortadas se veían como 139 y 0 por cortar). */
-function pendPz(m){var n=0;(S.cola||[]).forEach(function(e){if(e&&e.mo===m.mo)n+=+e.piezas||0;});(S.errores||[]).forEach(function(x){var e=x&&x.ev;if(e&&e.mo===m.mo)n+=+e.piezas||0;});return n;}
+/* ENVIADOS19OCT (Moisés, 19-oct-2026, MO-441): lo que Katana ya aceptó pero la estación aún no ve en las notas (porque no ha podido
+   volver a bajar la lista) también cuenta. Se olvida en cuanto llega una lista nueva de Katana posterior al envío. */
+if(!S.katHora){var lm=Date.parse(document.lastModified);if(lm&&lm<Date.now())S.katHora=lm;}   /* sin lista en vivo: cuenta desde que se publicó esta versión */
+var ENVK=KEY+'_env';S.env=(function(){try{return JSON.parse(localStorage.getItem(ENVK)||'[]');}catch(e){return [];}})();
+function guardarEnv(){var lim=Date.now()-48*3600e3;S.env=(S.env||[]).filter(function(x){return x.t>lim&&x.t>(S.katHora||0);});try{localStorage.setItem(ENVK,JSON.stringify(S.env));}catch(e){}}
+function pendPz(m){var n=0;(S.env||[]).forEach(function(e){if(e&&e.mo===m.mo&&e.t>(S.katHora||0))n+=+e.piezas||0;});(S.cola||[]).forEach(function(e){if(e&&e.mo===m.mo)n+=+e.piezas||0;});(S.errores||[]).forEach(function(x){var e=x&&x.ev;if(e&&e.mo===m.mo)n+=+e.piezas||0;});return n;}
 function hz(m){var e=m.entr||0,loc=((typeof PAUSA_KATANA!=='undefined'&&PAUSA_KATANA)||!m.rowId)?(m.st.done||0):pendPz(m);return Math.min(m.piezas,Math.max(0,Math.max(notaPz(m),m.hechas||0)-e)+loc);}
 /* PZ7OCT · 6-oct-2026 23:06: Faltan = Remaining de Katana. PZ6OCT · 6-oct-2026 (Moisés): Faltan X de total + barra entregadas / listas -> siguiente estación / faltan aquí */
 function fmtN(n){return (+n||0).toLocaleString('en-US');}
@@ -163,7 +168,7 @@ function otraVez(){var w=ESPERA;ESPERA=Math.min(300000,ESPERA*2);setTimeout(rein
 function enviarCola(){if(!enLinea()||enviando||!S.cola.length){if(!S.cola.length&&S.sync==='pend')S.sync='ok';return;}
  enviando=true;var ev=S.cola[0];
  api('POST','/evento',{rowId:ev.rowId,accion:ev.accion,operador:ev.operador,pin:ev.pin||(CONX&&CONX.pin)||'',segundos:ev.segundos,piezas:ev.piezas||0,esperado:S.tReal[ev.rowId]}).then(function(r){enviando=false;
-  if(r.ok){S.cola.shift();S.mos.forEach(function(q){if(q.rowId===ev.rowId&&r.op&&r.op.hechas!=null)q.hechas=Math.max(q.hechas||0,+r.op.hechas);});S.tReal[ev.rowId]=r.op.tiempoReal;ESPERA=30000;}
+  if(r.ok){S.cola.shift();if(ev.piezas){S.env=S.env||[];S.env.push({mo:ev.mo,piezas:+ev.piezas,t:Date.now()});guardarEnv();}S.tReal[ev.rowId]=r.op.tiempoReal;ESPERA=30000;}
   else if(r._status>=400&&r._status<500){S.cola.shift();S.errores.push({t:Date.now(),mo:ev.mo,accion:ev.accion,error:r.error||('HTTP '+r._status)});}
   else{S.sync='err';guardar();render();otraVez();return;}
   S.sync=S.cola.length?'pend':'ok';guardar();if(!S.modal)render();if(S.cola.length)setTimeout(enviarCola,300);})

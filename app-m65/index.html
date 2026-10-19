@@ -115,7 +115,12 @@ function disponible(iso){var fin=new Date(iso+'T14:00:00'),t=new Date(),ms=0;
 function notaPz(m){var t=m.notas||'',n=0;(t.match(new RegExp('^[ \\t]*M65[^\\n]*','gim'))||[]).forEach(function(l){var r=/(\d+)\s*\/\s*(\d+)/g,x;while((x=r.exec(l))){var a=l.charAt(x.index-1),b=l.charAt(r.lastIndex);if(/[\d\/]/.test(a)||/[\d\/]/.test(b))continue;n=+x[1];}});return n;} /* 4-oct-2026: toma el ultimo x/y de la linea de la estacion, sin confundir fechas (02/10/2026) */
 /* DOBLECONTEO19OCT (Moisés, 19-oct-2026): los lapsos ya enviados a Katana ya vienen en las notas; solo se suman los que siguen
    en la cola (o rechazados por Katana). Antes se sumaban dos veces (MO-441: 121 cortadas se veían como 139 y 0 por cortar). */
-function pendPz(m){var n=0;(S.cola||[]).forEach(function(e){if(e&&e.mo===m.mo)n+=+e.piezas||0;});(S.errores||[]).forEach(function(x){var e=x&&x.ev;if(e&&e.mo===m.mo)n+=+e.piezas||0;});return n;}
+/* ENVIADOS19OCT (Moisés, 19-oct-2026, MO-441): lo que Katana ya aceptó pero la estación aún no ve en las notas (porque no ha podido
+   volver a bajar la lista) también cuenta. Se olvida en cuanto llega una lista nueva de Katana posterior al envío. */
+if(!S.katHora){var lm=Date.parse(document.lastModified);if(lm&&lm<Date.now())S.katHora=lm;}   /* sin lista en vivo: cuenta desde que se publicó esta versión */
+var ENVK=KEY+'_env';S.env=(function(){try{return JSON.parse(localStorage.getItem(ENVK)||'[]');}catch(e){return [];}})();
+function guardarEnv(){var lim=Date.now()-48*3600e3;S.env=(S.env||[]).filter(function(x){return x.t>lim&&x.t>(S.katHora||0);});try{localStorage.setItem(ENVK,JSON.stringify(S.env));}catch(e){}}
+function pendPz(m){var n=0;(S.env||[]).forEach(function(e){if(e&&e.mo===m.mo&&e.t>(S.katHora||0))n+=+e.piezas||0;});(S.cola||[]).forEach(function(e){if(e&&e.mo===m.mo)n+=+e.piezas||0;});(S.errores||[]).forEach(function(x){var e=x&&x.ev;if(e&&e.mo===m.mo)n+=+e.piezas||0;});return n;}
 function hz(m){var e=m.entr||0,loc=((typeof PAUSA_KATANA!=='undefined'&&PAUSA_KATANA)||!m.rowId)?(m.st.done||0):pendPz(m);return Math.min(m.piezas,Math.max(0,Math.max(notaPz(m),m.hechas||0)-e)+loc);}
 /* PORHACER15OCT (Moisés, 15-oct-2026): el número grande de la estación es lo que falta EN ESTA estación ("Por maquinar 511 de 692"); la TV sigue con lo que falta entregar al cliente.
    PZ6OCT · 6-oct-2026 (Moisés): Faltan X de total + barra entregadas / listas -> siguiente estación / faltan aquí */
@@ -150,7 +155,7 @@ S.mos.forEach(pendEnt);setTimeout(leerTV,800);setInterval(leerTV,120000);   /* T
 /* AUTORECARGA (Moisés, 12-oct-2026: "que las estaciones se recarguen junto con la TV"): cada 2 min revisa si en GitHub hay
    una versión nueva de esta estación (otro "MOs de Katana al ..."); si la hay, guarda lo capturado y recarga sola.
    Nunca recarga con una ventana abierta (captura de piezas, pausa, PIN...): espera a que se cierre. Además recarga a las 7:00, 12:00, 16:00 y 18:40 (hora de México). */
-var PIE_ACT='19-oct 13:50',T0CARGA=Date.now();
+var PIE_ACT='19-oct 14:05',T0CARGA=Date.now();
 function mxHM(){var d=new Date(Date.now()-6*3600000);return {h:d.getUTCHours(),m:d.getUTCMinutes()};}
 function recargar(){if(S.modal)return;try{guardar();}catch(e){}location.reload();}
 function revisarVersion(){fetch(location.pathname+'?v='+Date.now(),{cache:'no-store'}).then(function(r){return r.ok?r.text():'';}).then(function(t){
@@ -198,7 +203,7 @@ function otraVez(){var w=ESPERA;ESPERA=Math.min(300000,ESPERA*2);setTimeout(rein
 function enviarCola(){if(!enLinea()||enviando||!S.cola.length){if(!S.cola.length&&S.sync==='pend')S.sync='ok';return;}
  enviando=true;var ev=S.cola[0];
  api('POST','/evento',{rowId:ev.rowId,accion:ev.accion,operador:ev.operador,pin:ev.pin||(CONX&&CONX.pin)||'',segundos:ev.segundos,piezas:ev.piezas||0,esperado:S.tReal[ev.rowId]}).then(function(r){enviando=false;
-  if(r.ok){S.ultErr='';S.cola.shift();S.mos.forEach(function(q){if(q.rowId===ev.rowId&&r.op&&r.op.hechas!=null)q.hechas=Math.max(q.hechas||0,+r.op.hechas);});S.tReal[ev.rowId]=r.op.tiempoReal;ESPERA=30000;}
+  if(r.ok){S.ultErr='';S.cola.shift();if(ev.piezas){S.env=S.env||[];S.env.push({mo:ev.mo,piezas:+ev.piezas,t:Date.now()});guardarEnv();}S.tReal[ev.rowId]=r.op.tiempoReal;ESPERA=30000;}
   else if(r._status>=400&&r._status<500){S.cola.shift();S.errores.push({t:Date.now(),mo:ev.mo,accion:ev.accion,error:r.error||('HTTP '+r._status),ev:ev});}
   else{S.sync='err';S.ultErr=r.error||('HTTP '+r._status);guardar();render();otraVez();return;}
   S.sync=S.cola.length?'pend':'ok';guardar();if(!S.modal)render();if(S.cola.length)setTimeout(enviarCola,300);})
@@ -226,7 +231,7 @@ function mapaMO(k,dr,idx){var hoy=diaKey(Date.now()),cols=[],ruta=[];
 /* 14-oct-2026: ninguna respuesta lenta deja la estación en "Conectando…": la cola espera máx. 25 s; el tablero y los operadores, 8 s */
 function conTiempo(p,ms,dflt){return Promise.race([p,new Promise(function(r){setTimeout(function(){r(dflt);},ms);})]);}
 function cargarCola(){if(!enLinea())return Promise.resolve();
- return Promise.all([conTiempo(api('GET','/cola'),25000,{ok:false,error:'el servidor tardó demasiado'}),conTiempo(tvJSON().catch(function(){return null;}),8000,null),conTiempo(api('GET','/operadores').catch(function(){return null;}),8000,null)])
+ return Promise.all([conTiempo(api('GET','/cola'),50000,{ok:false,error:'el servidor tardó demasiado'}),conTiempo(tvJSON().catch(function(){return null;}),8000,null),conTiempo(api('GET','/operadores').catch(function(){return null;}),8000,null)])
  .then(function(res){var c=res[0],d=res[1],ops=res[2];
   if(!c||!c.ok){S.sync='err';S.conxMsg=(c&&c.error)||'Sin respuesta del servidor';if(!S.modal)render();return;}
   if(ops&&ops.ok&&ops.operadores&&ops.operadores.length)OPS=ops.operadores;
@@ -237,7 +242,7 @@ function cargarCola(){if(!enLinea())return Promise.resolve();
   lista.sort(function(a,b){if(ESPERA&&(!!a.espera)!==(!!b.espera))return a.espera?1:-1;var ia=pos[a.mo]!=null?pos[a.mo]:9999,ib=pos[b.mo]!=null?pos[b.mo]:9999;return ia-ib||(a.ent<b.ent?-1:a.ent>b.ent?1:0);});
   lista.forEach(pendEnt);if(!lista.length&&S.mos.length&&!c.mos.length){}S.mos=lista;var ni=-1;lista.forEach(function(m,i){if(m.mo===selMo)ni=i;});
   if(ni<0){S.sel=0;if(S.pantalla==='detalle'&&!S.modal)S.pantalla='lista';}else S.sel=ni;
-  S.katHora=Date.now();S.sync=S.cola.length?'pend':'ok';S.conxMsg='';if(!S.modal)render();guardar();})
+  S.katHora=Date.now();guardarEnv();S.sync=S.cola.length?'pend':'ok';S.conxMsg='';if(!S.modal)render();guardar();})
  .catch(function(){S.sync='err';S.conxMsg='Sin conexión';if(!S.modal)render();});}
 
 /* ================================ VISTAS ================================ */
@@ -272,7 +277,7 @@ function vLista(){
   '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;gap:6px"><span class="mono sku">'+m.sku+'</span><span style="text-align:right;white-space:nowrap"><span class="ks">Por M65 </span><b style="font-size:22px">'+fmtN(faltaPz(m))+'</b><span class="ks"> de '+fmtN(m.plan)+'</span></span></div>'+barraPz(m)+
   '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:7px"><span class="st" style="'+estStyM(m)+'">'+E(estTxtM(m))+'</span>'+
   (st.status==='none'?'<span class="st" style="background:'+pv[1]+';border:1px solid '+pv[2]+';color:'+pv[3]+'">'+pv[0]+'</span>':'')+'</div></button>';}).join('')+
- '<div style="font-size:12px;color:var(--tx2);margin:6px 0 10px;line-height:1.4">'+(enLinea()?'CONECTADA A KATANA · la cola se actualiza sola.':'PILOTO · MOs de Katana al 19-oct 13:50. Lo capturado se guarda en este teléfono; todavía no escribe en Katana: el Ing. Moisés lo registra con el Resumen del turno.')+'</div>';}
+ '<div style="font-size:12px;color:var(--tx2);margin:6px 0 10px;line-height:1.4">'+(enLinea()?'CONECTADA A KATANA · la cola se actualiza sola.':'PILOTO · MOs de Katana al 19-oct 14:05. Lo capturado se guarda en este teléfono; todavía no escribe en Katana: el Ing. Moisés lo registra con el Resumen del turno.')+'</div>';}
 function bigBtn(bg,fg,on){return 'background:'+bg+';color:'+fg+';opacity:'+(on?1:.25);}
 function vDetalle(){var m=cur(),st=m.st,falt=Math.max(0,m.piezas-hz(m)),tramo=st.tramoStart?trab(st):0,img=PZ[m.sku],pv=previa(m);
  var noStart=!(st.status==='none'||st.status==='pausa'),noPausa=st.status!=='prog',noFin=!(st.status==='prog'||st.status==='pausa');
