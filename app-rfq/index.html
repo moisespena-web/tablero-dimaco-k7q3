@@ -146,10 +146,11 @@ const ROLES = {
   ely:{n:'Ely',a:'Almacén',tabs:['pedir','mias','recibir']},
   uriel:{n:'Uriel',a:'Ingeniería',tabs:['pedir','mias']},
   gerardo:{n:'Gerardo',a:'Producción',tabs:['pedir','mias']},
+  lupita:{n:'Lupita',a:'Producción',tabs:['pedir','mias']},
   paty:{n:'Paty',a:'Compras',tabs:['pend','facturas','todas']},
-  moises:{n:'Moisés',a:'Dirección',tabs:['autorizar','todas']},
+  moises:{n:'Moisés',a:'Dirección',tabs:['autorizar','pedir','mias','todas']},
 };
-const TABN = {pedir:'Pedir',mias:'Mis requisiciones',recibir:'Recibir',pend:'Pendientes',facturas:'Facturas',autorizar:'Autorizar',todas:'Todas'};
+const TABN = {pedir:'Pedir',mias:'Mis req.',recibir:'Recibir',pend:'Pendientes',facturas:'Facturas',autorizar:'Autorizar',todas:'Todas'};
 const EST = {
   cotizar:['A cotizar','c-cot'], autorizar:['Por autorizar','c-aut'], pedir:['Autorizado · por pedir','c-ped'],
   pedido:['Pedido','c-ped'], parcial:['Llegó parcial','c-aut'], recibido:['Recibido','c-ok'],
@@ -354,7 +355,9 @@ app.addEventListener('click',e=>{
   if(b.id==='enviar'){
     S.seq++; const folio='RQ-'+String(S.seq).padStart(4,'0');
     const lines=carrito.map(x=>{ const c=x.k?catInfo(x.k):null; const dir=x.k&&vigente(c);
-      return {k:x.k,d:x.d,qty:x.qty,precio:dir?c.p:null,prov:dir?c.s:null,tipo:dir?'directo':'cotizar',est:dir?'autorizar':'cotizar',cot:[],rec:0,hist:[]}; });
+      const l={k:x.k,d:x.d,qty:x.qty,precio:dir?c.p:null,prov:dir?c.s:null,tipo:dir?'directo':'cotizar',est:dir?'autorizar':'cotizar',cot:[],rec:0,hist:[]};
+      if(ROL==='moises'&&l.est==='autorizar'&&autorizador(l)==='moises'){ l.est='pedir'; l.aut='Moisés'; }
+      return l; });
     S.reqs.push({id:S.seq,folio,fecha:hoyISO(),quien:ROL,para:paraTipo==='planta'?'Uso planta':mo,lines});
     carrito=[]; para=''; paraTipo=''; mo=''; save(); TAB='mias'; render(); toast(`${folio} enviada`); return;
   }
