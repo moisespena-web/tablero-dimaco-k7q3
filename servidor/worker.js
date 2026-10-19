@@ -74,6 +74,7 @@ const ESTACIONES = {
 export default {
   async scheduled(event, env, ctx) { return cron(event, env, ctx); },   // TVVIVO
   async fetch(req, env, ctx) {
+    CTX = ctx;   // RAPIDO19OCT: para renovar la foto de Katana por detrás
     const origen = env.ORIGEN || 'https://moisespena-web.github.io';
     const cors = {
       'Access-Control-Allow-Origin': origen,
@@ -243,8 +244,19 @@ function normop(row) {
 const FOTO_TTL = 60e3, FOTO_VIEJA = 15 * 60e3;
 let FOTO = null, FOTO_PROM = null, RECS = null;
 function fotoVencida() { if (FOTO) FOTO = { ...FOTO, vencida: true }; }   // tras un evento: renovar en la próxima consulta
+/* RAPIDO19OCT (Moisés, 19-oct-2026): las estaciones marcaban "Sin enviar · el servidor tardó demasiado" porque, tras cada
+   registro, la siguiente consulta esperaba a releer TODO Katana. Ahora, si hay una foto de menos de 15 min, se contesta al
+   instante con ella y la foto nueva se arma por detrás (la estación ya cuenta por su lado lo que acaba de enviar). */
+let CTX = null;
 async function foto(k) {
   if (FOTO && !FOTO.vencida && Date.now() - FOTO.t < FOTO_TTL) return FOTO;
+  if (FOTO && Date.now() - FOTO.t < FOTO_VIEJA) {
+    if (!FOTO_PROM) { const p = fotoNueva(k).catch(() => null); if (CTX && CTX.waitUntil) CTX.waitUntil(p); }
+    return FOTO;
+  }
+  return fotoNueva(k);
+}
+async function fotoNueva(k) {
   if (FOTO_PROM) return FOTO_PROM;
   FOTO_PROM = (async () => {
     try {
