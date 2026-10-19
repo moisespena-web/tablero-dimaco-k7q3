@@ -40,10 +40,13 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid 
 .hdr p{margin:2px 0 0;font-size:12px;color:var(--tx2)}
 .proto{font-size:12px;color:var(--warn);background:var(--warn-s);border-radius:10px;padding:8px 10px;margin-bottom:10px;line-height:1.4}
 .proto button{background:none;border:0;color:var(--ac);font-weight:700;padding:0;font-size:12px}
-.roles{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:8px}
-.roles button{flex:none;border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:7px 12px;font-size:13px;font-weight:600;color:var(--tx2)}
+.roles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-bottom:10px}
+.roles button{border:1px solid var(--line);background:var(--panel);border-radius:12px;padding:6px 4px;font-size:14px;font-weight:700;color:var(--tx);line-height:1.2;position:relative;min-width:0}
+.roles button small{display:block;font-size:11px;font-weight:600;color:var(--tx2)}
+.roles button[aria-pressed="true"] small{color:#fff}
+.roles button .bd{position:absolute;top:-6px;right:-4px;margin:0}
 .roles button[aria-pressed="true"]{background:var(--ac);border-color:var(--ac);color:#fff}
-.roles span.l{flex:none;align-self:center;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--tx3);font-weight:700;margin-right:2px}
+.roles span.l{grid-column:1/-1;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--tx3);font-weight:700}
 .tabs{display:flex;gap:4px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:4px;margin-bottom:12px}
 .tabs button{flex:1;border:0;background:none;border-radius:9px;padding:9px 4px;font-size:14px;font-weight:700;color:var(--tx2);position:relative}
 .tabs button[aria-selected="true"]{background:var(--ac-s);color:var(--ac)}
@@ -195,7 +198,7 @@ function render(){
   const c=counts();
   const badgeRol={paty:c.paty+c.facturas,moises:c.moises,ely:c.recibir};
   document.getElementById('roles').innerHTML = '<span class="l">Ver como</span>'+Object.entries(ROLES).map(([k,v])=>
-    `<button type="button" data-rol="${k}" aria-pressed="${k===ROL}">${v.n} · ${v.a}${badgeRol[k]?`<span class="bd">${badgeRol[k]}</span>`:''}</button>`).join('');
+    `<button type="button" data-rol="${k}" aria-pressed="${k===ROL}">${v.n}<small>${v.a}</small>${badgeRol[k]?`<span class="bd">${badgeRol[k]}</span>`:''}</button>`).join('');
   const tb={recibir:c.recibir,pend:c.paty,facturas:c.facturas,autorizar:c.moises};
   document.getElementById('tabs').innerHTML = ROLES[ROL].tabs.map(t=>
     `<button type="button" role="tab" data-tab="${t}" aria-selected="${t===TAB}">${TABN[t]}${tb[t]?`<span class="bd">${tb[t]}</span>`:''}</button>`).join('');
