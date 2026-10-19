@@ -1,0 +1,279 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1">
+<meta name="robots" content="noindex">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Caja chica">
+<meta name="theme-color" content="#f3f5f7">
+<link rel="apple-touch-icon" href="icon.png">
+<link rel="icon" type="image/png" href="icon.png">
+<title>Caja chica · DIMACO</title>
+<style>
+:root{--bg:#f3f5f7;--panel:#fff;--line:#d9e0e5;--tx:#15212a;--tx2:#52616a;--tx3:#80909a;--ac:#1f5fa8;--ac-s:#e3edf8;--ok:#1a7f37;--ok-s:#e3f4e8;--bad:#b42318;--bad-s:#fdecea;--warn:#9a6700;--warn-s:#fff4d6;--safe-b:env(safe-area-inset-bottom,0px);--safe-t:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--tx);font-family:-apple-system,"Helvetica Neue",Helvetica,Arial,sans-serif;-webkit-text-size-adjust:100%;-webkit-tap-highlight-color:transparent}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;touch-action:manipulation}
+#app{max-width:560px;margin:0 auto;padding:calc(10px + var(--safe-t)) 16px calc(24px + var(--safe-b))}
+.hdr{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.logos{display:flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:6px 10px}
+.logos img{height:34px;width:auto;display:block}
+.hdr h1{font-size:20px;margin:0;line-height:1.1}
+.hdr p{margin:2px 0 0;font-size:12px;color:var(--tx2)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px}
+.saldo .k{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--tx2);font-weight:700}
+.saldo .v{font-size:36px;font-weight:800;font-variant-numeric:tabular-nums;margin:2px 0}
+.saldo .v.neg{color:var(--bad)}
+.saldo .s{font-size:12px;color:var(--tx3)}
+.big{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.big button{min-height:76px;border-radius:14px;border:2px solid var(--ac);background:#fff;color:var(--ac);font-size:18px;font-weight:800}
+.big button.out{border-color:var(--bad);color:var(--bad)}
+.big button.in{border-color:var(--ok);color:var(--ok)}
+.send{width:100%;min-height:56px;border:0;border-radius:14px;background:var(--ac);color:#fff;font-size:17px;font-weight:800;margin-bottom:12px}
+.send:disabled{background:#c8d2da;color:#fff}
+h2{font-size:16px;margin:0 0 4px}
+.sub{font-size:12px;color:var(--tx2);margin-bottom:10px}
+ul.list{list-style:none;margin:0;padding:0}
+ul.list li{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-top:1px solid var(--line)}
+ul.list li:first-child{border-top:0}
+.li-d{font-size:12px;color:var(--tx3);min-width:58px;padding-top:2px}
+.li-c{flex:1;min-width:0}
+.li-c b{display:block;font-size:14px}
+.li-c span{display:block;font-size:12px;color:var(--tx2);overflow-wrap:anywhere}
+.li-r{text-align:right}
+.li-m{font-weight:800;font-variant-numeric:tabular-nums;white-space:nowrap}
+.li-m.in{color:var(--ok)}
+li.cx .li-c b,li.cx .li-m{text-decoration:line-through;color:var(--tx3)}
+.chip{display:inline-block;font-size:11px;font-weight:700;border-radius:6px;padding:1px 6px;margin-top:4px;white-space:nowrap}
+.chip.pend{background:var(--warn-s);color:var(--warn)}
+.chip.env{background:var(--ac-s);color:var(--ac)}
+.chip.ok{background:var(--ok-s);color:var(--ok)}
+.chip.cx{background:var(--bad-s);color:var(--bad)}
+.lk{background:none;border:0;color:var(--ac);font-size:12px;font-weight:700;padding:4px 0}
+form label{display:block;font-size:13px;font-weight:700;color:var(--tx2);margin:12px 0 4px}
+form input,form select,form textarea{width:100%;font-size:17px;padding:12px;border:1px solid var(--line);border-radius:10px;background:#fff}
+form textarea{min-height:64px;resize:vertical}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chips button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:9px 12px;font-size:14px;font-weight:600}
+.chips button[aria-pressed="true"]{background:var(--ac);border-color:var(--ac);color:#fff}
+.hint{font-size:12px;color:var(--tx3);margin-top:4px}
+.err{color:var(--bad);font-weight:700;font-size:14px;min-height:20px;margin-top:10px}
+.fbtn{display:grid;grid-template-columns:1fr 2fr;gap:10px;margin-top:8px}
+.fbtn button{min-height:52px;border-radius:12px;font-size:16px;font-weight:800;border:1px solid var(--line);background:#fff}
+.fbtn button.go{background:var(--ac);border-color:var(--ac);color:#fff}
+.lock{font-size:12px;color:var(--tx2);margin-top:12px;display:flex;gap:6px}
+.toast{position:fixed;left:50%;bottom:calc(20px + var(--safe-b));transform:translateX(-50%);background:#15212a;color:#fff;padding:10px 16px;border-radius:10px;font-size:14px;font-weight:600;z-index:20;max-width:90vw}
+.foot{font-size:11px;color:var(--tx3);text-align:center;margin-top:8px}
+.tabs{display:grid;grid-template-columns:1fr 1fr;background:#e4e9ed;border-radius:12px;padding:3px;margin-bottom:12px}
+.tabs button{border:0;background:none;border-radius:10px;padding:10px;font-size:15px;font-weight:700;color:var(--tx2)}
+.tabs button[aria-pressed="true"]{background:#fff;color:var(--tx);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.mnav{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.mnav button{border:1px solid var(--line);background:#fff;border-radius:10px;width:44px;height:40px;font-size:20px}
+.mnav b{font-size:16px}
+.tots{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.tots>div{background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px}
+.tots .k{font-size:11px;color:var(--tx2);font-weight:700;text-transform:uppercase}
+.tots .v{font-size:18px;font-weight:800;font-variant-numeric:tabular-nums}
+input.q{width:100%;font-size:16px;padding:11px;border:1px solid var(--line);border-radius:10px;margin-bottom:10px}
+.modal{position:fixed;inset:0;background:rgba(10,16,24,.5);display:flex;align-items:flex-end;justify-content:center;z-index:10}
+.modal .card{width:100%;max-width:560px;margin:0;border-radius:16px 16px 0 0;padding-bottom:calc(16px + var(--safe-b))}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+(function(){
+'use strict';
+var DEST='moises.pena@dimaco-mx.com';
+var KEY='dimaco_caja_paty_v1';
+var CATS=[['NÓMINA','Sobre semanal (escribe el número de nómina), sueldos, diferencias, becarios'],['DESTAJO','Pagos por pieza, por horas o por obra'],['PRÉSTAMO','Préstamos al personal'],['VIÁTICOS','Comidas, cenas y casetas en viaje'],['COMPRAS','Refacciones, herramienta y material de planta'],['VEHÍCULOS','Talacha, gasolina, reparaciones, multas, lavado'],['SERVICIOS','Agua, basura, báscula, paquetería, impresiones, comida de perros'],['PERSONAL','Médico y medicamento, pasteles, recargas, regalos al personal'],['DIRECCIÓN','Gastos que pide dirección'],['OTROS','Solo si no cabe en ninguno']];
+var SUBS={'NÓMINA':['Nómina semanal','Sueldo en efectivo','Diferencia de nómina','Becario','PTU','Otro'],'DESTAJO':['Destajo por pieza','Pago por horas','Obra y mantenimiento','Otro'],'PRÉSTAMO':['Préstamo a trabajador','Otro'],'VIÁTICOS':['Comida en viaje','Cena en viaje','Caseta','Otro'],'COMPRAS':['Tornillería','Mangueras','Refacciones y piezas','Herramienta','Material eléctrico','Otro'],'VEHÍCULOS':['Talacha y llantas','Gasolina','Reparación','Multa o verificación','Lavado','Otro'],'SERVICIOS':['Agua oficinas','Basura','Paquetería','Comida de perros','Impresiones','Báscula','Limpieza y terreno','Otro'],'PERSONAL':['Médico y medicamento','Pastel de cumpleaños','Recarga de celular','Regalo','Otro'],'DIRECCIÓN':['Bebidas','Comida','Otro'],'OTROS':['Otro']};
+var TIPOS=[['DIRECCIÓN','Efectivo que me entregó el Ing. Moisés','Quién me lo dio o con quién lo mandó'],['CHEQUE','Cambié un cheque en el banco','Banco y número de cheque'],['CLIENTE','Un cliente pagó en efectivo','Nombre del cliente'],['REPOSICIÓN','Un colaborador regresó dinero (fuera de nómina)','Nombre del colaborador']];
+var COMPS=['Ticket','Nota','Factura','Recibo firmado','Sin comprobante'];
+var MES=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+var DOW=['dom','lun','mar','mié','jue','vie','sáb'];
+var money=new Intl.NumberFormat('es-MX',{style:'currency',currency:'MXN',minimumFractionDigits:2,maximumFractionDigits:2});
+function fm(n){return money.format(Math.round((n||0)*100)/100);}
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+function pad(n){return (n<10?'0':'')+n;}
+function hoy(){var d=new Date();return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());}
+function fd(s){var p=s.split('-');var d=new Date(+p[0],+p[1]-1,+p[2]);return DOW[d.getDay()]+' '+(+p[2])+' '+MES[+p[1]-1];}
+function fdn(s){var p=s.split('-');return p[2]+'/'+p[1]+'/'+p[0];}
+function parseMoney(v){var n=Number(String(v).replace(/[$,\s]/g,''));return isFinite(n)?Math.round(n*100)/100:NaN;}
+function clean(s){return String(s||'').replace(/[\r\n\t]+/g,' ').replace(/·/g,'-').replace(/›/g,'>').replace(/\s+/g,' ').trim();}
+function folio(){var d=new Date(),a='ABCDEFGHJKLMNPQRSTUVWXYZ23456789',r='';for(var i=0;i<4;i++)r+=a[Math.floor(Math.random()*a.length)];
+ return 'P'+String(d.getFullYear()).slice(2)+pad(d.getMonth()+1)+pad(d.getDate())+'-'+r;}
+
+/* ----- estado (vive en este teléfono) ----- */
+var D={movs:[],base:null};
+function load(){try{var j=JSON.parse(localStorage.getItem(KEY)||'null');if(j&&j.movs)D=j;}catch(e){}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(D));}catch(e){toast('No se pudo guardar en el teléfono. No borres el historial del navegador.');}}
+load();
+var LB=null;var S={vista:'cap',mes:hoy().slice(0,7),q:'',pant:'inicio',cat:null,sub:null,tipo:null,edit:null,err:'',modal:null,todos:false};
+
+function enTablero(m){return !!(D.base&&D.base.folios&&D.base.folios.indexOf(m.f)>=0);}
+function cxEnTablero(m){return !!(D.base&&D.base.cancelados&&D.base.cancelados.indexOf(m.f)>=0);}
+function saldo(){
+ if(!D.base||typeof D.base.saldo!=='number')return null;
+ var s=D.base.saldo;
+ D.movs.forEach(function(m){var sg=m.k==='E'?1:-1;
+  if(!enTablero(m)){if(!m.cx)s+=sg*m.monto;}
+  else if(m.cx&&!cxEnTablero(m)){s-=sg*m.monto;}});
+ return Math.round(s*100)/100;}
+function porEnviar(){return D.movs.filter(function(m){return !m.env||(m.cx&&!m.cx.env);});}
+
+function refrescarSaldo(){
+ fetch('saldo.json?t='+Date.now(),{cache:'no-store'}).then(function(r){return r.ok?r.json():null;}).then(function(j){
+  if(j&&typeof j.saldo==='number'){D.base=j;save();render();}}).catch(function(){});}
+
+/* ----- vistas ----- */
+function vHeader(){return '<div class="hdr"><div class="logos"><img src="logo-dimaco.png" alt="DIMACO"><img src="logo-mg.png" alt="Marca Guanajuato Internacional"></div><div><h1>Caja chica</h1><p>Estación de Paty · DIMACO METALMECANICA</p></div></div>';}
+function vSaldo(){var s=saldo();
+ var al=D.base&&D.base.al?new Date(D.base.al):null;
+ var txt=al?'Saldo del tablero al '+al.getDate()+' '+MES[al.getMonth()]+' '+pad(al.getHours())+':'+pad(al.getMinutes())+', más lo que has capturado después.':'Aún no llega el saldo del tablero. Revisa tu conexión.';
+ return '<div class="card saldo"><div class="k">Te queda en caja</div><div class="v'+(s!=null&&s<0?' neg':'')+'">'+(s==null?'—':fm(s))+'</div><div class="s">'+esc(txt)+'</div></div>';}
+function chipDe(m){
+ if(m.cx){return m.cx.env?(cxEnTablero(m)?'<span class="chip cx">Cancelado</span>':'<span class="chip cx">Cancelado · enviado</span>'):'<span class="chip pend">Cancelado · por enviar</span>';}
+ if(enTablero(m))return '<span class="chip ok">En tablero</span>';
+ if(m.env)return '<span class="chip env">Enviado</span>';
+ return '<span class="chip pend">Por enviar</span>';}
+function vLista(){
+ var ms=D.movs.slice().sort(function(a,b){return b.ts-a.ts;});
+ var lim=S.todos?ms.length:15;
+ var rows=ms.slice(0,lim).map(function(m){var sal=m.k==='S';
+  var t=sal?m.cat+(m.sub&&m.sub!=='Otro'?' · '+m.sub:''):'Entrada · '+m.tipo;
+  var d=sal?m.desc+' — '+m.persona:(m.persona+(m.nota?' — '+m.nota:''));
+  var acc='';
+  if(!m.cx){acc=!m.env?'<button class="lk" data-a="editar" data-v="'+m.f+'">Corregir</button> · <button class="lk" data-a="cancelar" data-v="'+m.f+'">Cancelar</button>':'<button class="lk" data-a="cancelar" data-v="'+m.f+'">Cancelar</button>';}
+  else acc='<span class="sub" style="margin:0">Motivo: '+esc(m.cx.motivo)+'</span>';
+  return '<li class="'+(m.cx?'cx':'')+'"><span class="li-d">'+esc(fd(m.fecha))+'</span><span class="li-c"><b>'+esc(t)+'</b><span>'+esc(d)+'</span>'+acc+'</span><span class="li-r"><span class="li-m'+(sal?'':' in')+'">'+(sal?'−':'+')+fm(m.monto)+'</span><br>'+chipDe(m)+'</span></li>';}).join('');
+ if(!rows)rows='<li><span class="li-c"><span>Aún no hay movimientos en este teléfono.</span></span></li>';
+ var mas=ms.length>15?'<button class="lk" data-a="todos">'+(S.todos?'Ver menos':'Ver todos ('+ms.length+')')+'</button>':'';
+ return '<div class="card"><h2>Mis movimientos</h2><div class="sub">Folio en el correo. "En tablero" = dirección ya lo tiene.</div><ul class="list">'+rows+'</ul>'+mas+'</div>';}
+function vInicio(){var n=porEnviar().length;
+ return vHeader()+vTabs()+vSaldo()+
+ '<div class="big"><button class="out" data-a="nuevaS">− Salida</button><button class="in" data-a="nuevaE">+ Entrada</button></div>'+
+ '<button class="send" data-a="enviar"'+(n?'':' disabled')+'>📤 Enviar a Ing. Moisés'+(n?' ('+n+')':' · todo enviado')+'</button>'+
+ vLista()+
+ '<div class="foot">Los movimientos viven en este teléfono hasta que los envías. No borres el historial del navegador.<br><button class="lk" data-a="reenviar">Reenviar los últimos 7 días</button></div>';}
+function chips(list,sel,act){return '<div class="chips">'+list.map(function(x){var v=Array.isArray(x)?x[0]:x;return '<button type="button" data-a="'+act+'" data-v="'+esc(v)+'" aria-pressed="'+(v===sel)+'">'+esc(v)+'</button>';}).join('')+'</div>';}
+function vSalida(){var m=S.edit||{};var cd=CATS.filter(function(c){return c[0]===S.cat;})[0];
+ return vHeader()+'<div class="card"><h2>'+(S.edit?'Corregir salida':'Nueva salida')+'</h2><div class="sub">Todo efectivo que sale de la caja.</div><form id="fs" novalidate>'+
+ '<div class="row2"><div><label for="fFecha">Fecha</label><input type="date" id="fFecha" value="'+esc(m.fecha||hoy())+'" max="'+hoy()+'"></div><div><label for="fMonto">Monto</label><input id="fMonto" inputmode="decimal" placeholder="$0.00" value="'+(m.monto?fm(m.monto):'')+'" autocomplete="off"></div></div>'+
+ '<label>Concepto</label>'+chips(CATS,S.cat,'cat')+(cd?'<div class="hint">'+esc(cd[1])+'</div>':'')+
+ (S.cat?'<label>Detalle</label>'+chips(SUBS[S.cat],S.sub,'sub'):'')+
+ '<label for="fDesc">Qué se compró o pagó, y para qué</label><input id="fDesc" maxlength="140" value="'+esc(m.desc||'')+'" placeholder="'+(S.sub==='Nómina semanal'?'Ej. Sobre nómina 43':'Ej. 2 garrafones para la planta')+'">'+
+ '<label for="fPer">Quién recibe el dinero</label><input id="fPer" maxlength="80" value="'+esc(m.persona||'')+'" placeholder="Persona, negocio o proveedor">'+
+ '<label for="fComp">Comprobante</label><select id="fComp">'+COMPS.map(function(c){return '<option'+((m.comp||'Ticket')===c?' selected':'')+'>'+c+'</option>';}).join('')+'</select>'+
+ '<label for="fNota">Nota (opcional)</label><textarea id="fNota" maxlength="300">'+esc(m.nota||'')+'</textarea>'+
+ '<div class="err">'+esc(S.err)+'</div>'+
+ '<div class="fbtn"><button type="button" data-a="inicio">Regresar</button><button type="submit" class="go">Guardar salida</button></div>'+
+ '<div class="lock">🔒<span>Todo gasto dice qué, a quién y para qué. Lo enviado ya no se corrige: se cancela con motivo.</span></div></form></div>';}
+function vEntrada(){var m=S.edit||{};var td=TIPOS.filter(function(t){return t[0]===S.tipo;})[0];
+ return vHeader()+'<div class="card"><h2>'+(S.edit?'Corregir entrada':'Nueva entrada')+'</h2><div class="sub">Dinero que entra a la caja.</div><form id="fe" novalidate>'+
+ '<label>Cómo llegó el dinero</label>'+chips(TIPOS,S.tipo,'tipo')+(td?'<div class="hint">'+esc(td[1])+'</div>':'')+
+ '<div class="row2"><div><label for="fFecha">Fecha</label><input type="date" id="fFecha" value="'+esc(m.fecha||hoy())+'" max="'+hoy()+'"></div><div><label for="fMonto">Monto</label><input id="fMonto" inputmode="decimal" placeholder="$0.00" value="'+(m.monto?fm(m.monto):'')+'" autocomplete="off"></div></div>'+
+ '<label for="fPer">'+esc(td?td[2]:'De quién')+'</label><input id="fPer" maxlength="80" value="'+esc(m.persona||'')+'">'+
+ '<label for="fNota">Nota (opcional)</label><input id="fNota" maxlength="140" value="'+esc(m.nota||'')+'">'+
+ '<div class="err">'+esc(S.err)+'</div>'+
+ '<div class="fbtn"><button type="button" data-a="inicio">Regresar</button><button type="submit" class="go">Guardar entrada</button></div>'+
+ (S.tipo==='DIRECCIÓN'?'<div class="lock">🔒<span>El efectivo de dirección lo confirma el Ing. Moisés en el tablero.</span></div>':'')+'</form></div>';}
+function vModal(){if(!S.modal)return '';var m=D.movs.filter(function(x){return x.f===S.modal;})[0];if(!m)return '';
+ return '<div class="modal"><div class="card"><h2>Cancelar movimiento</h2><div class="sub">'+esc(fd(m.fecha))+' · '+fm(m.monto)+' · '+esc(m.k==='S'?m.desc:m.tipo)+'</div><form id="fc" novalidate><label for="cMot">Motivo (obligatorio)</label><input id="cMot" maxlength="140" placeholder="Ej. Lo capturé dos veces"><div class="err">'+esc(S.err)+'</div><div class="fbtn"><button type="button" data-a="cerrar">No cancelar</button><button type="submit" class="go" style="background:var(--bad);border-color:var(--bad)">Cancelar movimiento</button></div></form></div></div>';}
+function vTabs(){return '<div class="tabs"><button data-a="vista" data-v="cap" aria-pressed="'+(S.vista==='cap')+'">Capturar</button><button data-a="vista" data-v="con" aria-pressed="'+(S.vista==='con')+'">Consultar</button></div>';}
+var MESL=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+function vConsulta(){
+ var h=vHeader()+vTabs()+vSaldo();
+ if(!LB)return h+'<div class="card"><div class="sub">Cargando el libro de caja…</div></div>';
+ var p=S.mes.split('-'),q=S.q.toLowerCase();
+ var rows=LB.movs.filter(function(r){return r.f.slice(0,7)===S.mes&&(!q||(r.c+' '+r.d+' '+r.q+' '+r.p).toLowerCase().indexOf(q)>=0);});
+ var te=0,ts=0;rows.forEach(function(r){if(r.x)return;if(r.k==='E')te+=r.m;else ts+=r.m;});
+ var li=rows.map(function(r){var sal=r.k==='S';return '<li class="'+(r.x?'cx':'')+'"><span class="li-d">'+esc(fd(r.f))+'</span><span class="li-c"><b>'+esc(sal?r.c+(r.d&&r.d!=='Otro'?' · '+r.d:''):'Entrada · '+r.c)+'</b><span>'+esc([r.q,r.p].filter(Boolean).join(' — '))+'</span>'+(r.x?'<span class="chip cx">Cancelado</span>':'')+'</span><span class="li-r"><span class="li-m'+(sal?'':' in')+'">'+(sal?'−':'+')+fm(r.m)+'</span></span></li>';}).join('')||'<li><span class="li-c"><span>Sin movimientos.</span></span></li>';
+ var al=new Date(LB.al);
+ return h+'<div class="card"><div class="mnav"><button data-a="mes" data-v="-1" aria-label="Mes anterior">‹</button><b>'+MESL[+p[1]-1]+' '+p[0]+'</b><button data-a="mes" data-v="1" aria-label="Mes siguiente">›</button></div>'+
+ '<input class="q" id="q" type="search" placeholder="Buscar concepto, persona o descripción" value="'+esc(S.q)+'">'+
+ '<div class="tots"><div><div class="k">Entradas</div><div class="v" style="color:var(--ok)">'+fm(te)+'</div></div><div><div class="k">Salidas</div><div class="v" style="color:var(--bad)">'+fm(ts)+'</div></div></div>'+
+ '<ul class="list">'+li+'</ul><div class="foot">Libro del tablero al '+al.getDate()+' '+MES[al.getMonth()]+' '+pad(al.getHours())+':'+pad(al.getMinutes())+'. Solo consulta: aquí no se edita nada.</div></div>';}
+function cargarLibro(){fetch('libro.json?t='+Date.now(),{cache:'no-store'}).then(function(r){return r.ok?r.json():null;}).then(function(j){if(j&&j.movs){LB=j;if(S.vista==='con')render();}}).catch(function(){});}
+function render(){var app=document.getElementById('app');var y=window.scrollY;
+ app.innerHTML=S.vista==='con'?vConsulta():(S.pant==='salida'?vSalida():S.pant==='entrada'?vEntrada():vInicio())+vModal();
+ var qi=document.getElementById('q');if(qi){qi.addEventListener('input',function(){S.q=qi.value;var pos=qi.selectionStart;render();var n=document.getElementById('q');n.focus();try{n.setSelectionRange(pos,pos);}catch(e){}});}
+ if(S._p!==S.vista+S.pant){window.scrollTo(0,0);S._p=S.vista+S.pant;}else window.scrollTo(0,y);
+ var mo=document.getElementById('fMonto');if(mo)mo.addEventListener('blur',function(){var n=parseMoney(mo.value);if(n>0)mo.value=fm(n);});}
+
+/* ----- correo ----- */
+function linea(m){
+ if(m.k==='S')return 'SALIDA · '+m.f+' · '+fdn(m.fecha)+' · '+fm(m.monto)+' · '+m.cat+' › '+m.sub+' · Qué: '+clean(m.desc)+' · Recibe: '+clean(m.persona)+' · Comprobante: '+m.comp+' · Nota: '+(clean(m.nota)||'-');
+ return 'ENTRADA · '+m.f+' · '+fdn(m.fecha)+' · '+fm(m.monto)+' · '+m.tipo+' · De: '+clean(m.persona)+' · Nota: '+(clean(m.nota)||'-');}
+function correo(lista){var d=new Date();var L=[];
+ lista.forEach(function(m){L.push(linea(m));if(m.cx)L.push('CANCELA · '+m.f+' · Motivo: '+clean(m.cx.motivo));});
+ var s=saldo();
+ var subj='CAJA CHICA PATY · '+pad(d.getDate())+'/'+pad(d.getMonth()+1)+'/'+d.getFullYear()+' '+pad(d.getHours())+':'+pad(d.getMinutes());
+ var body=subj+'\nSaldo en la estación: '+(s==null?'sin dato':fm(s))+'\n\n'+L.join('\n')+'\n\nFIN · '+L.length+' renglones';
+ return {subj:subj,body:body};}
+function mandar(lista){if(!lista.length){toast('No hay nada por enviar');return;}
+ var c=correo(lista);var now=Date.now();
+ lista.forEach(function(m){if(!m.env)m.env=now;if(m.cx&&!m.cx.env)m.cx.env=now;});save();render();
+ var url='mailto:'+DEST+'?subject='+encodeURIComponent(c.subj)+'&body='+encodeURIComponent(c.body);(window.__abrirCorreo||function(u){window.location.href=u;})(url);
+ toast('Se abrió el correo: toca Enviar');}
+
+/* ----- acciones ----- */
+var A={};
+A.inicio=function(){S.pant='inicio';S.edit=null;S.err='';};
+A.nuevaS=function(){S.pant='salida';S.edit=null;S.cat=null;S.sub=null;S.err='';};
+A.nuevaE=function(){S.pant='entrada';S.edit=null;S.tipo=null;S.err='';};
+A.cat=function(v){keep();S.cat=v;S.sub=SUBS[v].length===1?SUBS[v][0]:null;};
+A.sub=function(v){keep();S.sub=v;};
+A.tipo=function(v){keep();S.tipo=v;};
+A.todos=function(){S.todos=!S.todos;};
+A.vista=function(v){S.vista=v;S.pant='inicio';S.edit=null;S.err='';if(v==='con')cargarLibro();};
+A.mes=function(v){var p=S.mes.split('-'),y=+p[0],m=+p[1]-1+(+v);if(m<0){m=11;y--;}if(m>11){m=0;y++;}S.mes=y+'-'+pad(m+1);};
+A.editar=function(v){var m=D.movs.filter(function(x){return x.f===v;})[0];if(!m||m.env)return;S.edit=Object.assign({},m);S.err='';
+ if(m.k==='S'){S.pant='salida';S.cat=m.cat;S.sub=m.sub;}else{S.pant='entrada';S.tipo=m.tipo;}};
+A.cancelar=function(v){S.modal=v;S.err='';};
+A.cerrar=function(){S.modal=null;S.err='';};
+A.enviar=function(){mandar(porEnviar());};
+A.reenviar=function(){var lim=Date.now()-7*864e5;mandar(D.movs.filter(function(m){return m.ts>=lim||(m.cx&&m.cx.ts>=lim);}));};
+/* conserva lo tecleado al cambiar de concepto */
+function keep(){var g=function(i){var e=document.getElementById(i);return e?e.value:undefined;};
+ var e=S.edit||{};var f=g('fFecha'),mo=g('fMonto'),de=g('fDesc'),pe=g('fPer'),co=g('fComp'),no=g('fNota');
+ if(f!==undefined)e.fecha=f;if(mo!==undefined)e.monto=parseMoney(mo)||0;if(de!==undefined)e.desc=de;if(pe!==undefined)e.persona=pe;if(co!==undefined)e.comp=co;if(no!==undefined)e.nota=no;
+ S.edit=e.f?e:Object.assign({_nuevo:true},e);}
+
+document.addEventListener('click',function(ev){var b=ev.target.closest('[data-a]');if(!b)return;var a=A[b.dataset.a];if(!a)return;ev.preventDefault();a(b.dataset.v);if(b.dataset.a!=='enviar'&&b.dataset.a!=='reenviar')render();});
+document.addEventListener('submit',function(ev){ev.preventDefault();var id=ev.target.id;var v=function(i){return (document.getElementById(i).value||'').trim();};
+ if(id==='fc'){var mot=v('cMot');if(mot.length<5){S.err='Escribe el motivo de la cancelación.';render();return;}
+  var m=D.movs.filter(function(x){return x.f===S.modal;})[0];if(m){m.cx={motivo:mot,ts:Date.now(),env:null};save();toast('Movimiento cancelado. Envíalo a dirección.');}
+  S.modal=null;S.err='';render();return;}
+ var fecha=v('fFecha'),monto=parseMoney(v('fMonto')),per=v('fPer'),nota=v('fNota');
+ var err='';
+ if(!fecha)err='Pon la fecha.';else if(fecha>hoy())err='La fecha no puede ser de mañana.';
+ else if(!(monto>0))err='Escribe el monto.';
+ var rec;
+ if(id==='fs'){var desc=v('fDesc'),comp=v('fComp');
+  if(!err&&!S.cat)err='Elige el concepto.';
+  else if(!err&&!S.sub)err='Elige el detalle.';
+  else if(!err&&desc.length<8)err='Escribe qué se compró o pagó y para qué. Todo gasto dice hacia dónde fue el dinero.';
+  else if(!err&&S.sub==='Nómina semanal'&&!/\d/.test(desc))err='Escribe el número de nómina (ej. Sobre nómina 43).';
+  else if(!err&&per.length<3)err='Escribe quién recibió el dinero.';
+  rec={k:'S',fecha:fecha,monto:monto,cat:S.cat,sub:S.sub,desc:desc,persona:per,comp:comp,nota:nota};}
+ else{if(!err&&!S.tipo)err='Elige cómo llegó el dinero.';
+  else if(!err&&per.length<3)err='Escribe de quién o de dónde vino el dinero.';
+  rec={k:'E',fecha:fecha,monto:monto,tipo:S.tipo,persona:per,nota:nota};}
+ if(err){S.err=err;S.edit=Object.assign({},S.edit||{},rec);render();return;}
+ if(S.edit&&S.edit.f){var old=D.movs.filter(function(x){return x.f===S.edit.f;})[0];if(old&&!old.env){Object.assign(old,rec);old.corr=(old.corr||0)+1;}}
+ else{rec.f=folio();rec.ts=Date.now();rec.env=null;rec.cx=null;D.movs.push(rec);}
+ save();toast((rec.k==='S'?'Salida':'Entrada')+' guardada · '+fm(rec.monto));
+ S.pant='inicio';S.edit=null;S.err='';render();});
+var toastT;function toast(t){var e=document.getElementById('toast');if(!e){e=document.createElement('div');e.id='toast';e.className='toast';document.body.appendChild(e);}e.textContent=t;e.hidden=false;clearTimeout(toastT);toastT=setTimeout(function(){e.hidden=true;},2800);}
+
+render();refrescarSaldo();
+document.addEventListener('visibilitychange',function(){if(!document.hidden){refrescarSaldo();if(S.vista==='con')cargarLibro();}});
+})();
+</script>
+</body>
+</html>
