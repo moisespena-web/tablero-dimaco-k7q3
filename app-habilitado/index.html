@@ -98,7 +98,10 @@ function disponible(iso){var fin=new Date(iso+'T14:00:00'),t=new Date(),ms=0;
  return ms;}
 /* piezas ya hechas en esta estación: terminadas en Katana + lapsos de la tablet; si las notas de la MO traen un avance mayor (ej. 'Corte: Mario 30/50'; no cuenta 'Corte Laser'), manda ese */
 function notaPz(m){var r=new RegExp('\\bCorte(?!\\s*L[aá]ser)'+'[^\\n]*?(\\d+)\\s*/\\s*\\d+','gi'),x,n=0;var t=m.notas||'';while((x=r.exec(t)))n=+x[1];return n;}
-function hz(m){var e=m.entr||0;return Math.min(m.piezas,Math.max(Math.max(0,notaPz(m)-e),Math.max(0,(m.hechas||0)-e)+m.st.done));}
+/* DOBLECONTEO19OCT (Moisés, 19-oct-2026): los lapsos ya enviados a Katana ya vienen en las notas; solo se suman los que siguen
+   en la cola (o rechazados por Katana). Antes se sumaban dos veces (MO-441: 121 cortadas se veían como 139 y 0 por cortar). */
+function pendPz(m){var n=0;(S.cola||[]).forEach(function(e){if(e&&e.mo===m.mo)n+=+e.piezas||0;});(S.errores||[]).forEach(function(x){var e=x&&x.ev;if(e&&e.mo===m.mo)n+=+e.piezas||0;});return n;}
+function hz(m){var e=m.entr||0,loc=((typeof PAUSA_KATANA!=='undefined'&&PAUSA_KATANA)||!m.rowId)?(m.st.done||0):pendPz(m);return Math.min(m.piezas,Math.max(0,Math.max(notaPz(m),m.hechas||0)-e)+loc);}
 /* PZ7OCT · 6-oct-2026 23:06: Faltan = Remaining de Katana. PZ6OCT · 6-oct-2026 (Moisés): Faltan X de total + barra entregadas / listas -> siguiente estación / faltan aquí */
 function fmtN(n){return (+n||0).toLocaleString('en-US');}
 function faltaPz(m){return Math.max(0,m.piezas-hz(m));}
@@ -160,7 +163,7 @@ function otraVez(){var w=ESPERA;ESPERA=Math.min(300000,ESPERA*2);setTimeout(rein
 function enviarCola(){if(!enLinea()||enviando||!S.cola.length){if(!S.cola.length&&S.sync==='pend')S.sync='ok';return;}
  enviando=true;var ev=S.cola[0];
  api('POST','/evento',{rowId:ev.rowId,accion:ev.accion,operador:ev.operador,pin:ev.pin||(CONX&&CONX.pin)||'',segundos:ev.segundos,piezas:ev.piezas||0,esperado:S.tReal[ev.rowId]}).then(function(r){enviando=false;
-  if(r.ok){S.cola.shift();S.tReal[ev.rowId]=r.op.tiempoReal;ESPERA=30000;}
+  if(r.ok){S.cola.shift();S.mos.forEach(function(q){if(q.rowId===ev.rowId&&r.op&&r.op.hechas!=null)q.hechas=Math.max(q.hechas||0,+r.op.hechas);});S.tReal[ev.rowId]=r.op.tiempoReal;ESPERA=30000;}
   else if(r._status>=400&&r._status<500){S.cola.shift();S.errores.push({t:Date.now(),mo:ev.mo,accion:ev.accion,error:r.error||('HTTP '+r._status)});}
   else{S.sync='err';guardar();render();otraVez();return;}
   S.sync=S.cola.length?'pend':'ok';guardar();if(!S.modal)render();if(S.cola.length)setTimeout(enviarCola,300);})
