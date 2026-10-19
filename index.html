@@ -961,7 +961,9 @@ function checarReloj(){
     evento("katana","Hora de capturar el avance en Katana",120);}
 }
 function checarVencidas(){
-  if(!datos)return;
+  /* VENCIDAS19OCT (Moisés, 19-oct-2026): no revisar vencidas con los datos viejos que trae la página al abrir;
+     solo con los datos en vivo (antes salían MOs cerradas hace semanas como MO-202, MO-175, MO-176). */
+  if(!datos||!window.__VIVO)return;
   var raw=LS.get("ev-vencidas"),prev=raw?JSON.parse(raw):null,act=[];
   (datos.rows||[]).forEach(function(r){if(vencida(r))act.push(clave(r)+"|"+r.deadline);});
   if(prev){act.forEach(function(k){if(prev.indexOf(k)<0){
@@ -972,7 +974,7 @@ function checarVencidas(){
 function checarLimp(){
   /* regla 3-oct-2026: si más del 30% de los SKUs con MO abierta sólo esperan Limpieza & SQA, alarma roja con sirena (L-V 7:30-19:00).
      Ajuste de Moisés (2-oct-2026 20:40): ya no se queda fija tapando el tablero; sale 60 s cada 15 min con su sirena. */
-  var el=$("alimp"),a=datos&&datos.alertaLimpieza;if(!el)return;
+  var el=$("alimp"),a=window.__VIVO&&datos&&datos.alertaLimpieza;if(!el)return;
   if(!a){el.hidden=true;return;}
   el.innerHTML='<div class="t1">🚨 CYNTHIA: '+a.n+' ÓRDENES ('+a.pct+'%) ESPERAN LIMPIEZA &amp; SQA</div>'+
    '<div class="t2">Por favor terminemos su limpieza e inspección y liberémoslas en Katana, para que entren órdenes nuevas a las máquinas.</div>';
@@ -1020,7 +1022,7 @@ render(window.__DATOS__);
           datos.rows.forEach(function(r){if(fase(r)==="listo")return;var n=ahora[clave(r)];
             if(!n||fase(n)==="listo")evento("terminada",r.mo+" terminada · "+r.piezas+" pz");});
         }
-        primera=false;render(D);checarVencidas();
+        primera=false;window.__VIVO=true;render(D);checarVencidas();
       }
       if(!avisoPropio)aviso(j&&j.aviso);                      // respaldo: solo mientras el aviso propio no responda
     });
