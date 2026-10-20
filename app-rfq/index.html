@@ -143,7 +143,7 @@ const EST = {
 const PASOS = ['cotizar','autorizar','pedir','pedido','recibido','facturado'];
 
 let PIN = ''; try{ PIN = localStorage.getItem('rfq-pin')||''; }catch(e){}
-let YO = null, CAT = [], BYK = {}, REQS = [], PROVS = [], MOS = null, TAB = '', cargando = false;
+let YO = null, CAT = [], BYK = {}, REQS = [], ALTAS = [], PROVS = [], MOS = null, TAB = '', cargando = false, altaForm = null;
 let carrito = [], paraTipo = '', mo = '', busq = '', borradorCot = {};
 try{ const d=JSON.parse(localStorage.getItem('rfq-carrito')||'null'); if(d){ carrito=d.c||[]; paraTipo=d.t||''; mo=d.m||''; } }catch(e){}
 const guardarCarrito = () => { try{ localStorage.setItem('rfq-carrito',JSON.stringify({c:carrito,t:paraTipo,m:mo})); }catch(e){} };
@@ -170,7 +170,7 @@ async function entrar(){
     const yo = await api('/yo'); YO = yo.yo; TAB = TAB && tabsDe(YO.id).includes(TAB) ? TAB : tabsDe(YO.id)[0];
     try{ localStorage.setItem('rfq-pin',PIN); }catch(e){}
     const [c,d] = await Promise.all([api('/catalogo'), api('/datos')]);
-    CAT = c.catalogo; BYK = Object.fromEntries(CAT.map(x=>[x.k,x])); REQS = d.reqs; PROVS = d.provs;
+    CAT = c.catalogo; BYK = Object.fromEntries(CAT.map(x=>[x.k,x])); REQS = d.reqs; ALTAS = d.altas||[]; PROVS = d.provs;
     cargando=false; render();
     api('/mos').then(m=>{ MOS=m; if(TAB==='pedir') render(); }).catch(()=>{ MOS={mafesa:0,mos:[],nota:'No se pudo leer Katana'}; });
   }catch(e){ cargando=false; if(YO===null) { render(); if(e.message!=='PIN incorrecto') toast(e.message.includes('fetch')?'Sin conexión con el servidor':e.message); } }
@@ -179,7 +179,7 @@ function salir(msg){ YO=null; PIN=''; try{ localStorage.removeItem('rfq-pin'); }
 async function refrescar(){
   if(!YO || document.hidden) return;
   const a=document.activeElement; if(a && (a.tagName==='INPUT'||a.tagName==='SELECT')) return;
-  try{ const d=await api('/datos'); REQS=d.reqs; PROVS=d.provs; render(); }catch(e){}
+  try{ const d=await api('/datos'); REQS=d.reqs; ALTAS=d.altas||[]; PROVS=d.provs; render(); }catch(e){}
 }
 setInterval(refrescar, 30000);
 document.addEventListener('visibilitychange', refrescar);
@@ -187,7 +187,7 @@ document.addEventListener('visibilitychange', refrescar);
 async function accion(body, okMsg){
   try{
     const d = await api('/accion', body);
-    REQS = d.reqs; PROVS = d.provs;
+    REQS = d.reqs; ALTAS = d.altas||ALTAS; PROVS = d.provs;
     if(d.cat){ Object.entries(d.cat).forEach(([k,o])=>{ if(BYK[k]) Object.assign(BYK[k],{p:o.p,s:o.s||BYK[k].s,f:o.f}); else { const n={k,d:o.d,p:o.p,s:o.s,f:o.f,c:'Nuevo'}; CAT.push(n); BYK[k]=n; } }); }
     render(); toast(okMsg || d.msg || 'Listo'); return d;
   }catch(e){ toast(e.message); return null; }
@@ -215,7 +215,7 @@ function cuentas(){
   const L=allLines();
   return {
     paty: L.filter(x=>x.l.est==='cotizar'||(x.l.est==='autorizar'&&autorizador(x.l)==='paty')||x.l.est==='pedir').length,
-    moises: L.filter(x=>x.l.est==='autorizar'&&autorizador(x.l)==='moises').length,
+    moises: L.filter(x=>x.l.est==='autorizar'&&autorizador(x.l)==='moises').length + (YO&&YO.id==='moises'?ALTAS.filter(a=>a.est==='pendiente').length:0),
     recibir: L.filter(x=>x.l.est==='pedido'||x.l.est==='parcial').length,
     facturas: L.filter(x=>x.l.est==='recibido').length,
   };
@@ -236,9 +236,16 @@ function vPedir(){
     <div class="sub">Busca el insumo y agrégalo. Si tiene precio de menos de 6 meses se pide directo; si no, Paty lo cotiza.</div>
     <label class="f" for="q">Buscar insumo</label>
     <input type="search" id="q" placeholder="Ej. broca 1/4, guante, disco" value="${esc(busq)}" autocomplete="off">
-    ${busq.trim().length>=2?`<ul class="res">${res.map(c=>{const t=vigente(c);return `<li><button type="button" data-add="${esc(c.k)}"><div class="d">${esc(c.d)}<div class="m">${t?'<span class="chip c-dir">Directo</span>':'<span class="chip c-cot">A cotizar</span>'} ${esc(c.s||'Sin proveedor habitual')}</div></div><div class="p">${c.p!=null?fmt(c.p):''}</div></button></li>`}).join('')}
-      <li><button type="button" data-nuevo="1"><div class="d"><b>No está en el catálogo:</b> agregar “${esc(busq.trim())}” como insumo nuevo<div class="m"><span class="chip c-cot">A cotizar</span></div></div></button></li></ul>`:''}
+    ${busq.trim().length>=2?`<ul class="res">${res.map(c=>{const t=vigente(c);return `<li><button type="button" data-add="${esc(c.k)}"><div class="d">${esc(c.d)}<div class="m">${t?'<span class="chip c-dir">Directo</span>':'<span class="chip c-cot">A cotizar</span>'}${c.c==='Katana'?' <span class="chip c-gr">Katana</span>':''}${c.c==='Nuevo'?' <span class="chip c-gr">Nuevo</span>':''} ${esc(c.s||'Sin proveedor habitual')}${c.u?' · '+esc(c.u):''}</div></div><div class="p">${c.p!=null?fmt(c.p):''}</div></button></li>`}).join('')}
+      ${YO.altas?`<li><button type="button" data-nuevo="1"><div class="d"><b>¿No está?</b> Proponer “${esc(busq.trim())}” como artículo nuevo<div class="m">Lo aprueba Moisés antes de entrar al catálogo</div></div></button></li>`:`<li><div class="d" style="padding:10px 12px;font-size:13px;color:var(--tx2)">¿No está en el catálogo? Pide a Lupita o a Uriel que lo den de alta.</div></li>`}</ul>`:''}
   </div>
+  ${altaForm?`<div class="card"><h2>Proponer artículo nuevo</h2><div class="sub">Llega a Moisés para que lo apruebe. Al aprobarse entra al catálogo y la primera compra se cotiza.</div>
+    <form id="falta"><label class="f" for="al-d">Descripción</label><input type="text" id="al-d" value="${esc(altaForm.d)}" maxlength="140">
+    <div class="row2"><div><label class="f" for="al-u">Unidad</label><input type="text" id="al-u" placeholder="pz, caja, kg, m…" maxlength="20"></div>
+    <div><label class="f" for="al-p">Proveedor sugerido</label><select id="al-p"><option value="">(opcional)</option>${PROVS.map(p=>`<option>${esc(p)}</option>`).join('')}</select></div></div>
+    <label class="f" for="al-n">Nota para Moisés</label><input type="text" id="al-n" placeholder="Para qué se usa, marca, medida…" maxlength="200">
+    <div class="row" style="margin-top:12px"><button class="btn s" type="submit">Enviar a Moisés</button><button class="btn s gh" type="button" id="al-x">Cancelar</button></div></form></div>`:''}
+  ${YO.altas&&ALTAS.length?`<div class="card"><h2>Mis artículos propuestos</h2>${ALTAS.slice().reverse().slice(0,15).map(a=>`<div class="ln"><div class="a"><b>${esc(a.d)}</b><span>${fFecha(a.f)}${a.u?' · '+esc(a.u):''}${a.motivo?' · '+esc(a.motivo):''}</span></div><div class="z"><span class="chip ${a.est==='aprobada'?'c-ok':a.est==='rechazada'?'c-bad':'c-aut'}">${a.est==='aprobada'?'Aprobado':a.est==='rechazada'?'Rechazado':'Por aprobar'}</span></div></div>`).join('')}</div>`:''}
   <div class="card">
     <h2>Lo que vas a pedir</h2>
     ${carrito.length?lines:'<div class="empty">Aún no agregas insumos.</div>'}
@@ -291,8 +298,12 @@ function autLine({r,l,i}){
 }
 function vAutorizar(){
   const L=allLines().filter(x=>x.l.est==='autorizar'&&autorizador(x.l)==='moises');
+  const A=ALTAS.filter(a=>a.est==='pendiente');
   return `<div class="card"><h2>Por autorizar</h2><div class="sub">Conceptos de más de ${fmt(LIMITE)} (cantidad × precio). Los demás los autoriza Paty.</div>
-  ${L.length?L.map(autLine).join(''):'<div class="empty">Nada pendiente.</div>'}</div>`;
+  ${L.length?L.map(autLine).join(''):'<div class="empty">Nada pendiente.</div>'}</div>
+  <div class="card"><h2>Artículos nuevos por aprobar <span class="chip c-aut">${A.length}</span></h2><div class="sub">Los proponen Lupita o Uriel. Al aprobar entran al catálogo.</div>
+  ${A.length?A.map(a=>`<div class="ln"><div class="a"><b>${esc(a.d)}</b><span>Propone ${NOMBRES[a.por]} · ${fFecha(a.f)}${a.u?' · '+esc(a.u):''}${a.prov?' · '+esc(a.prov):''}</span>${a.nota?`<span>${esc(a.nota)}</span>`:''}
+    <div class="row" style="margin-top:8px"><button class="btn s ok" type="button" data-apalta="${a.id}">Aprobar</button><button class="btn s bad" type="button" data-rechalta="${a.id}">Rechazar</button></div></div></div>`).join(''):'<div class="empty">Nada pendiente.</div>'}</div>`;
 }
 function vPend(){
   const L=allLines();
@@ -350,14 +361,20 @@ function vFacturas(){
 /* ---------------- eventos ---------------- */
 const app=document.getElementById('app');
 const ref = s => { const [rid,i,j]=s.split(':'); const r=REQS.find(x=>x.id==rid); return {r,l:r&&r.lines[+i],rid:+rid,i:+i,j:j!=null?+j:null}; };
-app.addEventListener('submit',e=>{ if(e.target.id==='flogin'){ e.preventDefault(); PIN=document.getElementById('pin').value.trim(); if(PIN) entrar(); } });
+app.addEventListener('submit',async e=>{ if(e.target.id==='falta'){ e.preventDefault();
+    const r=await accion({tipo:'alta',d:document.getElementById('al-d').value,u:document.getElementById('al-u').value,prov:document.getElementById('al-p').value,nota:document.getElementById('al-n').value});
+    if(r){ altaForm=null; render(); } return; }
+  if(e.target.id==='flogin'){ e.preventDefault(); PIN=document.getElementById('pin').value.trim(); if(PIN) entrar(); } });
 app.addEventListener('click',async e=>{
   const b=e.target.closest('button'); if(!b) return;
   const d=b.dataset;
   if(b.id==='salir'){ salir(); return; }
   if(d.tab){ TAB=d.tab; render(); window.scrollTo(0,0); return; }
   if(d.add){ const c=BYK[d.add]; if(!carrito.find(x=>x.k===c.k)) carrito.push({k:c.k,d:c.d,qty:1}); busq=''; guardarCarrito(); render(); toast('Agregado'); return; }
-  if(d.nuevo){ carrito.push({k:null,d:busq.trim().toUpperCase(),qty:1}); busq=''; guardarCarrito(); render(); toast('Agregado como insumo nuevo'); return; }
+  if(d.nuevo){ altaForm={d:busq.trim().toUpperCase()}; busq=''; render(); const x=document.getElementById('al-u'); if(x) x.focus(); return; }
+  if(b.id==='al-x'){ altaForm=null; render(); return; }
+  if(d.apalta){ accion({tipo:'aprobarAlta',id:+d.apalta}).then(r=>{ if(r) api('/catalogo').then(c=>{ CAT=c.catalogo; BYK=Object.fromEntries(CAT.map(x=>[x.k,x])); }); }); return; }
+  if(d.rechalta){ accion({tipo:'rechazarAlta',id:+d.rechalta}); return; }
   if(d.del){ carrito.splice(+d.del,1); guardarCarrito(); render(); return; }
   if(d.para){ paraTipo=d.para; guardarCarrito(); render(); return; }
   if(b.id==='enviar'){
