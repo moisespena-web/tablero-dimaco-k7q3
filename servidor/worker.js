@@ -114,6 +114,20 @@ export default {
       } catch (e) { return json({ ok: false, error: String(e && e.message || e) }, 502); }
     }
 
+    // --- 19-oct-2026 (Moisés · "AVISOMO"): aviso por WhatsApp de MOs nuevas del Tablero de TV MAFESA ---
+    // Katana llama aquí en cuanto se crea una MO o una de sus operaciones (webhook). Responde al instante y revisa por detrás.
+    if (req.method === 'POST' && ruta === '/katana/aviso') {
+      if (!env.AVISO_CLAVE || !iguales(url.searchParams.get('k') || '', env.AVISO_CLAVE)) return json({ ok: false }, 401);
+      let b = {}; try { b = await req.json(); } catch (e) {}
+      if (ctx && ctx.waitUntil) ctx.waitUntil(avisoWebhook(env, b).catch(e => console.error('AVISOMO webhook · ' + String(e && e.message || e))));
+      return json({ ok: true });
+    }
+    if (req.method === 'GET' && ruta === '/katana/aviso/estado') {   // diagnóstico: último envío y último error (sin datos sensibles)
+      if (!env.AVISO_CLAVE || !iguales(url.searchParams.get('k') || '', env.AVISO_CLAVE)) return json({ ok: false }, 401);
+      return json({ ok: true, whatsapp: !!(env.WA_TOKEN && env.WA_PHONE_ID && env.WA_TO), kv: !!env.TV,
+                    ultimo: env.TV ? await env.TV.get('aviso:ultimo', 'json') : null, error: env.TV ? await env.TV.get('aviso:error', 'json') : null });
+    }
+
     const codigo = req.headers.get('X-Tablet') || '';
     let est = null;
     if (iguales(codigo, env.CODIGO_TABLET || '')) est = ESTACIONES.tm2p;
@@ -174,6 +188,7 @@ async function cron(event, env, ctx) {
     if (h.dia === 0 || h.h < 6 || h.h > 20) return;   // L-S 6:00-20:59
     const t = await tablero(env);
     if (t) await tableroVivo(env, t, true);
+    try { await avisoCron(env); } catch (e) { console.error('AVISOMO cron · ' + String(e && e.message || e)); }   // AVISOMO
   })());
 }
 
@@ -737,4 +752,95 @@ function armarVivo(D0, F, ahora) {
   D.stamp = H.stamp;             // hora de esta lectura de Katana
   D.vivo = true;
   return D;
+}
+
+
+/* ======================= AVISOMO (Moisés, 19-oct-2026) =======================
+   "Avísame cuando el Tablero de TV MAFESA abra MOs nuevas: número de MO, cantidad, SKU y nombre, en tiempo real por WhatsApp."
+   · Entra al aviso la MISMA MO que entra a la TV: todas sus operaciones en recursos MAFESA (MAF_REC) y al menos una que no sea
+     Limpieza & SQA (igual que armarVivo).
+   · Tiempo real: webhook de Katana (manufacturing_order.created y manufacturing_order_operation_row.created) → POST /katana/aviso.
+   · Red de seguridad: el cron (cada 5 min, L-S 6:00-20:59) revisa las MOs MAFESA de los últimos 3 días que aún no se avisaron.
+   · Cada MO se avisa UNA sola vez (llave KV av:<id>, 120 días). La primera vez que corre solo marca las que ya existen (no avisa).
+   · WhatsApp Cloud API con la plantilla aprobada (una variable). Secretos: WA_TOKEN, WA_PHONE_ID, WA_TO (uno o varios
+     números separados por coma, con lada: 524722111096); opcionales WA_PLANTILLA (alerta_katana) y WA_IDIOMA (es_MX).
+     AVISO_CLAVE: clave que va en la URL del webhook para que nadie más pueda llamarlo. */
+const AV_TTL = 120 * 86400, AV_DIAS = 3;
+
+function esMafesaTV(ops) {
+  const rec = (ops || []).filter(o => !o.deleted_at).map(o => (o.resource_name || '').trim());
+  return rec.length > 0 && rec.every(x => MAF_REC.has(x)) && rec.some(x => x !== 'Limpieza & SQA');
+}
+function lineaMO(mo, va) {
+  const pm = (va && va.product_or_material) || {};
+  const qty = Math.round(num(mo.planned_quantity)).toLocaleString('en-US');
+  return [mo.order_no || ('MO ' + mo.id), qty + ' pz', (va && va.sku) || 's/SKU', (pm.name || '').replace(/\s+/g, ' ').trim() || 's/nombre'].join(' · ');
+}
+
+async function avisoWebhook(env, b) {
+  if (!env.TV || !env.KATANA_API_KEY) return;
+  const k = katana(env.KATANA_API_KEY);
+  const obj = (b && b.object) || {}, act = String((b && b.action) || '');
+  let moId = null;
+  if (act.startsWith('manufacturing_order_operation_row')) {
+    const row = obj.id ? await k.get('/manufacturing_order_operation_rows/' + obj.id).catch(() => null) : null;
+    moId = row && row.manufacturing_order_id;
+  } else if (act.startsWith('manufacturing_order')) moId = obj.id;
+  if (!moId || await env.TV.get('av:' + moId)) return;
+  await dormir(6000);   // que Katana termine de dar de alta las operaciones de la receta
+  if (await env.TV.get('av:' + moId)) return;
+  const mo = await k.get('/manufacturing_orders/' + moId).catch(() => null);
+  if (!mo || mo.deleted_at || mo.status === 'DONE') return;
+  const d = await k.get('/manufacturing_order_operation_rows?limit=250&manufacturing_order_id=' + moId).catch(() => null);
+  if (!esMafesaTV((d && d.data) || [])) return;   // aún sin operaciones o no es de la TV MAFESA: el siguiente evento o el cron decide
+  let va = variante(mo.variant_id);
+  if (!va) { const v = await k.get('/variants?extend[]=product_or_material&ids[]=' + mo.variant_id).catch(() => null); va = v && v.data && v.data[0]; }
+  if (!(await env.TV.get('av_semilla'))) await avisoCron(env);   // primera vez: sembrar antes de avisar
+  if (await env.TV.get('av:' + moId)) return;
+  await env.TV.put('av:' + moId, String(Date.now()), { expirationTtl: AV_TTL });
+  await enviarAviso(env, [lineaMO(mo, va)]);
+}
+
+async function avisoCron(env) {
+  if (!env.TV || !env.KATANA_API_KEY) return;
+  const F = await foto(katana(env.KATANA_API_KEY));
+  if (!F || !F.mos || !F.mos.size) return;
+  const desde = Date.now() - AV_DIAS * 864e5, cand = [];
+  for (const [id, mo] of F.mos) {
+    if (mo.status === 'DONE' || !mo.created_at || Date.parse(mo.created_at) < desde) continue;
+    if (!esMafesaTV(F.ops.get(id))) continue;
+    if (Date.now() - Date.parse(mo.created_at) < 90e3) continue;   // recién creada: deja que el webhook la avise
+    cand.push(mo);
+  }
+  const semilla = await env.TV.get('av_semilla');
+  const nuevas = [];
+  for (const mo of cand) if (!(await env.TV.get('av:' + mo.id))) nuevas.push(mo);
+  for (const mo of nuevas) await env.TV.put('av:' + mo.id, String(Date.now()), { expirationTtl: AV_TTL });
+  if (!semilla) { await env.TV.put('av_semilla', new Date().toISOString()); return; }   // arranque: no avisar lo que ya existía
+  if (nuevas.length) {
+    nuevas.sort((a, b) => String(a.order_no).localeCompare(String(b.order_no), 'es', { numeric: true }));
+    await enviarAviso(env, nuevas.map(mo => lineaMO(mo, variante(mo.variant_id))));
+  }
+}
+
+async function enviarAviso(env, lineas) {
+  if (!lineas.length) return;
+  if (!env.WA_TOKEN || !env.WA_PHONE_ID || !env.WA_TO) { await env.TV.put('aviso:error', JSON.stringify({ t: new Date().toISOString(), error: 'Faltan WA_TOKEN / WA_PHONE_ID / WA_TO' })); return; }
+  // La variable de una plantilla de WhatsApp no acepta saltos de línea: las MOs van separadas por " | " (bloques de ≤900 caracteres)
+  const n = lineas.length, cab = n === 1 ? 'MO nueva en Tablero TV MAFESA: ' : n + ' MO nuevas en Tablero TV MAFESA: ';
+  const bloques = []; let cur = '';
+  for (const l of lineas) { if (cur && (cab + cur + ' | ' + l).length > 900) { bloques.push(cur); cur = l; } else cur = cur ? cur + ' | ' + l : l; }
+  if (cur) bloques.push(cur);
+  const a = String(env.WA_TO).split(',').map(x => x.replace(/\D/g, '')).filter(Boolean);
+  for (const bl of bloques) for (const to of a) {
+    const r = await fetch('https://graph.facebook.com/v21.0/' + env.WA_PHONE_ID + '/messages', {
+      method: 'POST', headers: { Authorization: 'Bearer ' + env.WA_TOKEN, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ messaging_product: 'whatsapp', to, type: 'template', template: {
+        name: env.WA_PLANTILLA || 'alerta_katana', language: { code: env.WA_IDIOMA || 'es_MX' },
+        components: [{ type: 'body', parameters: [{ type: 'text', text: (cab + bl).slice(0, 1000) }] }] } }),
+    });
+    const txt = await r.text();
+    if (!r.ok) { console.error('AVISOMO WhatsApp ' + r.status + ' · ' + txt.slice(0, 300)); await env.TV.put('aviso:error', JSON.stringify({ t: new Date().toISOString(), status: r.status, error: txt.slice(0, 300) })); }
+    else await env.TV.put('aviso:ultimo', JSON.stringify({ t: new Date().toISOString(), mos: n, texto: (cab + bl).slice(0, 300) }));
+  }
 }
