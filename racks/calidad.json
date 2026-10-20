@@ -1,7 +1,25 @@
 {
- "stamp": "2026-10-16T18:49",
+ "stamp": "2026-10-19T18:48",
  "proyecto": "racks",
  "incidencias": [
+  {
+   "fecha": "2026-10-19",
+   "tipo": "scrap",
+   "origen": "hab",
+   "deteccion": "insp-hab",
+   "causa": "Corte fuera de medida (sierra o cizalla)",
+   "mo": "MO-MAFESA",
+   "so": "MAFESA",
+   "producto": "Apoyo de Habilitado a MAFESA",
+   "cliente": "MAFESA",
+   "piezas": 4,
+   "estado": "abierta",
+   "accion": "Fabricar de nuevo (reposición)",
+   "accionDetalle": "Poner mas atención a las instrucciones",
+   "diasRetraso": 0,
+   "operador": "Mario",
+   "monto": 5780.99
+  },
   {
    "fecha": "2026-10-15",
    "tipo": "scrap",
