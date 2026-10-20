@@ -121,6 +121,12 @@ input[type=number]{font-variant-numeric:tabular-nums}
 .envio .card{width:100%;max-width:520px;margin:0}
 </style>
 
+<meta http-equiv="Cache-Control" content="no-cache">
+<script>
+const APPVER='v11b';
+(async()=>{ try{ const t=await (await fetch('index.html?_='+Date.now(),{cache:'no-store'})).text(); const m=t.match(/APPVER='([^']+)'/); if(m&&m[1]!==APPVER){ location.replace(location.pathname+'?v='+m[1]); } }catch(e){} })();
+document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible') fetch('index.html?_='+Date.now(),{cache:'no-store'}).then(r=>r.text()).then(t=>{ const m=t.match(/APPVER='([^']+)'/); if(m&&m[1]!==APPVER) location.replace(location.pathname+'?v='+m[1]); }).catch(()=>{}); });
+</script>
 </head>
 <body>
 <div id="app">
