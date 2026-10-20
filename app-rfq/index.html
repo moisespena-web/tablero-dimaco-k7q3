@@ -107,6 +107,12 @@ input[type=number]{font-variant-numeric:tabular-nums}
 .stats b{display:block;font-size:22px;font-variant-numeric:tabular-nums}
 .stats span{font-size:11px;color:var(--tx2)}
 @media (prefers-reduced-motion:reduce){.toast{transition:none}}
+.molist{max-height:300px;overflow:auto;border:1px solid var(--line);border-radius:10px;margin-top:6px}
+.mogrp{position:sticky;top:0;background:var(--bg);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--tx3);font-weight:700;padding:6px 12px;border-bottom:1px solid var(--line)}
+.mochk{display:flex;gap:10px;align-items:flex-start;padding:9px 12px;border-bottom:1px solid var(--line);font-size:14px;cursor:pointer}
+.mochk input{width:20px;height:20px;flex:none;margin-top:1px}
+.mochk span{min-width:0;overflow-wrap:anywhere}
+.mochk small{display:block;font-size:12px;color:var(--tx2)}
 </style>
 
 </head>
@@ -144,9 +150,9 @@ const PASOS = ['cotizar','autorizar','pedir','pedido','recibido','facturado'];
 
 let PIN = ''; try{ PIN = localStorage.getItem('rfq-pin')||''; }catch(e){}
 let YO = null, CAT = [], BYK = {}, REQS = [], ALTAS = [], PROVS = [], MOS = null, TAB = '', cargando = false, altaForm = null;
-let carrito = [], paraTipo = '', mo = '', busq = '', borradorCot = {};
-try{ const d=JSON.parse(localStorage.getItem('rfq-carrito')||'null'); if(d){ carrito=d.c||[]; paraTipo=d.t||''; mo=d.m||''; } }catch(e){}
-const guardarCarrito = () => { try{ localStorage.setItem('rfq-carrito',JSON.stringify({c:carrito,t:paraTipo,m:mo})); }catch(e){} };
+let carrito = [], paraTipo = '', mos = [], moFil = '', busq = '', borradorCot = {};
+try{ const d=JSON.parse(localStorage.getItem('rfq-carrito')||'null'); if(d){ carrito=d.c||[]; paraTipo=d.t||''; mos=Array.isArray(d.m)?d.m:[]; } }catch(e){}
+const guardarCarrito = () => { try{ localStorage.setItem('rfq-carrito',JSON.stringify({c:carrito,t:paraTipo,m:mos})); }catch(e){} };
 
 function tabsDe(u){
   if(u==='paty') return ['pend','facturas','todas'];
@@ -221,7 +227,7 @@ function cuentas(){
   };
 }
 const vigente = c => c && c.p!=null && venc(c.f||'2026-10-19') >= hoyISO();
-const paraOk = () => paraTipo==='planta' || (paraTipo==='mo' && mo);
+const paraOk = () => paraTipo==='planta' || (paraTipo==='mo' && mos.length>0);
 
 function vPedir(){
   const res = busq.trim().length>=2 ? buscar(busq) : [];
@@ -230,8 +236,11 @@ function vPedir(){
     return `<div class="ln"><div class="a"><b>${esc(l.d)}</b><span>${dir?`<span class="chip c-dir">Pedido directo</span> ${esc(c.s||'Proveedor: lo asigna Paty')} · ${fmt(p)} ${c.u?'/ '+esc(c.u):'c/u'}`:`<span class="chip c-cot">A cotizar</span> ${l.k?'precio vencido o sin precio':'insumo nuevo'}`}</span></div>
       <div class="z"><input class="qty" type="number" min="1" inputmode="numeric" id="qty-${i}" data-qi="${i}" value="${l.qty}" aria-label="Cantidad">${c&&c.u?`<div style="font-size:11px;color:var(--tx2);text-align:center">${esc(c.u)}</div>`:''}<div class="num" style="font-size:12px;margin-top:4px">${p?fmt(p*l.qty):''}</div></div>
       <button class="x" type="button" data-del="${i}" aria-label="Quitar">×</button></div>`;}).join('');
-  const moOpt = m=>`<option value="${esc(m.n)}" ${m.n===mo?'selected':''}>${esc(m.n)} · ${esc(m.p)}${m.sku?' ('+esc(m.sku)+')':''} · ${m.sb?'STAND BY':esc(m.st)}, faltan ${nfmt(m.q)}</option>`;
-  const moOpts = MOS ? `<optgroup label="MAFESA">${MOS.mos.filter(m=>m.maf).map(moOpt).join('')}</optgroup><optgroup label="Racks y otros">${MOS.mos.filter(m=>!m.maf).map(moOpt).join('')}</optgroup>` : '';
+  const fw = moFil.toUpperCase().split(/\s+/).filter(Boolean);
+  const moVis = m => fw.every(w=>(m.n+' '+m.p+' '+m.sku).toUpperCase().includes(w));
+  const moOpt = m=>`<label class="mochk"><input type="checkbox" data-mo="${esc(m.n)}" ${mos.includes(m.n)?'checked':''}><span><b>${esc(m.n)}</b> · ${esc(m.p)}${m.sku?' ('+esc(m.sku)+')':''}<small>${m.sb?'STAND BY':esc(m.st)} · faltan ${nfmt(m.q)}</small></span></label>`;
+  const grupo = (t,xs) => xs.length?`<div class="mogrp">${t}</div>${xs.map(moOpt).join('')}`:'';
+  const moOpts = MOS ? grupo('MAFESA',MOS.mos.filter(m=>m.maf&&moVis(m))) + grupo('Racks y otros',MOS.mos.filter(m=>!m.maf&&moVis(m))) : '';
   return `<div class="card">
     <h2>Nueva requisición</h2>
     <div class="sub">Busca el insumo y agrégalo. Si tiene precio de menos de 6 meses se pide directo; si no, Paty lo cotiza.</div>
@@ -253,10 +262,13 @@ function vPedir(){
     ${carrito.length?`<div class="tot"><span>Total conocido${hayCot?' (sin lo que se cotiza)':''}</span><span class="num">${fmt(tot)}</span></div>`:''}
     <div style="font-size:13px;font-weight:700;color:var(--tx2);margin:10px 0 4px">¿Para qué es?</div>
     <div class="row2">
-      <button type="button" class="btn s ${paraTipo==='mo'?'':'gh'}" style="width:100%" data-para="mo" aria-pressed="${paraTipo==='mo'}">Para una MO</button>
+      <button type="button" class="btn s ${paraTipo==='mo'?'':'gh'}" style="width:100%" data-para="mo" aria-pressed="${paraTipo==='mo'}">Para MO(s)</button>
       <button type="button" class="btn s ${paraTipo==='planta'?'':'gh'}" style="width:100%" data-para="planta" aria-pressed="${paraTipo==='planta'}">Uso planta</button>
     </div>
-    ${paraTipo==='mo'?(MOS?`<label class="f" for="mo">MO abierta en Katana</label><select id="mo"><option value="">Escoge la MO…</option>${moOpts}</select>${MOS.nota?`<div class="sub" style="margin:6px 0 0">${esc(MOS.nota)}</div>`:''}`:'<div class="sub" style="margin:8px 0 0">Cargando MOs de Katana…</div>'):''}
+    ${paraTipo==='mo'?(MOS?`<label class="f" for="mofil">MOs abiertas en Katana · marca una o varias</label>
+      ${mos.length?`<div class="chips" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px">${mos.map(n=>`<button type="button" class="chip c-ped" data-unmo="${esc(n)}" style="border:0;font-size:13px;padding:4px 8px">${esc(n)} ×</button>`).join('')}</div>`:''}
+      <input type="search" id="mofil" placeholder="Filtrar: número, producto o SKU" value="${esc(moFil)}" autocomplete="off">
+      <div class="molist">${moOpts||'<div class="empty">Ninguna MO coincide.</div>'}</div>${MOS.nota?`<div class="sub" style="margin:6px 0 0">${esc(MOS.nota)}</div>`:''}`:'<div class="sub" style="margin:8px 0 0">Cargando MOs de Katana…</div>'):''}
     ${paraTipo==='planta'?`<div class="sub" style="margin:6px 0 0">Consumo general de la planta: guantes, discos, limpieza, gases, etc.</div>`:''}
     <div style="margin-top:12px"><button class="btn" type="button" id="enviar" ${carrito.length&&paraOk()?'':'disabled'}>Enviar requisición</button></div>
     <div class="sub" style="margin-top:8px;margin-bottom:0">Folio y fecha se ponen solos. Le llega a Paty.</div>
@@ -377,11 +389,12 @@ app.addEventListener('click',async e=>{
   if(d.apalta){ accion({tipo:'aprobarAlta',id:+d.apalta}).then(r=>{ if(r) api('/catalogo').then(c=>{ CAT=c.catalogo; BYK=Object.fromEntries(CAT.map(x=>[x.k,x])); }); }); return; }
   if(d.rechalta){ accion({tipo:'rechazarAlta',id:+d.rechalta}); return; }
   if(d.del){ carrito.splice(+d.del,1); guardarCarrito(); render(); return; }
+  if(d.unmo){ mos=mos.filter(x=>x!==d.unmo); guardarCarrito(); render(); return; }
   if(d.para){ paraTipo=d.para; guardarCarrito(); render(); return; }
   if(b.id==='enviar'){
     b.disabled=true;
-    const r = await accion({tipo:'crear', para: paraTipo==='planta'?'Uso planta':mo, items: carrito.map(x=>({k:x.k,d:x.d,qty:x.qty}))});
-    if(r){ carrito=[]; paraTipo=''; mo=''; guardarCarrito(); TAB='mias'; render(); toast(`${r.folio} enviada a Paty`); } else b.disabled=false;
+    const r = await accion({tipo:'crear', para: paraTipo==='planta'?'Uso planta':mos.join(', '), items: carrito.map(x=>({k:x.k,d:x.d,qty:x.qty}))});
+    if(r){ carrito=[]; paraTipo=''; mos=[]; moFil=''; guardarCarrito(); TAB='mias'; render(); toast(`${r.folio} enviada a Paty`); } else b.disabled=false;
     return;
   }
   if(d.aut){ const x=ref(d.aut); accion({tipo:'autorizar',rid:x.rid,i:x.i}); return; }
@@ -399,6 +412,7 @@ app.addEventListener('click',async e=>{
 });
 app.addEventListener('input',e=>{
   const t=e.target, d=t.dataset;
+  if(t.id==='mofil'){ moFil=t.value; const pos=t.selectionStart; render(); const q=document.getElementById('mofil'); q.focus(); try{q.setSelectionRange(pos,pos);}catch(_){} return; }
   if(t.id==='q'){ busq=t.value; const pos=t.selectionStart; render(); const q=document.getElementById('q'); q.focus(); try{q.setSelectionRange(pos,pos);}catch(_){} return; }
   if(d.qi!=null){ carrito[+d.qi].qty=Math.max(1,+t.value||1); guardarCarrito(); return; }
   if(d.fac!=null){ const v=+t.value, esp=+d.esp, out=document.getElementById('cruce-'+d.fac), bt=document.querySelector(`[data-gi="${d.fac}"]`);
@@ -410,7 +424,7 @@ app.addEventListener('input',e=>{
 app.addEventListener('change',async e=>{
   const t=e.target, d=t.dataset;
   if(d.qi!=null){ render(); return; }
-  if(t.id==='mo'){ mo=t.value; guardarCarrito(); render(); return; }
+  if(d.mo){ const i=mos.indexOf(d.mo); if(t.checked&&i<0) mos.push(d.mo); if(!t.checked&&i>=0) mos.splice(i,1); guardarCarrito(); const y=window.scrollY; render(); window.scrollTo(0,y); return; }
   if(d.cot){ const [rid,i,j,f]=d.cot.split(':'); const key=rid+':'+i; const x=ref(key);
     const cs=(borradorCot[key]||x.l.cot||[]).map(c=>Object.assign({},c)); while(cs.length<3) cs.push({prov:'',precio:null});
     let v=t.value; if(f==='prov'&&v==='__otro'){ v=(window.prompt&&window.prompt('Nombre del proveedor'))||''; v=v.trim(); if(!v){ render(); return; } }
