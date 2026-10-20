@@ -113,6 +113,8 @@ input[type=number]{font-variant-numeric:tabular-nums}
 .mochk input{width:20px;height:20px;flex:none;margin-top:1px}
 .mochk span{min-width:0;overflow-wrap:anywhere}
 .mochk small{display:block;font-size:12px;color:var(--tx2)}
+body::after{content:"";position:fixed;inset:0;background:url(logo-mg.png) center 55%/min(70vw,380px) no-repeat;opacity:.06;pointer-events:none;z-index:50}
+.toast{z-index:60}
 </style>
 
 </head>
@@ -285,7 +287,7 @@ function reqCard(r){
   <div class="sub">${fFecha(r.fecha)} · ${NOMBRES[r.quien]||r.quien} · ${esc(r.para)}</div>
   ${r.lines.map((l,i)=>`<div class="ln"><div class="a"><b>${esc(l.d)}</b><span>${nfmt(l.qty)} ${esc(l.u||'pz')} · ${l.prov?esc(l.prov):'proveedor por definir'} · ${l.precio!=null?fmt(l.precio)+' c/u':'sin precio'}</span>
     ${flow(l)}${(mia||YO.id==='paty')&&['cotizar','autorizar','pedir'].includes(l.est)?`<button class="lk" type="button" data-cancel="${r.id}:${i}" style="background:none;border:0;color:var(--tx3);font-size:12px;padding:4px 0">Cancelar este concepto</button>`:''}</div>
-    <div class="z"><span class="chip ${EST[l.est][1]}">${EST[l.est][0]}${l.est==='parcial'?` ${l.rec}/${l.qty}`:''}</span>${l.po?`<div style="font-size:11px;color:var(--tx2);margin-top:4px">${esc(l.po)} Katana</div>`:''}${l.katErr?`<div class="chip c-bad" style="margin-top:4px">Falta recibir en Katana</div>`:''}
+    <div class="z"><span class="chip ${EST[l.est][1]}">${EST[l.est][0]}${l.est==='parcial'?` ${l.rec}/${l.qty}`:''}</span>${l.po?`<div style="font-size:11px;color:var(--tx2);margin-top:4px">${esc(l.po)} Katana</div>`:(l.rfqPo?`<div style="font-size:11px;color:var(--tx2);margin-top:4px">RFQ ${esc(l.rfqPo)}</div>`:'')}${l.katErr?`<div class="chip c-bad" style="margin-top:4px">Falta recibir en Katana</div>`:''}
     ${l.est==='autorizar'?`<div style="font-size:11px;color:var(--tx3);margin-top:4px">autoriza ${NOMBRES[autorizador(l)]}</div>`:''}</div></div>`).join('')}
   </div>`;
 }
@@ -324,18 +326,26 @@ function vPend(){
   const aut=L.filter(x=>x.l.est==='autorizar'&&autorizador(x.l)==='paty');
   const esp=L.filter(x=>x.l.est==='autorizar'&&autorizador(x.l)==='moises');
   const ped=L.filter(x=>x.l.est==='pedir');
-  const porProv={}; ped.forEach(x=>{const p=x.l.prov||'';(porProv[p]=porProv[p]||[]).push(x);});
+  const porProv={}; ped.filter(x=>!x.l.poId).forEach(x=>{const p=x.l.prov||'';(porProv[p]=porProv[p]||[]).push(x);});
+  const porPO={}; ped.filter(x=>x.l.poId).forEach(x=>{(porPO[x.l.poId]=porPO[x.l.poId]||[]).push(x);});
+  const esKat = l => /^K\d+$/.test(l.k||'');
+  const katSinRfq = cot.filter(x=>esKat(x.l) && !x.l.poId);
+  const fueraKat = cot.filter(x=>!esKat(x.l));
   const provOpts = sel => `<option value="">Proveedor…</option>`+PROVS.map(p=>`<option ${p===sel?'selected':''}>${esc(p)}</option>`).join('')+`<option value="__otro">Otro (escribir)…</option>`;
   return `
   <div class="card"><h2>1 · A cotizar <span class="chip c-cot">${cot.length}</span></h2>
     <div class="sub">Insumos nuevos o con precio vencido. Tú eliges a qué proveedores mandar y cuál gana; el precio ganador entra al catálogo.</div>
-    ${cot.length>1?`<button class="btn s" type="button" data-rfqall="1" style="margin-bottom:8px">PDF RFQ con todo lo pendiente (${cot.length})</button>`:''}
+    ${katSinRfq.length?`<button class="btn s" type="button" data-rfqkat="1" style="margin-bottom:8px">Crear RFQ en Katana (${katSinRfq.length} artículo(s) de Katana)</button><div class="sub" style="margin:-4px 0 8px">Se crea una PO en borrador con proveedor "COTIZACIÓN ABIERTA". La imprimes en Katana con tu plantilla RFQ y la mandas a los proveedores que quieras.</div>`:''}
+    ${fueraKat.length>1?`<button class="btn s gh" type="button" data-rfqall="1" style="margin-bottom:8px">PDF RFQ de insumos fuera de Katana (${fueraKat.length})</button>`:''}
     ${cot.length?cot.map(({r,l,i})=>{ const key=r.id+':'+i; const cs=(borradorCot[key]||l.cot||[]).slice(); while(cs.length<3) cs.push({prov:'',precio:null});
       return `<div class="ln" style="display:block"><b style="font-size:14px">${esc(l.d)}</b><div style="font-size:12px;color:var(--tx2)">${nfmt(l.qty)} ${esc(l.u||'pz')} · ${r.folio} · ${NOMBRES[r.quien]} · ${esc(r.para)}</div>
       ${cs.map((c,j)=>`<div class="cot"><select id="cp-${r.id}-${i}-${j}" data-cot="${key}:${j}:prov" aria-label="Proveedor ${j+1}">${provOpts(c.prov)}${c.prov&&!PROVS.includes(c.prov)?`<option selected>${esc(c.prov)}</option>`:''}</select>
         <input type="number" step="0.01" inputmode="decimal" id="cv-${r.id}-${i}-${j}" placeholder="$ c/u" value="${c.precio??''}" data-cot="${key}:${j}:precio" aria-label="Precio ${j+1}">
         <button class="btn s gh win" type="button" data-win="${key}:${j}" ${c.prov&&c.precio?'':'disabled'}>Gana</button></div>`).join('')}
-      <div class="row" style="margin-top:8px"><button class="btn s" type="button" data-rfqpdf="${key}">PDF RFQ</button><button class="btn s gh" type="button" data-rfqtxt="${key}">Copiar texto</button></div>
+      ${l.poId?`<div class="row" style="margin-top:8px"><a class="btn s" style="display:inline-flex;align-items:center;text-decoration:none" href="https://factory.katanamrp.com/purchaseorder/${l.poId}" target="_blank" rel="noopener">RFQ ${esc(l.rfqPo||'')} · abrir en Katana</a></div>`
+        : esKat(l) ? `<div class="sub" style="margin:8px 0 0">Artículo de Katana: usa "Crear RFQ en Katana" arriba.</div>`
+        : `<div class="row" style="margin-top:8px"><button class="btn s" type="button" data-rfqpdf="${key}">PDF RFQ</button><button class="btn s gh" type="button" data-rfqtxt="${key}">Copiar texto</button></div>`}
+      ${l.katErr?`<div class="chip c-bad" style="margin-top:6px">${esc(l.katErr)}</div>`:''}
       </div>`}).join(''):'<div class="empty">Nada por cotizar.</div>'}
   </div>
   <div class="card"><h2>2 · Por autorizar <span class="chip c-aut">${aut.length}</span></h2>
@@ -345,6 +355,10 @@ function vPend(){
   </div>
   <div class="card"><h2>3 · Por pedir <span class="chip c-ped">${ped.length}</span></h2>
     <div class="sub">Autorizado, agrupado por proveedor. Copia el pedido para el correo y márcalo como pedido.</div>
+    ${Object.entries(porPO).map(([id,xs])=>{ const l0=xs[0].l; return `<div class="grp"><span>${esc(l0.rfqPo||'PO')} · ${esc(l0.prov||'')}</span><span class="num">${fmt(xs.reduce((a,x)=>a+imp(x.l),0))}</span></div>
+      ${xs.map(({r,l})=>`<div class="ln"><div class="a"><b>${esc(l.d)}</b><span>${r.folio} · ${NOMBRES[r.quien]} · ${nfmt(l.qty)} ${esc(l.u||'pz')} × ${fmt(l.precio)}</span></div><div class="z num">${fmt(imp(l))}</div></div>`).join('')}
+      <div class="row" style="margin-top:6px"><a class="btn s gh" style="display:inline-flex;align-items:center;text-decoration:none" href="https://factory.katanamrp.com/purchaseorder/${id}" target="_blank" rel="noopener">Abrir en Katana</a><button class="btn s" type="button" data-confpo="${id}">Confirmar ${esc(l0.rfqPo||'PO')} como orden de compra</button></div>
+      <div class="sub" style="margin:6px 0 0">Pasa la RFQ a orden de compra (No recibida) con el mismo folio. Después imprímela en Katana con tu plantilla PO.</div>`; }).join('')}
     ${ped.length?Object.entries(porProv).map(([p,xs])=>`<div class="grp"><span>${p?esc(p):'Sin proveedor'}</span><span class="num">${fmt(xs.reduce((a,x)=>a+imp(x.l),0))}</span></div>
       ${xs.map(({r,l,i})=>`<div class="ln"><div class="a"><b>${esc(l.d)}</b><span>${r.folio} · ${NOMBRES[r.quien]} · ${nfmt(l.qty)} ${esc(l.u||'pz')} × ${fmt(l.precio)}</span>${p?'':`<select id="ap-${r.id}-${i}" data-asig="${r.id}:${i}" style="margin-top:6px" aria-label="Asignar proveedor">${provOpts('')}</select>`}</div><div class="z num">${fmt(imp(l))}</div></div>`).join('')}
       ${p?(()=>{ const todoKat=xs.every(x=>/^K\d+$/.test(x.l.k||'')); return `<div class="row" style="margin-top:6px"><button class="btn s gh" type="button" data-pdfpedir="${esc(p)}">PDF</button><button class="btn s gh" type="button" data-pedtxt="${esc(p)}">Copiar pedido</button><button class="btn s gh" type="button" data-pedir="${esc(p)}">Solo en la estación</button>${todoKat?`<button class="btn s" type="button" data-kpo="${esc(p)}">Crear PO en Katana</button>`:''}</div>${todoKat?'':'<div class="sub" style="margin:6px 0 0">Para crear PO en Katana, todo lo de este proveedor debe venir de Katana.</div>'}`; })():''}`).join(''):'<div class="empty">Nada por pedir.</div>'}
@@ -484,8 +498,12 @@ app.addEventListener('click',async e=>{
   if(d.pedtxt){ const xs=allLines().filter(x=>x.l.est==='pedir'&&x.l.prov===d.pedtxt); const tot=xs.reduce((a,x)=>a+imp(x.l),0);
     copiar(`Pedido · DIMACO METALMECANICA · ${d.pedtxt}\n\n`+xs.map(x=>`- ${nfmt(x.l.qty)} ${esc(x.l.u||'pz')} · ${x.l.d} · ${fmt(x.l.precio)} c/u = ${fmt(imp(x.l))}`).join('\n')+`\n\nSubtotal: ${fmt(tot)} + IVA\nReferencia: ${[...new Set(xs.map(x=>x.r.folio))].join(', ')}\nFacturar y enviar a Patricia Peña.`); return; }
   if(d.pedir){ accion({tipo:'pedir',prov:d.pedir}); return; }
+  if(d.rfqkat){ if(b.dataset.ok!=='1'){ b.dataset.ok='1'; b.textContent='Confirmar: crear RFQ en Katana'; b.classList.add('ok'); setTimeout(()=>{ if(b.isConnected){ b.dataset.ok=''; render(); } },5000); return; }
+    b.disabled=true; b.textContent='Creando RFQ en Katana…'; accion({tipo:'rfqKatana'}); return; }
+  if(d.confpo){ if(b.dataset.ok!=='1'){ b.dataset.ok='1'; b.textContent='Toca otra vez para confirmar'; b.classList.add('ok'); setTimeout(()=>{ if(b.isConnected){ b.dataset.ok=''; render(); } },5000); return; }
+    b.disabled=true; b.textContent='Confirmando en Katana…'; accion({tipo:'confirmarPO',poId:+d.confpo}); return; }
   if(d.rfqpdf){ const x=ref(d.rfqpdf); pdfPedido([{r:x.r,l:x.l}],'rfq').catch(e=>toast(e.message)); return; }
-  if(d.rfqall){ pdfPedido(allLines().filter(x=>x.l.est==='cotizar'),'rfq').catch(e=>toast(e.message)); return; }
+  if(d.rfqall){ pdfPedido(allLines().filter(x=>x.l.est==='cotizar'&&!/^K\d+$/.test(x.l.k||'')),'rfq').catch(e=>toast(e.message)); return; }
   if(d.pdfpedir){ pdfPedido(allLines().filter(x=>x.l.est==='pedir'&&x.l.prov===d.pdfpedir)).catch(e=>toast(e.message)); return; }
   if(d.pdfg){ const xs=PDFG[d.pdfg]; if(xs) pdfPedido(xs).catch(e=>toast(e.message)); return; }
   if(d.kpo){ if(b.dataset.ok!=='1'){ b.dataset.ok='1'; b.textContent='Confirmar: crear PO en Katana'; b.classList.add('ok'); setTimeout(()=>{ if(b.isConnected){ b.dataset.ok=''; b.textContent='Crear PO en Katana'; b.classList.remove('ok'); } },5000); return; }
