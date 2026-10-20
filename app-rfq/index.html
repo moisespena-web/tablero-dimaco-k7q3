@@ -113,8 +113,12 @@ input[type=number]{font-variant-numeric:tabular-nums}
 .mochk input{width:20px;height:20px;flex:none;margin-top:1px}
 .mochk span{min-width:0;overflow-wrap:anywhere}
 .mochk small{display:block;font-size:12px;color:var(--tx2)}
-.pie{display:flex;justify-content:flex-end;margin-top:18px}
-.pie img{height:64px;width:auto;opacity:.9}
+.hdr .mg{margin-left:auto;height:52px;width:auto;flex:none}
+.modo{display:inline-flex;border:1px solid var(--line);border-radius:9px;overflow:hidden;margin-top:8px}
+.modo button{border:0;background:var(--panel);padding:6px 14px;font-size:13px;font-weight:700;color:var(--tx2)}
+.modo button[aria-pressed="true"]{background:var(--ac);color:#fff}
+.envio{position:fixed;inset:0;background:rgba(0,0,0,.35);display:flex;align-items:flex-end;justify-content:center;z-index:70;padding:16px;padding-bottom:calc(16px + env(safe-area-inset-bottom,0px))}
+.envio .card{width:100%;max-width:520px;margin:0}
 </style>
 
 </head>
@@ -123,11 +127,11 @@ input[type=number]{font-variant-numeric:tabular-nums}
   <div class="hdr">
     <div class="logos"><img alt="DIMACO" src="logo-dimaco.png"></div>
     <div><h1>Estación RFQ</h1><p>Compra de insumos · DIMACO</p></div>
+    <img class="mg" alt="Marca Guanajuato Internacional" src="logo-mg.png">
   </div>
   <div id="quien"></div>
   <div class="tabs" id="tabs" role="tablist" hidden></div>
   <div id="view"></div>
-  <div class="pie"><img alt="Marca Guanajuato Internacional" src="logo-mg.png"></div>
 </div>
 <div class="toast" id="toast" role="status"></div>
 <script>
@@ -309,6 +313,7 @@ function vTodas(){
 }
 function autLine({r,l,i}){
   return `<div class="ln"><div class="a"><b>${esc(l.d)}</b><span>${r.folio} · ${NOMBRES[r.quien]} · ${esc(r.para)}</span><span>${nfmt(l.qty)} ${esc(l.u||'pz')} × ${fmt(l.precio)} · ${esc(l.prov||'proveedor por definir')}${l.tipo==='cotizar'?' · cotizado':''}</span>
+    ${YO&&(YO.id==='paty'||YO.id==='moises')&&!l.po?modoSel(r.id+':'+i,'compra'):''}
     <div class="row" style="margin-top:8px"><button class="btn s ok" type="button" data-aut="${r.id}:${i}">Autorizar</button><button class="btn s bad" type="button" data-rech="${r.id}:${i}">Rechazar</button></div></div>
     <div class="z"><div class="num">${fmt(imp(l))}</div></div></div>`;
 }
@@ -336,13 +341,15 @@ function vPend(){
   return `
   <div class="card"><h2>1 · A cotizar <span class="chip c-cot">${cot.length}</span></h2>
     <div class="sub">Insumos nuevos o con precio vencido. Tú eliges a qué proveedores mandar y cuál gana; el precio ganador entra al catálogo.</div>
-    ${katSinRfq.length?`<button class="btn s" type="button" data-rfqkat="1" style="margin-bottom:8px">Crear RFQ en Katana (${katSinRfq.length} artículo(s) de Katana)</button><div class="sub" style="margin:-4px 0 8px">Se crea una PO en borrador con proveedor "COTIZACIÓN ABIERTA". La imprimes en Katana con tu plantilla RFQ y la mandas a los proveedores que quieras.</div>`:''}
+    ${katSinRfq.length?`<button class="btn s" type="button" data-rfqkat="1" style="margin-bottom:8px">Crear RFQ + PDF (${katSinRfq.length} artículo(s) de Katana)</button><div class="sub" style="margin:-4px 0 8px">Crea la RFQ en Katana (borrador, proveedor "COTIZACIÓN ABIERTA") y te da el PDF al instante para mandarlo a tus proveedores.</div>`:''}
     ${fueraKat.length>1?`<button class="btn s gh" type="button" data-rfqall="1" style="margin-bottom:8px">PDF RFQ de insumos fuera de Katana (${fueraKat.length})</button>`:''}
     ${cot.length?cot.map(({r,l,i})=>{ const key=r.id+':'+i; const cs=(borradorCot[key]||l.cot||[]).slice(); while(cs.length<3) cs.push({prov:'',precio:null});
       return `<div class="ln" style="display:block"><b style="font-size:14px">${esc(l.d)}</b><div style="font-size:12px;color:var(--tx2)">${nfmt(l.qty)} ${esc(l.u||'pz')} · ${r.folio} · ${NOMBRES[r.quien]} · ${esc(r.para)}</div>
+      ${modoSel(key, compraForm[key]?'compra':'rfq')}
+      ${compraForm[key]?`<div class="cot"><select id="cm-p-${r.id}-${i}" aria-label="Proveedor">${provOpts(l.prov||'')}</select><input type="number" step="0.01" inputmode="decimal" id="cm-v-${r.id}-${i}" placeholder="$ c/u" value="${l.precio??''}" aria-label="Precio"><button class="btn s ok" type="button" data-acompra="${key}">Listo</button></div><div class="sub" style="margin:4px 0 0">Compra directa: sin cotizar, pasa a autorizar.</div>`:`
       ${cs.map((c,j)=>`<div class="cot"><select id="cp-${r.id}-${i}-${j}" data-cot="${key}:${j}:prov" aria-label="Proveedor ${j+1}">${provOpts(c.prov)}${c.prov&&!PROVS.includes(c.prov)?`<option selected>${esc(c.prov)}</option>`:''}</select>
         <input type="number" step="0.01" inputmode="decimal" id="cv-${r.id}-${i}-${j}" placeholder="$ c/u" value="${c.precio??''}" data-cot="${key}:${j}:precio" aria-label="Precio ${j+1}">
-        <button class="btn s gh win" type="button" data-win="${key}:${j}" ${c.prov&&c.precio?'':'disabled'}>Gana</button></div>`).join('')}
+        <button class="btn s gh win" type="button" data-win="${key}:${j}" ${c.prov&&c.precio?'':'disabled'}>Gana</button></div>`).join('')}`}
       ${l.poId?`<div class="row" style="margin-top:8px"><a class="btn s" style="display:inline-flex;align-items:center;text-decoration:none" href="https://factory.katanamrp.com/purchaseorder/${l.poId}" target="_blank" rel="noopener">RFQ ${esc(l.rfqPo||'')} · abrir en Katana</a></div>`
         : esKat(l) ? `<div class="sub" style="margin:8px 0 0">Artículo de Katana: usa "Crear RFQ en Katana" arriba.</div>`
         : `<div class="row" style="margin-top:8px"><button class="btn s" type="button" data-rfqpdf="${key}">PDF RFQ</button><button class="btn s gh" type="button" data-rfqtxt="${key}">Copiar texto</button></div>`}
@@ -355,18 +362,20 @@ function vPend(){
     ${esp.length?`<div class="grp"><span>Esperando a Moisés</span><span class="chip c-aut">${esp.length}</span></div>${esp.map(({r,l})=>`<div class="ln"><div class="a"><b>${esc(l.d)}</b><span>${r.folio} · ${nfmt(l.qty)} ${esc(l.u||'pz')}</span></div><div class="z num">${fmt(imp(l))}</div></div>`).join('')}`:''}
   </div>
   <div class="card"><h2>3 · Por pedir <span class="chip c-ped">${ped.length}</span></h2>
-    <div class="sub">Autorizado, agrupado por proveedor. Copia el pedido para el correo y márcalo como pedido.</div>
+    <div class="sub">Autorizado, agrupado por proveedor. Al pedir se genera el PDF de la orden para mandarlo al proveedor.</div>
     ${Object.entries(porPO).map(([id,xs])=>{ const l0=xs[0].l; return `<div class="grp"><span>${esc(l0.rfqPo||'PO')} · ${esc(l0.prov||'')}</span><span class="num">${fmt(xs.reduce((a,x)=>a+imp(x.l),0))}</span></div>
       ${xs.map(({r,l})=>`<div class="ln"><div class="a"><b>${esc(l.d)}</b><span>${r.folio} · ${NOMBRES[r.quien]} · ${nfmt(l.qty)} ${esc(l.u||'pz')} × ${fmt(l.precio)}</span></div><div class="z num">${fmt(imp(l))}</div></div>`).join('')}
-      <div class="row" style="margin-top:6px"><a class="btn s gh" style="display:inline-flex;align-items:center;text-decoration:none" href="https://factory.katanamrp.com/purchaseorder/${id}" target="_blank" rel="noopener">Abrir en Katana</a><button class="btn s" type="button" data-confpo="${id}">Confirmar ${esc(l0.rfqPo||'PO')} como orden de compra</button></div>
-      <div class="sub" style="margin:6px 0 0">Pasa la RFQ a orden de compra (No recibida) con el mismo folio. Después imprímela en Katana con tu plantilla PO.</div>`; }).join('')}
+      <div class="row" style="margin-top:6px"><a class="btn s gh" style="display:inline-flex;align-items:center;text-decoration:none" href="https://factory.katanamrp.com/purchaseorder/${id}" target="_blank" rel="noopener">Abrir en Katana</a><button class="btn s" type="button" data-confpo="${id}">Confirmar ${esc(l0.rfqPo||'PO')} como orden de compra + PDF</button></div>
+      <div class="sub" style="margin:6px 0 0">Pasa la RFQ a orden de compra (No recibida) con el mismo folio y te da el PDF al instante para mandarlo al proveedor.</div>`; }).join('')}
     ${ped.length?Object.entries(porProv).map(([p,xs])=>`<div class="grp"><span>${p?esc(p):'Sin proveedor'}</span><span class="num">${fmt(xs.reduce((a,x)=>a+imp(x.l),0))}</span></div>
       ${xs.map(({r,l,i})=>`<div class="ln"><div class="a"><b>${esc(l.d)}</b><span>${r.folio} · ${NOMBRES[r.quien]} · ${nfmt(l.qty)} ${esc(l.u||'pz')} × ${fmt(l.precio)}</span>${p?'':`<select id="ap-${r.id}-${i}" data-asig="${r.id}:${i}" style="margin-top:6px" aria-label="Asignar proveedor">${provOpts('')}</select>`}</div><div class="z num">${fmt(imp(l))}</div></div>`).join('')}
-      ${p?(()=>{ const todoKat=xs.every(x=>/^K\d+$/.test(x.l.k||'')); return `<div class="row" style="margin-top:6px"><button class="btn s gh" type="button" data-pdfpedir="${esc(p)}">PDF</button><button class="btn s gh" type="button" data-pedtxt="${esc(p)}">Copiar pedido</button><button class="btn s gh" type="button" data-pedir="${esc(p)}">Solo en la estación</button>${todoKat?`<button class="btn s" type="button" data-kpo="${esc(p)}">Crear PO en Katana</button>`:''}</div>${todoKat?'':'<div class="sub" style="margin:6px 0 0">Para crear PO en Katana, todo lo de este proveedor debe venir de Katana.</div>'}`; })():''}`).join(''):'<div class="empty">Nada por pedir.</div>'}
+      ${p?(()=>{ const todoKat=xs.every(x=>/^K\d+$/.test(x.l.k||'')); return `<div class="row" style="margin-top:6px"><button class="btn s gh" type="button" data-pedtxt="${esc(p)}">Copiar pedido</button><button class="btn s gh" type="button" data-pedir="${esc(p)}">Pedir solo en la estación + PDF</button>${todoKat?`<button class="btn s" type="button" data-kpo="${esc(p)}">Crear PO en Katana + PDF</button>`:''}</div>${todoKat?'':'<div class="sub" style="margin:6px 0 0">Para crear PO en Katana, todo lo de este proveedor debe venir de Katana.</div>'}`; })():''}`).join(''):'<div class="empty">Nada por pedir.</div>'}
   </div>
   ${vEnviados()}`;
 }
 let PDFG = {};
+let compraForm = {};
+function modoSel(key, m){ return `<div class="modo" role="group" aria-label="RFQ o compra"><button type="button" data-modo="${key}|rfq" aria-pressed="${m==='rfq'}">RFQ</button><button type="button" data-modo="${key}|compra" aria-pressed="${m==='compra'}">Compra</button></div>`; }
 function gruposEnviados(){
   const lim = new Date(Date.now()-45*864e5).toISOString().slice(0,10);
   const g = {};
@@ -381,66 +390,91 @@ function vEnviados(){
     <div class="z"><div class="num">${fmt(xs.reduce((a,x)=>a+imp(x.l),0))}</div><button class="btn s gh" type="button" data-pdfg="${esc(k)}" style="margin-top:6px">PDF</button></div></div>`; }).join(''):'<div class="empty">Aún no hay pedidos enviados.</div>'}</div>`;
 }
 
-/* ---------------- PDF de la orden de compra ---------------- */
+/* ---------------- PDF con el formato de las plantillas de Katana (RFQ / Orden de compra) ---------------- */
 function cargarScript(src){ return new Promise((ok,err)=>{ if(document.querySelector(`script[src="${src}"]`)) return ok(); const s=document.createElement('script'); s.src=src; s.onload=ok; s.onerror=()=>err(new Error('No se pudo cargar '+src)); document.head.appendChild(s); }); }
 async function imgData(url){ const b=await (await fetch(url)).blob(); return await new Promise(r=>{ const fr=new FileReader(); fr.onload=()=>r(fr.result); fr.readAsDataURL(b); }); }
 function imgSize(data){ return new Promise(r=>{ const i=new Image(); i.onload=()=>r([i.naturalWidth,i.naturalHeight]); i.src=data; }); }
-async function pdfPedido(xs, tipo){
+const SOL_NOMBRE = { ely:'Elizabeth Ramírez', uriel:'Uriel Pérez', gerardo:'Gerardo Contreras', lupita:'Guadalupe Olmos', paty:'Patricia Peña', moises:'Moisés Peña' };
+function numLetras(n){
+  const U=['','UN','DOS','TRES','CUATRO','CINCO','SEIS','SIETE','OCHO','NUEVE','DIEZ','ONCE','DOCE','TRECE','CATORCE','QUINCE','DIECISÉIS','DIECISIETE','DIECIOCHO','DIECINUEVE','VEINTE','VEINTIÚN','VEINTIDÓS','VEINTITRÉS','VEINTICUATRO','VEINTICINCO','VEINTISÉIS','VEINTISIETE','VEINTIOCHO','VEINTINUEVE'];
+  const D=['','','','TREINTA','CUARENTA','CINCUENTA','SESENTA','SETENTA','OCHENTA','NOVENTA'];
+  const C=['','CIENTO','DOSCIENTOS','TRESCIENTOS','CUATROCIENTOS','QUINIENTOS','SEISCIENTOS','SETECIENTOS','OCHOCIENTOS','NOVECIENTOS'];
+  const cien=x=>{ if(x===0) return ''; if(x===100) return 'CIEN'; const c=Math.floor(x/100), r=x%100; let s=C[c]; if(r){ s+=(s?' ':'')+(r<30?U[r]:D[Math.floor(r/10)]+(r%10?' Y '+U[r%10]:'')); } return s; };
+  const ent=Math.floor(n), cen=Math.round((n-ent)*100);
+  const mill=Math.floor(ent/1e6), miles=Math.floor((ent%1e6)/1000), res=ent%1000;
+  let s=''; if(mill) s+=(mill===1?'UN MILLÓN':cien(mill)+' MILLONES')+' ';
+  if(miles) s+=(miles===1?'MIL':cien(miles)+' MIL')+' ';
+  s+=cien(res); s=s.trim()||'CERO';
+  return `${s} PESOS ${String(cen).padStart(2,'0')}/100 M.N.`;
+}
+async function pdfDoc(tipo, folio, xs){
   const rfq = tipo==='rfq';
-  toast('Generando PDF…');
   await cargarScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
   await cargarScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js');
   const { jsPDF } = window.jspdf; const doc = new jsPDF({ unit:'mm', format:'letter' });
-  const W = doc.internal.pageSize.getWidth();
-  const l0 = xs[0].l, prov = l0.prov || '—';
-  const pos = [...new Set(xs.map(x=>x.l.po).filter(Boolean))];
-  const rqs = [...new Set(xs.map(x=>x.r.folio))];
-  const folio = rfq ? 'RFQ ' + rqs.join(', ') : (pos.length ? pos.join(', ') : 'OC ' + rqs.join(', '));
-  const fecha = fFecha(rfq ? hoyISO() : (l0.pedidoF || hoyISO()));
-  const yoCompras = YO && YO.id==='moises' ? 'Moisés Peña · moises.pena@dimaco-mx.com' : 'Patricia Peña · patricia.pena@dimaco-mx.com';
+  const W = doc.internal.pageSize.getWidth(), H = doc.internal.pageSize.getHeight();
+  const prov = rfq ? 'COTIZACIÓN ABIERTA' : (xs[0].l.prov || '—');
+  let pinfo = null; if(!rfq){ try{ pinfo = (await api('/proveedor?n='+encodeURIComponent(prov))).info; }catch(e){} }
   const correo = YO && YO.id==='moises' ? 'moises.pena@dimaco-mx.com' : 'patricia.pena@dimaco-mx.com';
-  try{
-    const d1=await imgData('logo-dimaco.png'), d2=await imgData('logo-mg.png');
-    const [w1,h1]=await imgSize(d1), [w2,h2]=await imgSize(d2);
-    doc.addImage(d1,'PNG',14,10,22*w1/h1>50?50:22*w1/h1,22*w1/h1>50?50*h1/w1:22);
-    doc.addImage(d2,'PNG',W-14-22*w2/h2,8,22*w2/h2,22);
-  }catch(e){}
-  doc.setFont('helvetica','bold'); doc.setFontSize(16); doc.text(rfq ? 'SOLICITUD DE COTIZACIÓN' : 'ORDEN DE COMPRA', W/2, 18, {align:'center'});
-  doc.setFontSize(11); doc.text(folio, W/2, 25, {align:'center'});
-  doc.setFont('helvetica','normal'); doc.setFontSize(9);
-  doc.text('DIMACO METALMECANICA', 14, 40); doc.text('Compras: ' + yoCompras, 14, 45);
-  doc.text('Fecha: '+fecha, W-14, 40, {align:'right'});
-  doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.text(rfq ? 'Proveedor: ______________________________' : 'Proveedor: '+prov, 14, 53);
-  doc.setFont('helvetica','normal');
   const money = n => '$'+Number(n||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
-  const sub = xs.reduce((a,x)=>a+imp(x.l),0);
+  let d1=null, d2=null, s1=[1,1], s2=[1,1];
+  try{ d1=await imgData('logo-dimaco.png'); s1=await imgSize(d1); d2=await imgData('logo-mg.png'); s2=await imgSize(d2); }catch(e){}
+  if(d1){ const h=18, w=Math.min(46,h*s1[0]/s1[1]); doc.addImage(d1,'PNG',14,10,w,w*s1[1]/s1[0]); }
+  doc.setFont('helvetica','bold'); doc.setFontSize(15); doc.text(rfq?`RFQ: ${folio}`:`Orden de compra ${folio}`, W-14, 16, {align:'right'});
+  doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.text('Fecha: '+fFecha(hoyISO()), W-14, 22, {align:'right'});
+  doc.text('DIMACO METALMECANICA', 14, 36);
+  doc.setFont('helvetica','bold'); doc.text('Proveedor', W/2+4, 36); doc.setFont('helvetica','normal');
+  const pl=[prov]; if(pinfo){ const a=pinfo.a; if(a) pl.push([a.line_1,a.line_2].filter(Boolean).join(' '), [a.city,a.state,a.zip].filter(Boolean).join(', ')); if(pinfo.t) pl.push('Tel. '+pinfo.t); if(pinfo.e) pl.push(pinfo.e); }
+  if(!rfq) pl.push('RFC: '+(pinfo&&pinfo.rfc?pinfo.rfc:''));
+  doc.text(pl.filter(Boolean).map(s=>doc.splitTextToSize(String(s),W/2-20)).flat(), W/2+4, 41);
+  const mos=[...new Set(xs.flatMap(x=>String(x.r.para||'').split(/\s*,\s*/)).filter(Boolean))].join(', ');
+  const sol=[...new Set(xs.map(x=>SOL_NOMBRE[x.r.quien]||x.r.quien))].join(', ');
+  doc.text(doc.splitTextToSize(`Referencia: ${mos}`, W/2-20), 14, 41);
+  doc.text(doc.splitTextToSize(`Solicita: ${sol}`, W/2-20), 14, 51);
+  const sku = l => { const p=String(l.d).split(' · '); return p.length>1?p[p.length-1]:''; };
+  const desc = l => { const p=String(l.d).split(' · '); return (p.length>1?p.slice(0,-1).join(' · '):l.d) + (/SOLERA/i.test(l.d)?'  (mide 144" / 3.66 m)':''); };
+  const head = rfq ? [['SKU','Descripción','Medidas','Cantidad']] : [['SKU','Descripción','Medidas','Cantidad','Precio unitario','Importe']];
+  const body = xs.map(({l})=>{ const base=[sku(l), desc(l), l.u||'pz', nfmt(l.qty)]; return rfq?base:base.concat([money(l.precio), money(imp(l))]); });
+  doc.autoTable({ startY: 62, head, body, styles:{ fontSize:8.5, cellPadding:2 }, headStyles:{ fillColor:[31,95,168] },
+    columnStyles: rfq ? { 0:{cellWidth:30}, 2:{cellWidth:28}, 3:{cellWidth:20,halign:'right'} } : { 0:{cellWidth:26}, 2:{cellWidth:24}, 3:{cellWidth:19,halign:'right'}, 4:{cellWidth:26,halign:'right'}, 5:{cellWidth:28,halign:'right'} } });
+  let y = doc.lastAutoTable.finalY + 6; doc.setFontSize(9);
   if(rfq){
-    doc.autoTable({ startY: 58, head:[['#','Cant.','Unidad','Descripción','P. unitario (sin IVA)','Tiempo de entrega']],
-      body: xs.map((x,i)=>[i+1, nfmt(x.l.qty), x.l.u||'pz', x.l.d, '', '']),
-      styles:{ fontSize:8.5, cellPadding:2.4, minCellHeight:9 }, headStyles:{ fillColor:[31,95,168] },
-      columnStyles:{ 0:{cellWidth:8}, 1:{cellWidth:14,halign:'right'}, 2:{cellWidth:22}, 4:{cellWidth:30}, 5:{cellWidth:28} } });
-    let y = doc.lastAutoTable.finalY + 8; doc.setFontSize(9);
-    doc.text(doc.splitTextToSize(`Favor de cotizar los artículos anteriores indicando precio unitario sin IVA, tiempo de entrega, condiciones de pago y vigencia de la cotización. Enviar su cotización a ${correo} mencionando el folio ${folio}.`, W-28), 14, y); y+=16;
-    doc.text('Vigencia de la cotización: ____________    Condiciones de pago: ____________', 14, y); y+=8;
-    doc.text(doc.splitTextToSize(`Referencia interna: ${rqs.join(', ')}`, W-28), 14, y);
+    doc.text(doc.splitTextToSize(`Favor de cotizar indicando precio unitario sin IVA, tiempo de entrega, condiciones de pago y vigencia. Enviar su cotización a ${correo} mencionando el folio ${folio}.`, W-28), 14, y); y+=14;
   } else {
-  doc.autoTable({ startY: 58, head:[['#','Cant.','Unidad','Descripción','P. unitario','Importe']],
-    body: xs.map((x,i)=>[i+1, nfmt(x.l.qty), x.l.u||'pz', x.l.d, money(x.l.precio), money(imp(x.l))]),
-    styles:{ fontSize:8.5, cellPadding:1.8 }, headStyles:{ fillColor:[31,95,168] },
-    columnStyles:{ 0:{cellWidth:8}, 1:{cellWidth:14,halign:'right'}, 2:{cellWidth:24}, 4:{cellWidth:26,halign:'right'}, 5:{cellWidth:28,halign:'right'} } });
-  let y = doc.lastAutoTable.finalY + 6;
-  const fila=(t,v,b)=>{ doc.setFont('helvetica',b?'bold':'normal'); doc.text(t, W-50, y, {align:'right'}); doc.text(v, W-14, y, {align:'right'}); y+=5.5; };
-  fila('Subtotal', money(sub)); fila('IVA 16%', money(sub*0.16)); fila('Total', money(sub*1.16), true);
-  doc.setFont('helvetica','normal'); doc.setFontSize(8.5); y+=4;
-  const paras=[...new Set(xs.map(x=>x.r.para))].join(' · ');
-  doc.text(doc.splitTextToSize(`Referencia interna: ${rqs.join(', ')} · ${paras}`, W-28), 14, y); y+=10;
-  doc.text(doc.splitTextToSize(`Favor de confirmar la recepción de esta orden y el tiempo de entrega. Enviar la factura a ${correo} indicando el folio de esta orden.`, W-28), 14, y);
+    const sub=xs.reduce((a,x)=>a+imp(x.l),0), iva=sub*0.16, tot=sub+iva;
+    const fila=(t,v,b)=>{ doc.setFont('helvetica',b?'bold':'normal'); doc.text(t, W-48, y, {align:'right'}); doc.text(v, W-14, y, {align:'right'}); y+=5.5; };
+    fila('Subtotal', money(sub)); fila('IVA (16%)', money(iva)); fila('Total', money(tot), true);
+    doc.setFont('helvetica','normal'); y+=2; doc.text(doc.splitTextToSize(`Importe con letra: ${numLetras(tot)} · Moneda: MXN`, W-28), 14, y); y+=10;
+    doc.text(`Autorizó: M. Peña`, 14, y); y+=6;
+    doc.text(doc.splitTextToSize(`Favor de confirmar esta orden y su fecha de entrega. Enviar la factura a ${correo} indicando el folio ${folio}.`, W-28), 14, y); y+=12;
   }
-  const nombre = (folio.replace(/[^A-Za-z0-9-]+/g,'_')+'_'+prov.replace(/[^A-Za-z0-9]+/g,'_')).slice(0,80)+'.pdf';
-  const blob = doc.output('blob'); const file = new File([blob], nombre, {type:'application/pdf'});
-  try{ if(navigator.canShare && navigator.canShare({files:[file]})){ await navigator.share({files:[file], title:(rfq?'Solicitud de cotización ':'Orden de compra ')+folio, text:(rfq?'Solicitud de cotización DIMACO ':'Orden de compra DIMACO ')+folio}); return; } }catch(e){ if(e && e.name==='AbortError') return; }
-  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=nombre; document.body.appendChild(a); a.click(); a.remove(); toast('PDF descargado: '+nombre);
+  doc.setFontSize(8); doc.setTextColor(90);
+  doc.text(doc.splitTextToSize('La recepción del material no garantiza la aceptación del mismo, hasta verificar el cumplimiento de las especificaciones solicitadas.', W-60), 14, H-16);
+  doc.setTextColor(0);
+  if(d2){ const h=20, w=h*s2[0]/s2[1]; doc.addImage(d2,'PNG',W-14-w,H-12-h,w,h); }
+  const nombre = (rfq?'RFQ_':'PO_')+folio.replace(/[^A-Za-z0-9-]+/g,'_')+'.pdf';
+  return new File([doc.output('blob')], nombre, {type:'application/pdf'});
 }
+let PDF_LISTO = null;
+async function prepararPDF(tipo, folio, keys){
+  const xs = keys.map(k=>{ const x=ref(k); return x.l?{r:x.r,l:x.l}:null; }).filter(Boolean);
+  if(!xs.length){ toast('No encontré los artículos para el PDF'); return; }
+  toast('Generando PDF…');
+  try{ PDF_LISTO = await pdfDoc(tipo, folio, xs); mostrarEnvio(); }catch(e){ toast(e.message); }
+}
+function mostrarEnvio(){
+  let m=document.getElementById('envio'); if(!m){ m=document.createElement('div'); m.id='envio'; document.body.appendChild(m); }
+  m.className='envio'; m.innerHTML=`<div class="card" role="dialog" aria-label="Enviar PDF"><h2>${esc(PDF_LISTO.name)}</h2><div class="sub">Listo para mandarlo al proveedor.</div>
+    <div class="row"><button class="btn s" type="button" id="env-share">Enviar (WhatsApp / correo)</button><button class="btn s gh" type="button" id="env-dl">Descargar</button><button class="btn s gh" type="button" id="env-x">Cerrar</button></div></div>`;
+  m.hidden=false;
+}
+document.addEventListener('click', async e=>{
+  const b=e.target.closest('#env-share,#env-dl,#env-x'); if(!b||!PDF_LISTO) return;
+  if(b.id==='env-x'){ document.getElementById('envio').hidden=true; return; }
+  if(b.id==='env-share'){ try{ if(navigator.canShare && navigator.canShare({files:[PDF_LISTO]})){ await navigator.share({files:[PDF_LISTO], title:PDF_LISTO.name}); return; } }catch(err){ if(err&&err.name==='AbortError') return; } }
+  const a=document.createElement('a'); a.href=URL.createObjectURL(PDF_LISTO); a.download=PDF_LISTO.name; document.body.appendChild(a); a.click(); a.remove(); toast('PDF descargado');
+});
+
 function vRecibir(){
   const L=allLines().filter(x=>x.l.est==='pedido'||x.l.est==='parcial');
   const g={}; L.forEach(x=>{const p=x.l.prov||'—';(g[p]=g[p]||[]).push(x);});
@@ -498,17 +532,22 @@ app.addEventListener('click',async e=>{
   if(d.rfqtxt){ const {r,l}=ref(d.rfqtxt); copiar(`Solicitud de cotización · DIMACO METALMECANICA\nFolio: ${r.folio}\n\nFavor de cotizar:\n- ${nfmt(l.qty)} ${esc(l.u||'pz')} · ${l.d}\n\nIndicar precio unitario sin IVA y tiempo de entrega.\nResponder a Patricia Peña.`); return; }
   if(d.pedtxt){ const xs=allLines().filter(x=>x.l.est==='pedir'&&x.l.prov===d.pedtxt); const tot=xs.reduce((a,x)=>a+imp(x.l),0);
     copiar(`Pedido · DIMACO METALMECANICA · ${d.pedtxt}\n\n`+xs.map(x=>`- ${nfmt(x.l.qty)} ${esc(x.l.u||'pz')} · ${x.l.d} · ${fmt(x.l.precio)} c/u = ${fmt(imp(x.l))}`).join('\n')+`\n\nSubtotal: ${fmt(tot)} + IVA\nReferencia: ${[...new Set(xs.map(x=>x.r.folio))].join(', ')}\nFacturar y enviar a Patricia Peña.`); return; }
-  if(d.pedir){ accion({tipo:'pedir',prov:d.pedir}); return; }
+  if(d.pedir){ const d3=await accion({tipo:'pedir',prov:d.pedir}); if(d3&&d3.po) prepararPDF('oc', d3.po.no, d3.po.keys); return; }
+  if(d.modo){ const [key,m]=d.modo.split('|'); const x=ref(key);
+    if(m==='rfq'){ if(x.l.est!=='cotizar') accion({tipo:'aRFQ',rid:x.rid,i:x.i}); else { delete compraForm[key]; render(); } }
+    else { if(x.l.est==='cotizar'){ compraForm[key]=true; render(); } } return; }
+  if(d.acompra){ const x=ref(d.acompra); const pv=document.getElementById('cm-p-'+x.rid+'-'+x.i).value, pr=document.getElementById('cm-v-'+x.rid+'-'+x.i).value;
+    const r0=await accion({tipo:'aCompra',rid:x.rid,i:x.i,prov:pv,precio:pr}); if(r0) delete compraForm[d.acompra]; render(); return; }
   if(d.rfqkat){ if(b.dataset.ok!=='1'){ b.dataset.ok='1'; b.textContent='Confirmar: crear RFQ en Katana'; b.classList.add('ok'); setTimeout(()=>{ if(b.isConnected){ b.dataset.ok=''; render(); } },5000); return; }
-    b.disabled=true; b.textContent='Creando RFQ en Katana…'; accion({tipo:'rfqKatana'}); return; }
+    b.disabled=true; b.textContent='Creando RFQ en Katana…'; const d0=await accion({tipo:'rfqKatana'}); if(d0&&d0.po) prepararPDF('rfq', d0.po.no, d0.po.keys); return; }
   if(d.confpo){ if(b.dataset.ok!=='1'){ b.dataset.ok='1'; b.textContent='Toca otra vez para confirmar'; b.classList.add('ok'); setTimeout(()=>{ if(b.isConnected){ b.dataset.ok=''; render(); } },5000); return; }
-    b.disabled=true; b.textContent='Confirmando en Katana…'; accion({tipo:'confirmarPO',poId:+d.confpo}); return; }
-  if(d.rfqpdf){ const x=ref(d.rfqpdf); pdfPedido([{r:x.r,l:x.l}],'rfq').catch(e=>toast(e.message)); return; }
-  if(d.rfqall){ pdfPedido(allLines().filter(x=>x.l.est==='cotizar'&&!/^K\d+$/.test(x.l.k||'')),'rfq').catch(e=>toast(e.message)); return; }
-  if(d.pdfpedir){ pdfPedido(allLines().filter(x=>x.l.est==='pedir'&&x.l.prov===d.pdfpedir)).catch(e=>toast(e.message)); return; }
-  if(d.pdfg){ const xs=PDFG[d.pdfg]; if(xs) pdfPedido(xs).catch(e=>toast(e.message)); return; }
+    b.disabled=true; b.textContent='Confirmando en Katana…'; const d1=await accion({tipo:'confirmarPO',poId:+d.confpo}); if(d1&&d1.po) prepararPDF('oc', d1.po.no, d1.po.keys); return; }
+  if(d.rfqpdf){ prepararPDF('rfq', 'RFQ-'+ref(d.rfqpdf).r.folio, [d.rfqpdf]); return; }
+  if(d.rfqall){ const xs=allLines().filter(x=>x.l.est==='cotizar'&&!/^K\d+$/.test(x.l.k||'')); prepararPDF('rfq', 'RFQ-'+[...new Set(xs.map(x=>x.r.folio))].join('-'), xs.map(x=>x.r.id+':'+x.i)); return; }
+
+  if(d.pdfg){ const xs=PDFG[d.pdfg]; if(xs) prepararPDF('oc', xs[0].l.po||xs[0].l.oc||('OC-'+xs[0].r.folio), xs.map(x=>x.r.id+':'+x.i)); return; }
   if(d.kpo){ if(b.dataset.ok!=='1'){ b.dataset.ok='1'; b.textContent='Confirmar: crear PO en Katana'; b.classList.add('ok'); setTimeout(()=>{ if(b.isConnected){ b.dataset.ok=''; b.textContent='Crear PO en Katana'; b.classList.remove('ok'); } },5000); return; }
-    b.disabled=true; b.textContent='Creando en Katana…'; accion({tipo:'katanaPO',prov:d.kpo}); return; }
+    b.disabled=true; b.textContent='Creando en Katana…'; const d2=await accion({tipo:'katanaPO',prov:d.kpo}); if(d2&&d2.po) prepararPDF('oc', d2.po.no, d2.po.keys); return; }
   if(d.rec){ const x=ref(d.rec); const n=+document.getElementById(`rc-${x.rid}-${x.i}`).value||0; accion({tipo:'recibir',rid:x.rid,i:x.i,n}); return; }
   if(d.bind){ const gi=d.gi; accion({tipo:'bind',prov:d.bind,subtotal:+document.getElementById('fs-'+gi).value,factura:document.getElementById('ff-'+gi).value}); return; }
 });
