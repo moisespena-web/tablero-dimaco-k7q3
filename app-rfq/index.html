@@ -113,20 +113,21 @@ input[type=number]{font-variant-numeric:tabular-nums}
 .mochk input{width:20px;height:20px;flex:none;margin-top:1px}
 .mochk span{min-width:0;overflow-wrap:anywhere}
 .mochk small{display:block;font-size:12px;color:var(--tx2)}
-body::after{content:"";position:fixed;inset:0;background:url(logo-mg.png) center 55%/min(70vw,380px) no-repeat;opacity:.06;pointer-events:none;z-index:50}
-.toast{z-index:60}
+.pie{display:flex;justify-content:flex-end;margin-top:18px}
+.pie img{height:64px;width:auto;opacity:.9}
 </style>
 
 </head>
 <body>
 <div id="app">
   <div class="hdr">
-    <div class="logos"><img alt="DIMACO" src="logo-dimaco.png"><img alt="Marca Guanajuato Internacional" src="logo-mg.png"></div>
+    <div class="logos"><img alt="DIMACO" src="logo-dimaco.png"></div>
     <div><h1>Estación RFQ</h1><p>Compra de insumos · DIMACO</p></div>
   </div>
   <div id="quien"></div>
   <div class="tabs" id="tabs" role="tablist" hidden></div>
   <div id="view"></div>
+  <div class="pie"><img alt="Marca Guanajuato Internacional" src="logo-mg.png"></div>
 </div>
 <div class="toast" id="toast" role="status"></div>
 <script>
@@ -157,7 +158,7 @@ try{ const d=JSON.parse(localStorage.getItem('rfq-carrito')||'null'); if(d){ car
 const guardarCarrito = () => { try{ localStorage.setItem('rfq-carrito',JSON.stringify({c:carrito,t:paraTipo,m:mos})); }catch(e){} };
 
 function tabsDe(u){
-  if(u==='paty') return ['pend','facturas','todas'];
+  if(u==='paty') return ['pend','pedir','facturas','mias','todas'];
   if(u==='moises') return ['autorizar','pend','pedir','facturas','mias','todas'];
   if(u==='ely') return ['pedir','mias','recibir'];
   return ['pedir','mias'];
