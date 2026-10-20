@@ -129,7 +129,7 @@ input[type=number]{font-variant-numeric:tabular-nums}
 
 <meta http-equiv="Cache-Control" content="no-cache">
 <script>
-const APPVER='v12b';
+const APPVER='v13';
 (async()=>{ try{ const t=await (await fetch('index.html?_='+Date.now(),{cache:'no-store'})).text(); const m=t.match(/APPVER='([^']+)'/); if(m&&m[1]!==APPVER){ location.replace(location.pathname+'?v='+m[1]); } }catch(e){} })();
 document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible') fetch('index.html?_='+Date.now(),{cache:'no-store'}).then(r=>r.text()).then(t=>{ const m=t.match(/APPVER='([^']+)'/); if(m&&m[1]!==APPVER) location.replace(location.pathname+'?v='+m[1]); }).catch(()=>{}); });
 </script>
@@ -299,7 +299,12 @@ function vPedir(){
       <input type="search" id="mofil" placeholder="Filtrar: número, producto o SKU" value="${esc(moFil)}" autocomplete="off">
       <div class="molist">${moOpts||'<div class="empty">Ninguna MO coincide.</div>'}</div>${MOS.nota?`<div class="sub" style="margin:6px 0 0">${esc(MOS.nota)}</div>`:''}`:'<div class="sub" style="margin:8px 0 0">Cargando MOs de Katana…</div>'):''}
     ${paraTipo==='planta'?`<div class="sub" style="margin:6px 0 0">Consumo general de la planta: guantes, discos, limpieza, gases, etc.</div>`:''}
-    <div style="margin-top:12px"><button class="btn" type="button" id="enviar" ${carrito.length&&paraOk()?'':'disabled'}>Enviar requisición</button></div>
+    <div style="margin-top:12px"><button class="btn" type="button" id="enviar" ${carrito.length&&paraOk()?'':'disabled'}>${YO&&YO.id==='moises'?'Enviar a Paty':'Enviar requisición'}</button></div>
+    ${YO&&YO.id==='moises'&&carrito.length?(()=>{ const listo = carrito.every(l=>{ const c=l.k?BYK[l.k]:null, vig=vigente(c); const m=l.modo||(vig?'compra':'rfq'); return m==='compra' && (l.prov||(vig&&c.s)) && (l.precio>0||(vig&&c.p>0)); });
+      const kat = carrito.every(l=>/^K\d+$/.test(l.k||''));
+      return `<div class="card" style="margin:12px 0 0;padding:12px;background:var(--panel)"><b style="font-size:14px">O pídelo tú directo al proveedor</b>
+      <div class="sub" style="margin:2px 0 8px">${listo?'Se registra, queda autorizado y sale el PDF de la orden de compra para mandarlo.':'Para pedir tú: marca todo como <b>Compra</b> con proveedor y precio.'}</div>
+      <div class="row"><button class="btn s ok" type="button" id="yo-est" ${listo&&paraOk()?'':'disabled'}>Pedir yo (estación) + PDF</button>${kat?`<button class="btn s gh" type="button" id="yo-kat" ${listo&&paraOk()?'':'disabled'}>Pedir yo con PO en Katana + PDF</button>`:''}</div></div>`; })():''}
     <div class="sub" style="margin-top:8px;margin-bottom:0">Folio y fecha se ponen solos. Le llega a Paty.</div>
   </div>`;
 }
@@ -477,22 +482,22 @@ async function pdfDoc(tipo, folio, xs){
   const nombre = (rfq?'RFQ_':'PO_')+folio.replace(/[^A-Za-z0-9-]+/g,'_')+'.pdf';
   return new File([doc.output('blob')], nombre, {type:'application/pdf'});
 }
-let PDF_LISTO = null;
+let PDF_LISTO = null, PDF_COLA = [];
 async function prepararPDF(tipo, folio, keys){
   const xs = keys.map(k=>{ const x=ref(k); return x.l?{r:x.r,l:x.l}:null; }).filter(Boolean);
   if(!xs.length){ toast('No encontré los artículos para el PDF'); return; }
   toast('Generando PDF…');
-  try{ PDF_LISTO = await pdfDoc(tipo, folio, xs); mostrarEnvio(); }catch(e){ toast(e.message); }
+  try{ const f = await pdfDoc(tipo, folio, xs); const m=document.getElementById('envio'); if(PDF_LISTO && m && !m.hidden){ PDF_COLA.push(f); mostrarEnvio(); } else { PDF_LISTO = f; mostrarEnvio(); } }catch(e){ toast(e.message); }
 }
 function mostrarEnvio(){
   let m=document.getElementById('envio'); if(!m){ m=document.createElement('div'); m.id='envio'; document.body.appendChild(m); }
-  m.className='envio'; m.innerHTML=`<div class="card" role="dialog" aria-label="Enviar PDF"><h2>${esc(PDF_LISTO.name)}</h2><div class="sub">Listo para mandarlo al proveedor.</div>
-    <div class="row"><button class="btn s" type="button" id="env-share">Enviar (WhatsApp / correo)</button><button class="btn s gh" type="button" id="env-dl">Descargar</button><button class="btn s gh" type="button" id="env-x">Cerrar</button></div></div>`;
+  m.className='envio'; m.innerHTML=`<div class="card" role="dialog" aria-label="Enviar PDF"><h2>${esc(PDF_LISTO.name)}</h2><div class="sub">Listo para mandarlo al proveedor.${PDF_COLA.length?` Después sigue${PDF_COLA.length>1?'n':''} ${PDF_COLA.length} más.`:''}</div>
+    <div class="row"><button class="btn s" type="button" id="env-share">Enviar (WhatsApp / correo)</button><button class="btn s gh" type="button" id="env-dl">Descargar</button><button class="btn s gh" type="button" id="env-x">${PDF_COLA.length?'Siguiente':'Cerrar'}</button></div></div>`;
   m.hidden=false;
 }
 document.addEventListener('click', async e=>{
   const b=e.target.closest('#env-share,#env-dl,#env-x'); if(!b||!PDF_LISTO) return;
-  if(b.id==='env-x'){ document.getElementById('envio').hidden=true; return; }
+  if(b.id==='env-x'){ if(PDF_COLA.length){ PDF_LISTO=PDF_COLA.shift(); mostrarEnvio(); } else document.getElementById('envio').hidden=true; return; }
   if(b.id==='env-share'){ try{ if(navigator.canShare && navigator.canShare({files:[PDF_LISTO]})){ await navigator.share({files:[PDF_LISTO], title:PDF_LISTO.name}); return; } }catch(err){ if(err&&err.name==='AbortError') return; } }
   const a=document.createElement('a'); a.href=URL.createObjectURL(PDF_LISTO); a.download=PDF_LISTO.name; document.body.appendChild(a); a.click(); a.remove(); toast('PDF descargado');
 });
@@ -541,6 +546,17 @@ app.addEventListener('click',async e=>{
   if(d.cm){ const [i,m]=d.cm.split('|'); carrito[+i].modo=m; guardarCarrito(); render(); return; }
   if(d.unmo){ mos=mos.filter(x=>x!==d.unmo); guardarCarrito(); render(); return; }
   if(d.para){ paraTipo=d.para; guardarCarrito(); render(); return; }
+  if(b.id==='yo-est'||b.id==='yo-kat'){
+    const kat=b.id==='yo-kat';
+    if(kat&&b.dataset.ok!=='1'){ b.dataset.ok='1'; b.textContent='Confirmar: crear PO en Katana'; setTimeout(()=>{ if(b.isConnected){ b.dataset.ok=''; b.textContent='Pedir yo con PO en Katana + PDF'; } },5000); return; }
+    b.disabled=true;
+    const provs=[...new Set(carrito.map(l=>{ const c=l.k?BYK[l.k]:null; return l.prov||(c&&c.s)||''; }))];
+    const r = await accion({tipo:'crear', para: paraTipo==='planta'?'Uso planta':mos.join(', '), items: carrito.map(x=>{ const c=x.k?BYK[x.k]:null; return {k:x.k,d:x.d,qty:x.qty,modo:'compra',prov:x.prov||(c&&c.s)||'',precio:x.precio||(c&&c.p)||null}; })});
+    if(!r){ b.disabled=false; return; }
+    modoReq=''; carrito=[]; paraTipo=''; mos=[]; moFil=''; guardarCarrito(); render();
+    for(const p of provs){ const d=await accion({tipo: kat?'katanaPO':'pedir', prov:p, rid:r.rid}); if(d&&d.po) await prepararPDF('oc', d.po.no, d.po.keys); }
+    return;
+  }
   if(b.id==='enviar'){
     b.disabled=true;
     const r = await accion({tipo:'crear', para: paraTipo==='planta'?'Uso planta':mos.join(', '), items: carrito.map(x=>({k:x.k,d:x.d,qty:x.qty,modo:x.modo,prov:x.prov,precio:x.precio}))});
