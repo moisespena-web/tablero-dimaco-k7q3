@@ -285,7 +285,7 @@ function reqCard(r){
   <div class="sub">${fFecha(r.fecha)} · ${NOMBRES[r.quien]||r.quien} · ${esc(r.para)}</div>
   ${r.lines.map((l,i)=>`<div class="ln"><div class="a"><b>${esc(l.d)}</b><span>${nfmt(l.qty)} ${esc(l.u||'pz')} · ${l.prov?esc(l.prov):'proveedor por definir'} · ${l.precio!=null?fmt(l.precio)+' c/u':'sin precio'}</span>
     ${flow(l)}${(mia||YO.id==='paty')&&['cotizar','autorizar','pedir'].includes(l.est)?`<button class="lk" type="button" data-cancel="${r.id}:${i}" style="background:none;border:0;color:var(--tx3);font-size:12px;padding:4px 0">Cancelar este concepto</button>`:''}</div>
-    <div class="z"><span class="chip ${EST[l.est][1]}">${EST[l.est][0]}${l.est==='parcial'?` ${l.rec}/${l.qty}`:''}</span>
+    <div class="z"><span class="chip ${EST[l.est][1]}">${EST[l.est][0]}${l.est==='parcial'?` ${l.rec}/${l.qty}`:''}</span>${l.po?`<div style="font-size:11px;color:var(--tx2);margin-top:4px">${esc(l.po)} Katana</div>`:''}
     ${l.est==='autorizar'?`<div style="font-size:11px;color:var(--tx3);margin-top:4px">autoriza ${NOMBRES[autorizador(l)]}</div>`:''}</div></div>`).join('')}
   </div>`;
 }
@@ -346,14 +346,14 @@ function vPend(){
     <div class="sub">Autorizado, agrupado por proveedor. Copia el pedido para el correo y márcalo como pedido.</div>
     ${ped.length?Object.entries(porProv).map(([p,xs])=>`<div class="grp"><span>${p?esc(p):'Sin proveedor'}</span><span class="num">${fmt(xs.reduce((a,x)=>a+imp(x.l),0))}</span></div>
       ${xs.map(({r,l,i})=>`<div class="ln"><div class="a"><b>${esc(l.d)}</b><span>${r.folio} · ${NOMBRES[r.quien]} · ${nfmt(l.qty)} ${esc(l.u||'pz')} × ${fmt(l.precio)}</span>${p?'':`<select id="ap-${r.id}-${i}" data-asig="${r.id}:${i}" style="margin-top:6px" aria-label="Asignar proveedor">${provOpts('')}</select>`}</div><div class="z num">${fmt(imp(l))}</div></div>`).join('')}
-      ${p?`<div class="row" style="margin-top:6px"><button class="btn s gh" type="button" data-pedtxt="${esc(p)}">Copiar pedido</button><button class="btn s" type="button" data-pedir="${esc(p)}">Marcar como pedido</button></div>`:''}`).join(''):'<div class="empty">Nada por pedir.</div>'}
+      ${p?(()=>{ const todoKat=xs.every(x=>/^K\d+$/.test(x.l.k||'')); return `<div class="row" style="margin-top:6px"><button class="btn s gh" type="button" data-pedtxt="${esc(p)}">Copiar pedido</button><button class="btn s gh" type="button" data-pedir="${esc(p)}">Solo en la estación</button>${todoKat?`<button class="btn s" type="button" data-kpo="${esc(p)}">Crear PO en Katana</button>`:''}</div>${todoKat?'':'<div class="sub" style="margin:6px 0 0">Para crear PO en Katana, todo lo de este proveedor debe venir de Katana.</div>'}`; })():''}`).join(''):'<div class="empty">Nada por pedir.</div>'}
   </div>`;
 }
 function vRecibir(){
   const L=allLines().filter(x=>x.l.est==='pedido'||x.l.est==='parcial');
   const g={}; L.forEach(x=>{const p=x.l.prov||'—';(g[p]=g[p]||[]).push(x);});
   return `<div class="card"><h2>Recibir material</h2><div class="sub">Anota cuántas piezas llegaron de cada renglón. Fecha y hora se ponen solas. Si falta algo, queda abierto y Paty recibe aviso.</div>
-  ${L.length?Object.entries(g).map(([p,xs])=>`<div class="grp"><span>${esc(p)}</span></div>${xs.map(({r,l,i})=>{const falta=l.qty-l.rec;return `<div class="ln"><div class="a"><b>${esc(l.d)}</b><span>${r.folio} · pedido el ${fFecha(l.pedidoF)} · pidió ${nfmt(l.qty)}${l.rec?` · ya llegaron ${nfmt(l.rec)}`:''}</span><span><b style="display:inline;color:var(--warn)">Faltan ${nfmt(falta)}</b></span></div>
+  ${L.length?Object.entries(g).map(([p,xs])=>`<div class="grp"><span>${esc(p)}</span></div>${xs.map(({r,l,i})=>{const falta=l.qty-l.rec;return `<div class="ln"><div class="a"><b>${esc(l.d)}</b><span>${r.folio}${l.po?' · '+esc(l.po):''} · pedido el ${fFecha(l.pedidoF)} · pidió ${nfmt(l.qty)}${l.rec?` · ya llegaron ${nfmt(l.rec)}`:''}</span><span><b style="display:inline;color:var(--warn)">Faltan ${nfmt(falta)}</b></span></div>
     <div class="z"><input class="qty" type="number" min="0" max="${falta}" inputmode="numeric" id="rc-${r.id}-${i}" value="${falta}" aria-label="Piezas que llegaron"><div style="margin-top:6px"><button class="btn s ok" type="button" data-rec="${r.id}:${i}">Llegó</button></div></div></div>`}).join('')}`).join(''):'<div class="empty">No hay material en camino.</div>'}
   </div>`;
 }
@@ -407,6 +407,8 @@ app.addEventListener('click',async e=>{
   if(d.pedtxt){ const xs=allLines().filter(x=>x.l.est==='pedir'&&x.l.prov===d.pedtxt); const tot=xs.reduce((a,x)=>a+imp(x.l),0);
     copiar(`Pedido · DIMACO METALMECANICA · ${d.pedtxt}\n\n`+xs.map(x=>`- ${nfmt(x.l.qty)} ${esc(x.l.u||'pz')} · ${x.l.d} · ${fmt(x.l.precio)} c/u = ${fmt(imp(x.l))}`).join('\n')+`\n\nSubtotal: ${fmt(tot)} + IVA\nReferencia: ${[...new Set(xs.map(x=>x.r.folio))].join(', ')}\nFacturar y enviar a Patricia Peña.`); return; }
   if(d.pedir){ accion({tipo:'pedir',prov:d.pedir}); return; }
+  if(d.kpo){ if(b.dataset.ok!=='1'){ b.dataset.ok='1'; b.textContent='Confirmar: crear PO en Katana'; b.classList.add('ok'); setTimeout(()=>{ if(b.isConnected){ b.dataset.ok=''; b.textContent='Crear PO en Katana'; b.classList.remove('ok'); } },5000); return; }
+    b.disabled=true; b.textContent='Creando en Katana…'; accion({tipo:'katanaPO',prov:d.kpo}); return; }
   if(d.rec){ const x=ref(d.rec); const n=+document.getElementById(`rc-${x.rid}-${x.i}`).value||0; accion({tipo:'recibir',rid:x.rid,i:x.i,n}); return; }
   if(d.bind){ const gi=d.gi; accion({tipo:'bind',prov:d.bind,subtotal:+document.getElementById('fs-'+gi).value,factura:document.getElementById('ff-'+gi).value}); return; }
 });
