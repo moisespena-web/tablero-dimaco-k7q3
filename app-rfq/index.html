@@ -123,7 +123,7 @@ input[type=number]{font-variant-numeric:tabular-nums}
 
 <meta http-equiv="Cache-Control" content="no-cache">
 <script>
-const APPVER='v11b';
+const APPVER='v12';
 (async()=>{ try{ const t=await (await fetch('index.html?_='+Date.now(),{cache:'no-store'})).text(); const m=t.match(/APPVER='([^']+)'/); if(m&&m[1]!==APPVER){ location.replace(location.pathname+'?v='+m[1]); } }catch(e){} })();
 document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible') fetch('index.html?_='+Date.now(),{cache:'no-store'}).then(r=>r.text()).then(t=>{ const m=t.match(/APPVER='([^']+)'/); if(m&&m[1]!==APPVER) location.replace(location.pathname+'?v='+m[1]); }).catch(()=>{}); });
 </script>
@@ -240,15 +240,23 @@ function cuentas(){
   };
 }
 const vigente = c => c && c.p!=null && venc(c.f||'2026-10-19') >= hoyISO();
+const provOptsG = sel => `<option value="">Proveedor…</option>`+(sel&&!PROVS.includes(sel)?`<option selected>${esc(sel)}</option>`:'')+PROVS.map(p=>`<option ${p===sel?'selected':''}>${esc(p)}</option>`).join('')+`<option value="__otro">Otro (escribir)…</option>`;
 const paraOk = () => paraTipo==='planta' || (paraTipo==='mo' && mos.length>0);
 
 function vPedir(){
   const res = busq.trim().length>=2 ? buscar(busq) : [];
   let tot=0, hayCot=false;
-  const lines = carrito.map((l,i)=>{ const c=l.k?BYK[l.k]:null; const dir=vigente(c); const p=dir?c.p:null; if(p) tot+=p*l.qty; else hayCot=true;
-    return `<div class="ln"><div class="a"><b>${esc(l.d)}</b><span>${dir?`<span class="chip c-dir">Pedido directo</span> ${esc(c.s||'Proveedor: lo asigna Paty')} · ${fmt(p)} ${c.u?'/ '+esc(c.u):'c/u'}`:`<span class="chip c-cot">A cotizar</span> ${l.k?'precio vencido o sin precio':'insumo nuevo'}`}</span></div>
+  const comprador = YO && (YO.id==='paty'||YO.id==='moises');
+  const lines = carrito.map((l,i)=>{ const c=l.k?BYK[l.k]:null; const vig=vigente(c);
+    const modo = comprador ? (l.modo || (vig?'compra':'rfq')) : (vig?'compra':'rfq');
+    const dir = modo==='compra';
+    const p = dir ? (l.precio>0 ? +l.precio : (vig?c.p:null)) : null; if(p) tot+=p*l.qty; else hayCot=true;
+    const pv = l.prov || (vig?c.s:'') || '';
+    const sel = comprador ? `<div class="modo" role="group" aria-label="RFQ o compra"><button type="button" data-cm="${i}|rfq" aria-pressed="${!dir}">RFQ</button><button type="button" data-cm="${i}|compra" aria-pressed="${dir}">Compra</button></div>` : '';
+    const forma = comprador && dir ? `<div class="cot"><select data-cpp="${i}" aria-label="Proveedor">${provOptsG(pv)}</select><input type="number" step="0.01" inputmode="decimal" data-cpv="${i}" placeholder="$ c/u" value="${p??''}" aria-label="Precio"></div>` : '';
+    return `<div class="ln" style="flex-wrap:wrap"><div class="a"><b>${esc(l.d)}</b><span>${dir?`<span class="chip c-dir">Compra directa</span> ${esc(pv||'Proveedor: lo asigna Paty')}${p?' · '+fmt(p)+' '+(c&&c.u?'/ '+esc(c.u):'c/u'):''}`:`<span class="chip c-cot">RFQ · a cotizar</span> ${vig?'se cotiza aunque tenga precio':(l.k?'precio vencido o sin precio':'insumo nuevo')}`}</span></div>
       <div class="z"><input class="qty" type="number" min="1" inputmode="numeric" id="qty-${i}" data-qi="${i}" value="${l.qty}" aria-label="Cantidad">${c&&c.u?`<div style="font-size:11px;color:var(--tx2);text-align:center">${esc(c.u)}</div>`:''}<div class="num" style="font-size:12px;margin-top:4px">${p?fmt(p*l.qty):''}</div></div>
-      <button class="x" type="button" data-del="${i}" aria-label="Quitar">×</button></div>`;}).join('');
+      <button class="x" type="button" data-del="${i}" aria-label="Quitar">×</button>${comprador?`<div style="flex-basis:100%;margin-top:-4px">${sel}${forma.replace('class="cot"','class="cot" style="grid-template-columns:minmax(0,1fr) 120px"')}</div>`:''}</div>`;}).join('');
   const fw = moFil.toUpperCase().split(/\s+/).filter(Boolean);
   const moVis = m => fw.every(w=>(m.n+' '+m.p+' '+m.sku).toUpperCase().includes(w));
   const moOpt = m=>`<label class="mochk"><input type="checkbox" data-mo="${esc(m.n)}" ${mos.includes(m.n)?'checked':''}><span><b>${esc(m.n)}</b> · ${esc(m.p)}${m.sku?' ('+esc(m.sku)+')':''}<small>${m.sb?'STAND BY':esc(m.st)} · faltan ${nfmt(m.q)}</small></span></label>`;
@@ -521,11 +529,12 @@ app.addEventListener('click',async e=>{
   if(d.apalta){ accion({tipo:'aprobarAlta',id:+d.apalta}).then(r=>{ if(r) api('/catalogo').then(c=>{ CAT=c.catalogo; BYK=Object.fromEntries(CAT.map(x=>[x.k,x])); }); }); return; }
   if(d.rechalta){ accion({tipo:'rechazarAlta',id:+d.rechalta}); return; }
   if(d.del){ carrito.splice(+d.del,1); guardarCarrito(); render(); return; }
+  if(d.cm){ const [i,m]=d.cm.split('|'); carrito[+i].modo=m; guardarCarrito(); render(); return; }
   if(d.unmo){ mos=mos.filter(x=>x!==d.unmo); guardarCarrito(); render(); return; }
   if(d.para){ paraTipo=d.para; guardarCarrito(); render(); return; }
   if(b.id==='enviar'){
     b.disabled=true;
-    const r = await accion({tipo:'crear', para: paraTipo==='planta'?'Uso planta':mos.join(', '), items: carrito.map(x=>({k:x.k,d:x.d,qty:x.qty}))});
+    const r = await accion({tipo:'crear', para: paraTipo==='planta'?'Uso planta':mos.join(', '), items: carrito.map(x=>({k:x.k,d:x.d,qty:x.qty,modo:x.modo,prov:x.prov,precio:x.precio}))});
     if(r){ carrito=[]; paraTipo=''; mos=[]; moFil=''; guardarCarrito(); TAB='mias'; render(); toast(`${r.folio} enviada a Paty`); } else b.disabled=false;
     return;
   }
@@ -562,6 +571,7 @@ app.addEventListener('input',e=>{
   if(t.id==='mofil'){ moFil=t.value; const pos=t.selectionStart; render(); const q=document.getElementById('mofil'); q.focus(); try{q.setSelectionRange(pos,pos);}catch(_){} return; }
   if(t.id==='q'){ busq=t.value; const pos=t.selectionStart; render(); const q=document.getElementById('q'); q.focus(); try{q.setSelectionRange(pos,pos);}catch(_){} return; }
   if(d.qi!=null){ carrito[+d.qi].qty=Math.max(1,+t.value||1); guardarCarrito(); return; }
+  if(d.cpv!=null){ carrito[+d.cpv].precio=+t.value||null; guardarCarrito(); return; }
   if(d.fac!=null){ const v=+t.value, esp=+d.esp, out=document.getElementById('cruce-'+d.fac), bt=document.querySelector(`[data-gi="${d.fac}"]`);
     if(!t.value){ out.textContent=''; bt.disabled=true; return; }
     const dif=v-esp; const ok=Math.abs(dif)<0.5;
@@ -570,6 +580,8 @@ app.addEventListener('input',e=>{
 });
 app.addEventListener('change',async e=>{
   const t=e.target, d=t.dataset;
+  if(d.cpp!=null){ let v=t.value; if(v==='__otro'){ v=((window.prompt&&window.prompt('Nombre del proveedor'))||'').trim(); } carrito[+d.cpp].prov=v||''; guardarCarrito(); render(); return; }
+  if(d.cpv!=null){ render(); return; }
   if(d.qi!=null){ render(); return; }
   if(d.mo){ const i=mos.indexOf(d.mo); if(t.checked&&i<0) mos.push(d.mo); if(!t.checked&&i>=0) mos.splice(i,1); guardarCarrito(); const y=window.scrollY; render(); window.scrollTo(0,y); return; }
   if(d.cot){ const [rid,i,j,f]=d.cot.split(':'); const key=rid+':'+i; const x=ref(key);
@@ -587,7 +599,6 @@ function mostrar(txt){ const v=document.getElementById('view'); const n=document
 
 render();
 if(PIN) entrar();
-
 </script>
 </body>
 </html>
