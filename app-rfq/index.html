@@ -123,7 +123,7 @@ input[type=number]{font-variant-numeric:tabular-nums}
 
 <meta http-equiv="Cache-Control" content="no-cache">
 <script>
-const APPVER='v12';
+const APPVER='v12b';
 (async()=>{ try{ const t=await (await fetch('index.html?_='+Date.now(),{cache:'no-store'})).text(); const m=t.match(/APPVER='([^']+)'/); if(m&&m[1]!==APPVER){ location.replace(location.pathname+'?v='+m[1]); } }catch(e){} })();
 document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible') fetch('index.html?_='+Date.now(),{cache:'no-store'}).then(r=>r.text()).then(t=>{ const m=t.match(/APPVER='([^']+)'/); if(m&&m[1]!==APPVER) location.replace(location.pathname+'?v='+m[1]); }).catch(()=>{}); });
 </script>
@@ -163,6 +163,7 @@ const PASOS = ['cotizar','autorizar','pedir','pedido','recibido','facturado'];
 
 let PIN = ''; try{ PIN = localStorage.getItem('rfq-pin')||''; }catch(e){}
 let YO = null, CAT = [], BYK = {}, REQS = [], ALTAS = [], PROVS = [], MOS = null, TAB = '', cargando = false, altaForm = null;
+let modoReq = '';
 let carrito = [], paraTipo = '', mos = [], moFil = '', busq = '', borradorCot = {};
 try{ const d=JSON.parse(localStorage.getItem('rfq-carrito')||'null'); if(d){ carrito=d.c||[]; paraTipo=d.t||''; mos=Array.isArray(d.m)?d.m:[]; } }catch(e){}
 const guardarCarrito = () => { try{ localStorage.setItem('rfq-carrito',JSON.stringify({c:carrito,t:paraTipo,m:mos})); }catch(e){} };
@@ -279,6 +280,7 @@ function vPedir(){
   ${YO.altas&&ALTAS.length?`<div class="card"><h2>Mis artículos propuestos</h2>${ALTAS.slice().reverse().slice(0,15).map(a=>`<div class="ln"><div class="a"><b>${esc(a.d)}</b><span>${fFecha(a.f)}${a.u?' · '+esc(a.u):''}${a.motivo?' · '+esc(a.motivo):''}</span></div><div class="z"><span class="chip ${a.est==='aprobada'?'c-ok':a.est==='rechazada'?'c-bad':'c-aut'}">${a.est==='aprobada'?'Aprobado':a.est==='rechazada'?'Rechazado':'Por aprobar'}</span></div></div>`).join('')}</div>`:''}
   <div class="card">
     <h2>Lo que vas a pedir</h2>
+    ${YO&&(YO.id==='paty'||YO.id==='moises')?`<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:-2px 0 8px"><b style="font-size:14px">¿RFQ o compra?</b><div class="modo" role="group" aria-label="RFQ o compra" style="margin-top:0"><button type="button" data-cmall="rfq" aria-pressed="${modoReq==='rfq'}">RFQ</button><button type="button" data-cmall="compra" aria-pressed="${modoReq==='compra'}">Compra</button></div><span class="sub" style="margin:0">${modoReq==='rfq'?'Todo se manda a cotizar.':modoReq==='compra'?'Todo es compra directa: pon proveedor y precio.':'Elige uno; o cámbialo por artículo.'}</span></div>`:''}
     ${carrito.length?lines:'<div class="empty">Aún no agregas insumos.</div>'}
     ${carrito.length?`<div class="tot"><span>Total conocido${hayCot?' (sin lo que se cotiza)':''}</span><span class="num">${fmt(tot)}</span></div>`:''}
     <div style="font-size:13px;font-weight:700;color:var(--tx2);margin:10px 0 4px">¿Para qué es?</div>
@@ -523,19 +525,20 @@ app.addEventListener('click',async e=>{
   const d=b.dataset;
   if(b.id==='salir'){ salir(); return; }
   if(d.tab){ TAB=d.tab; render(); window.scrollTo(0,0); return; }
-  if(d.add){ const c=BYK[d.add]; if(!carrito.find(x=>x.k===c.k)) carrito.push({k:c.k,d:c.d,qty:1}); busq=''; guardarCarrito(); render(); toast('Agregado'); return; }
+  if(d.add){ const c=BYK[d.add]; if(!carrito.find(x=>x.k===c.k)) carrito.push(modoReq?{k:c.k,d:c.d,qty:1,modo:modoReq}:{k:c.k,d:c.d,qty:1}); busq=''; guardarCarrito(); render(); toast('Agregado'); return; }
   if(d.nuevo){ altaForm={d:busq.trim().toUpperCase()}; busq=''; render(); const x=document.getElementById('al-u'); if(x) x.focus(); return; }
   if(b.id==='al-x'){ altaForm=null; render(); return; }
   if(d.apalta){ accion({tipo:'aprobarAlta',id:+d.apalta}).then(r=>{ if(r) api('/catalogo').then(c=>{ CAT=c.catalogo; BYK=Object.fromEntries(CAT.map(x=>[x.k,x])); }); }); return; }
   if(d.rechalta){ accion({tipo:'rechazarAlta',id:+d.rechalta}); return; }
   if(d.del){ carrito.splice(+d.del,1); guardarCarrito(); render(); return; }
+  if(d.cmall){ modoReq=d.cmall; carrito.forEach(x=>x.modo=modoReq); guardarCarrito(); render(); return; }
   if(d.cm){ const [i,m]=d.cm.split('|'); carrito[+i].modo=m; guardarCarrito(); render(); return; }
   if(d.unmo){ mos=mos.filter(x=>x!==d.unmo); guardarCarrito(); render(); return; }
   if(d.para){ paraTipo=d.para; guardarCarrito(); render(); return; }
   if(b.id==='enviar'){
     b.disabled=true;
     const r = await accion({tipo:'crear', para: paraTipo==='planta'?'Uso planta':mos.join(', '), items: carrito.map(x=>({k:x.k,d:x.d,qty:x.qty,modo:x.modo,prov:x.prov,precio:x.precio}))});
-    if(r){ carrito=[]; paraTipo=''; mos=[]; moFil=''; guardarCarrito(); TAB='mias'; render(); toast(`${r.folio} enviada a Paty`); } else b.disabled=false;
+    if(r){ modoReq=''; carrito=[]; paraTipo=''; mos=[]; moFil=''; guardarCarrito(); TAB='mias'; render(); toast(`${r.folio} enviada a Paty`); } else b.disabled=false;
     return;
   }
   if(d.aut){ const x=ref(d.aut); accion({tipo:'autorizar',rid:x.rid,i:x.i}); return; }
