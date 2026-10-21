@@ -510,5 +510,23 @@
    "37A14279-0001-1.png",
    "37A14279-0001-2.png"
   ]
+ },
+ "36B9157-0033": {
+  "desc": "TAP PAD .250 x 1.500 x 3.500",
+  "plano": "FIG. 1 (A 2.125 · B 1.375 · C .500): 1 barreno + 1 ranura · 1 doblez",
+  "ref": "36B9157 · FIG. 1, parte 33",
+  "nota": "",
+  "imgs": [
+   "36B9157-0033-1.png"
+  ]
+ },
+ "36A6789-0011": {
+  "desc": "LEAD CONNECTION BUS BAR .375 x 2.000 x 14.000",
+  "plano": "Solera recta sin barrenos ni doblez (renglón 11 de la tabla; sin figura)",
+  "ref": "36A6789 · tabla, parte 11",
+  "nota": "",
+  "imgs": [
+   "36A6789-0011-1.png"
+  ]
  }
 }
