@@ -133,7 +133,7 @@ input[type=number]{font-variant-numeric:tabular-nums}
 
 <meta http-equiv="Cache-Control" content="no-cache">
 <script>
-const APPVER='v14';
+const APPVER='v14p2';
 (async()=>{ try{ const t=await (await fetch('index.html?_='+Date.now(),{cache:'no-store'})).text(); const m=t.match(/APPVER='([^']+)'/); if(m&&m[1]!==APPVER){ location.replace(location.pathname+'?v='+m[1]); } }catch(e){} })();
 document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible') fetch('index.html?_='+Date.now(),{cache:'no-store'}).then(r=>r.text()).then(t=>{ const m=t.match(/APPVER='([^']+)'/); if(m&&m[1]!==APPVER) location.replace(location.pathname+'?v='+m[1]); }).catch(()=>{}); });
 </script>
@@ -228,8 +228,11 @@ async function entrar(){
 }
 function salir(msg){ YO=null; PIN=''; VISTAS=null; try{ localStorage.removeItem('rfq-pin'); }catch(e){} render(); if(msg) toast(msg); }
 async function refrescar(){
-  if(!YO || document.hidden) return;
-  const a=document.activeElement; if(a && (a.tagName==='INPUT'||a.tagName==='SELECT')) return;
+  if(!YO) return;
+  const a=document.activeElement;
+  if(document.hidden || (a && (a.tagName==='INPUT'||a.tagName==='SELECT'))){   // sin redibujar: solo revisa si hay alertas nuevas
+    if(ALERTA_PARA.includes(YO.id)) try{ const d=await api('/datos'); revisarAlertas(d.alertas); }catch(e){}
+    return; }
   try{ const d=await api('/datos'); REQS=d.reqs; ALTAS=d.altas||[]; PROVS=d.provs; render(); revisarAlertas(d.alertas); }catch(e){}
 }
 setInterval(refrescar, 30000);
