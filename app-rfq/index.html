@@ -133,7 +133,7 @@ input[type=number]{font-variant-numeric:tabular-nums}
 
 <meta http-equiv="Cache-Control" content="no-cache">
 <script>
-const APPVER='v14';
+const APPVER='v15';
 (async()=>{ try{ const t=await (await fetch('index.html?_='+Date.now(),{cache:'no-store'})).text(); const m=t.match(/APPVER='([^']+)'/); if(m&&m[1]!==APPVER){ location.replace(location.pathname+'?v='+m[1]); } }catch(e){} })();
 document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible') fetch('index.html?_='+Date.now(),{cache:'no-store'}).then(r=>r.text()).then(t=>{ const m=t.match(/APPVER='([^']+)'/); if(m&&m[1]!==APPVER) location.replace(location.pathname+'?v='+m[1]); }).catch(()=>{}); });
 </script>
@@ -346,9 +346,16 @@ function vPedir(){
     <div class="sub" style="margin-top:8px;margin-bottom:0">Folio y fecha se ponen solos. Le llega a Paty.</div>
   </div>`;
 }
+// Búsqueda: ignora comillas, entiende "2x2" = "2 X 2" y pone primero lo que trae la frase completa
+const nBus=s=>' '+String(s).toUpperCase().replace(/["”″'’]/g,' ').replace(/(\d)\s*X\s*(?=\d)/g,'$1 X ').replace(/\s+/g,' ').trim()+' ';
 function buscar(q){
-  const ws=q.toUpperCase().split(/\s+/).filter(Boolean);
-  return CAT.filter(c=>{ if(tipoPed==='mat'?c.c!=='Katana':c.c==='Katana') return false; const d=(c.k+' '+c.d).toUpperCase(); return ws.every(w=>d.includes(w));}).slice(0,25);
+  const nq=nBus(q).trim(); if(!nq) return [];
+  const ws=nq.split(' ');
+  const r=[];
+  CAT.forEach(c=>{ if(tipoPed==='mat'?c.c!=='Katana':c.c==='Katana') return; const d=nBus(c.k+' '+c.d);
+    if(!ws.every(w=>d.includes(w))) return;
+    r.push([d.includes(' '+nq+' ')?0:d.includes(nq)?1:2, c]); });
+  return r.sort((a,b)=>a[0]-b[0]).slice(0,60).map(x=>x[1]);
 }
 function reqCard(r){
   const tot=r.lines.reduce((a,l)=>a+(['rechazado','cancelado'].includes(l.est)?0:imp(l)),0);
