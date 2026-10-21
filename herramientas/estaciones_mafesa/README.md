@@ -1,5 +1,10 @@
 # Estaciones MAFESA — las 5 iguales (6-oct-2026)
 
+> **⚠ NUNCA EDITAR app-*/index.html A MANO (Moisés, 20-oct-2026):** el 19-oct se corrigieron las estaciones (doble conteo, candado
+> por estación anterior, "NO LLEGÓ A KATANA", contar lo ya enviado) editando directo las apps; esa misma noche otra corrida usó
+> `gen.py` con la plantilla vieja y borró todo, y el 20-oct volvieron las discrepancias. Desde el 20-oct esas correcciones ya están
+> en `plantilla.html`. Todo cambio de código va en `plantilla.html` y luego `python3 gen.py`; para mover MOs o rutas solo se cambia `var DATA=[...]`.
+>
 > **⚠ LAS 5 EN VIVO (Moisés, 14-oct-2026) — manda sobre cualquier instrucción anterior:** Corte y Taladro (Lupita, misma iPad),
 > TM-2P (Fernando, iPhone), Doblez (Miguel, tablet) e Inspección / Limpieza & SQA (Cynthia, tablet) escriben en Katana EN VIVO:
 > en las 5 `var PAUSA_KATANA=false;`. `gen.py` ya lo pone así (CFG `katana=True`). Si una tarea dice "PAUSA_KATANA=true debe
