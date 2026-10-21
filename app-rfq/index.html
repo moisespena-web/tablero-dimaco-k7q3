@@ -125,11 +125,15 @@ input[type=number]{font-variant-numeric:tabular-nums}
 .modo button[aria-pressed="true"]{background:var(--ac);color:#fff}
 .envio{position:fixed;inset:0;background:rgba(0,0,0,.35);display:flex;align-items:flex-end;justify-content:center;z-index:70;padding:16px;padding-bottom:calc(16px + env(safe-area-inset-bottom,0px))}
 .envio .card{width:100%;max-width:520px;margin:0}
+.sku{font-family:ui-monospace,Menlo,monospace;font-size:.92em;color:var(--ac);font-weight:700}
+.tp small{display:block;font-size:11px;font-weight:600;opacity:.8}
+.lk{background:none;border:0;color:var(--tx3);font-size:12px;padding:4px 0}
+.lk.bad{color:var(--bad)}
 </style>
 
 <meta http-equiv="Cache-Control" content="no-cache">
 <script>
-const APPVER='v13';
+const APPVER='v14';
 (async()=>{ try{ const t=await (await fetch('index.html?_='+Date.now(),{cache:'no-store'})).text(); const m=t.match(/APPVER='([^']+)'/); if(m&&m[1]!==APPVER){ location.replace(location.pathname+'?v='+m[1]); } }catch(e){} })();
 document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible') fetch('index.html?_='+Date.now(),{cache:'no-store'}).then(r=>r.text()).then(t=>{ const m=t.match(/APPVER='([^']+)'/); if(m&&m[1]!==APPVER) location.replace(location.pathname+'?v='+m[1]); }).catch(()=>{}); });
 </script>
@@ -138,7 +142,7 @@ document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==
 <div id="app">
   <div class="hdr">
     <div class="logos"><img alt="DIMACO" src="logo-dimaco.png"></div>
-    <div><h1>Estación RFQ</h1><p>Compra de insumos · DIMACO</p></div>
+    <div><h1>Estación RFQ</h1><p>Insumos y materiales · DIMACO</p></div>
     <img class="mg" alt="Marca Guanajuato Internacional" src="logo-mg.png">
   </div>
   <div id="quien"></div>
@@ -166,13 +170,34 @@ const EST = {
   facturado:['Registrado en Bind','c-ok'], rechazado:['Rechazado','c-bad'], cancelado:['Cancelado','c-gr']
 };
 const PASOS = ['cotizar','autorizar','pedir','pedido','recibido','facturado'];
+/* SKU + nombre: todos pedimos con el mismo lenguaje */
+const skuDe = l => { if(/^INS-/.test(l.k||'')) return l.k; const p=String(l.d||'').split(' · '); return p.length>1?p[p.length-1]:''; };
+const nomDe = l => { const p=String(l.d||'').split(' · '); return (/^INS-/.test(l.k||'')||p.length<2) ? String(l.d||'') : p.slice(0,-1).join(' · '); };
+const etq = l => { const s=skuDe(l); return (s?`<span class="sku">${esc(s)}</span> · `:'')+esc(nomDe(l)); };
+const esKatK = k => /^K\d+$/.test(k||'');
+/* alerta de sonido: requisiciones de Uriel o Gerardo suenan para Paty, Lupita, Ely y Moisés */
+const ALERTA_PARA = ['paty','lupita','ely','moises'];
+let AUDIO = null, VISTAS = null;
+function activarAudio(){ try{ if(!AUDIO) AUDIO=new (window.AudioContext||window.webkitAudioContext)(); if(AUDIO.state==='suspended') AUDIO.resume(); }catch(e){} }
+document.addEventListener('pointerdown', activarAudio, {capture:true});
+function sonar(){ try{ if(!AUDIO) return; const t=AUDIO.currentTime+0.05; [[0,880],[0.22,1320],[0.44,880],[0.66,1320]].forEach(([dt,f])=>{ const o=AUDIO.createOscillator(), g=AUDIO.createGain(); o.type='sine'; o.frequency.value=f; o.connect(g); g.connect(AUDIO.destination); g.gain.setValueAtTime(0.0001,t+dt); g.gain.exponentialRampToValueAtTime(0.5,t+dt+0.02); g.gain.exponentialRampToValueAtTime(0.0001,t+dt+0.19); o.start(t+dt); o.stop(t+dt+0.2); }); }catch(e){} }
+function revisarAlertas(al){
+  if(!YO || !ALERTA_PARA.includes(YO.id) || !Array.isArray(al)) return;
+  const key='rfq-vistas-'+YO.id;
+  if(VISTAS===null){ let prev=null; try{ prev=JSON.parse(localStorage.getItem(key)||'null'); }catch(e){} VISTAS=new Set(prev||[]); if(!prev){ al.forEach(a=>VISTAS.add(a.id)); try{ localStorage.setItem(key,JSON.stringify([...VISTAS])); }catch(e){} return; } }
+  const nuevas=al.filter(a=>!VISTAS.has(a.id)); if(!nuevas.length) return;
+  nuevas.forEach(a=>VISTAS.add(a.id)); try{ localStorage.setItem(key,JSON.stringify([...VISTAS].slice(-300))); }catch(e){}
+  sonar(); toast('Nueva requisición de producción: '+nuevas.map(a=>a.folio+' de '+(NOMBRES[a.quien]||a.quien)+' ('+a.para+')').join(', '), 8000);
+}
+function confirmar2(b, txt){ if(b.dataset.ok==='1') return true; b.dataset.ok='1'; const t=b.textContent; b.textContent=txt; setTimeout(()=>{ if(b.isConnected){ b.dataset.ok=''; b.textContent=t; } },5000); return false; }
+let tipoPed = '', rfqExcl = new Set(), rfqProvK = '', rfqProvI = '';
 
 let PIN = ''; try{ PIN = localStorage.getItem('rfq-pin')||''; }catch(e){}
 let YO = null, CAT = [], BYK = {}, REQS = [], ALTAS = [], PROVS = [], MOS = null, TAB = '', cargando = false, altaForm = null;
 let modoReq = '';
 let carrito = [], paraTipo = '', mos = [], moFil = '', busq = '', borradorCot = {};
-try{ const d=JSON.parse(localStorage.getItem('rfq-carrito')||'null'); if(d){ carrito=d.c||[]; paraTipo=d.t||''; mos=Array.isArray(d.m)?d.m:[]; } }catch(e){}
-const guardarCarrito = () => { try{ localStorage.setItem('rfq-carrito',JSON.stringify({c:carrito,t:paraTipo,m:mos})); }catch(e){} };
+try{ const d=JSON.parse(localStorage.getItem('rfq-carrito')||'null'); if(d){ carrito=d.c||[]; paraTipo=d.t||''; mos=Array.isArray(d.m)?d.m:[]; tipoPed=d.tp||''; } }catch(e){}
+const guardarCarrito = () => { try{ localStorage.setItem('rfq-carrito',JSON.stringify({c:carrito,t:paraTipo,m:mos,tp:tipoPed})); }catch(e){} };
 
 function tabsDe(u){
   if(u==='paty') return ['pend','pedir','facturas','mias','todas'];
@@ -180,7 +205,7 @@ function tabsDe(u){
   if(u==='ely') return ['pedir','mias','recibir'];
   return ['pedir','mias'];
 }
-function toast(t){ const el=document.getElementById('toast'); el.textContent=t; el.classList.add('on'); clearTimeout(toast.t); toast.t=setTimeout(()=>el.classList.remove('on'),2600); }
+function toast(t,ms){ const el=document.getElementById('toast'); el.textContent=t; el.classList.add('on'); clearTimeout(toast.t); toast.t=setTimeout(()=>el.classList.remove('on'),ms||2600); }
 
 async function api(path, body){
   const r = await fetch(API+path, { method: body?'POST':'GET', headers: Object.assign({'X-Pin':PIN}, body?{'Content-Type':'application/json'}:{}), body: body?JSON.stringify(body):undefined });
@@ -197,15 +222,18 @@ async function entrar(){
     try{ localStorage.setItem('rfq-pin',PIN); }catch(e){}
     const [c,d] = await Promise.all([api('/catalogo'), api('/datos')]);
     CAT = c.catalogo; BYK = Object.fromEntries(CAT.map(x=>[x.k,x])); REQS = d.reqs; ALTAS = d.altas||[]; PROVS = d.provs;
-    cargando=false; render();
+    cargando=false; render(); revisarAlertas(d.alertas);
     api('/mos').then(m=>{ MOS=m; if(TAB==='pedir') render(); }).catch(()=>{ MOS={mafesa:0,mos:[],nota:'No se pudo leer Katana'}; });
   }catch(e){ cargando=false; if(YO===null) { render(); if(e.message!=='PIN incorrecto') toast(e.message.includes('fetch')?'Sin conexión con el servidor':e.message); } }
 }
-function salir(msg){ YO=null; PIN=''; try{ localStorage.removeItem('rfq-pin'); }catch(e){} render(); if(msg) toast(msg); }
+function salir(msg){ YO=null; PIN=''; VISTAS=null; try{ localStorage.removeItem('rfq-pin'); }catch(e){} render(); if(msg) toast(msg); }
 async function refrescar(){
-  if(!YO || document.hidden) return;
-  const a=document.activeElement; if(a && (a.tagName==='INPUT'||a.tagName==='SELECT')) return;
-  try{ const d=await api('/datos'); REQS=d.reqs; ALTAS=d.altas||[]; PROVS=d.provs; render(); }catch(e){}
+  if(!YO) return;
+  const a=document.activeElement;
+  if(document.hidden || (a && (a.tagName==='INPUT'||a.tagName==='SELECT'))){   // sin redibujar: solo revisa si hay alertas nuevas
+    if(ALERTA_PARA.includes(YO.id)) try{ const d=await api('/datos'); revisarAlertas(d.alertas); }catch(e){}
+    return; }
+  try{ const d=await api('/datos'); REQS=d.reqs; ALTAS=d.altas||[]; PROVS=d.provs; render(); revisarAlertas(d.alertas); }catch(e){}
 }
 setInterval(refrescar, 30000);
 document.addEventListener('visibilitychange', refrescar);
@@ -215,7 +243,7 @@ async function accion(body, okMsg){
     const d = await api('/accion', body);
     REQS = d.reqs; ALTAS = d.altas||ALTAS; PROVS = d.provs;
     if(d.cat){ Object.entries(d.cat).forEach(([k,o])=>{ if(BYK[k]) Object.assign(BYK[k],{p:o.p,s:o.s||BYK[k].s,f:o.f}); else { const n={k,d:o.d,p:o.p,s:o.s,f:o.f,c:'Nuevo'}; CAT.push(n); BYK[k]=n; } }); }
-    render(); toast(okMsg || d.msg || 'Listo'); return d;
+    render(); toast(okMsg || d.msg || 'Listo'); revisarAlertas(d.alertas); return d;
   }catch(e){ toast(e.message); return null; }
 }
 
@@ -230,7 +258,7 @@ function render(){
     return;
   }
   const c = cuentas();
-  roles.innerHTML = `<div class="row" style="justify-content:space-between;margin-bottom:10px"><div><b style="font-size:15px">Hola, ${esc(YO.n)}</b> <span style="font-size:12px;color:var(--tx2)">· ${esc(YO.a)}</span></div><button class="btn s gh" type="button" id="salir">Salir</button></div>`;
+  roles.innerHTML = `<div class="row" style="justify-content:space-between;margin-bottom:10px"><div><b style="font-size:15px">Hola, ${esc(YO.n)}</b> <span style="font-size:12px;color:var(--tx2)">· ${esc(YO.a)}</span></div><div class="row">${ALERTA_PARA.includes(YO.id)?`<button class="btn s gh" type="button" id="sonido" title="Suena cuando Uriel o Gerardo piden material">${AUDIO&&AUDIO.state==='running'?'Sonido activo':'Activar sonido'}</button>`:''}<button class="btn s gh" type="button" id="salir">Salir</button></div></div>`;
   const tb={recibir:c.recibir,pend:c.paty,facturas:c.facturas,autorizar:c.moises};
   tabs.hidden=false;
   tabs.innerHTML = tabsDe(YO.id).map(t=>`<button type="button" role="tab" data-tab="${t}" aria-selected="${t===TAB}">${TABN[t]}${tb[t]?`<span class="bd">${tb[t]}</span>`:''}</button>`).join('');
@@ -261,7 +289,7 @@ function vPedir(){
     const pv = l.prov || (vig?c.s:'') || '';
     const sel = comprador ? `<div class="modo" role="group" aria-label="RFQ o compra"><button type="button" data-cm="${i}|rfq" aria-pressed="${!dir}">RFQ</button><button type="button" data-cm="${i}|compra" aria-pressed="${dir}">Compra</button></div>` : '';
     const forma = comprador && dir ? `<div class="cot"><select data-cpp="${i}" aria-label="Proveedor">${provOptsG(pv)}</select><input type="number" step="0.01" inputmode="decimal" data-cpv="${i}" placeholder="$ c/u" value="${p??''}" aria-label="Precio"></div>` : '';
-    return `<div class="ln" style="flex-wrap:wrap"><div class="a"><b>${esc(l.d)}</b><span>${dir?`<span class="chip c-dir">Compra directa</span> ${esc(pv||'Proveedor: lo asigna Paty')}${p?' · '+fmt(p)+' '+(c&&c.u?'/ '+esc(c.u):'c/u'):''}`:`<span class="chip c-cot">RFQ · a cotizar</span> ${vig?'se cotiza aunque tenga precio':(l.k?'precio vencido o sin precio':'insumo nuevo')}`}</span></div>
+    return `<div class="ln" style="flex-wrap:wrap"><div class="a"><b>${etq(l)}</b><span>${dir?`<span class="chip c-dir">Compra directa</span> ${esc(pv||'Proveedor: lo asigna Paty')}${p?' · '+fmt(p)+' '+(c&&c.u?'/ '+esc(c.u):'c/u'):''}`:`<span class="chip c-cot">RFQ · a cotizar</span> ${vig?'se cotiza aunque tenga precio':(l.k?'precio vencido o sin precio':'insumo nuevo')}`}</span></div>
       <div class="z"><input class="qty" type="number" min="1" inputmode="numeric" id="qty-${i}" data-qi="${i}" value="${l.qty}" aria-label="Cantidad">${c&&c.u?`<div style="font-size:11px;color:var(--tx2);text-align:center">${esc(c.u)}</div>`:''}<div class="num" style="font-size:12px;margin-top:4px">${p?fmt(p*l.qty):''}</div></div>
       <button class="x" type="button" data-del="${i}" aria-label="Quitar">×</button>${comprador?`<div style="flex-basis:100%;margin-top:-4px">${sel}${forma.replace('class="cot"','class="cot" style="grid-template-columns:minmax(0,1fr) 120px"')}</div>`:''}</div>`;}).join('');
   const fw = moFil.toUpperCase().split(/\s+/).filter(Boolean);
@@ -271,10 +299,15 @@ function vPedir(){
   const moOpts = MOS ? grupo('MAFESA',MOS.mos.filter(m=>m.maf&&moVis(m))) + grupo('Racks y otros',MOS.mos.filter(m=>!m.maf&&moVis(m))) : '';
   return `<div class="card">
     <h2>Nueva requisición</h2>
-    <div class="sub">Busca el insumo y agrégalo. Si tiene precio de menos de 6 meses se pide directo; si no, Paty lo cotiza.</div>
-    <label class="f" for="q">Buscar insumo</label>
-    <input type="search" id="q" placeholder="Ej. broca 1/4, guante, disco" value="${esc(busq)}" autocomplete="off">
-    ${busq.trim().length>=2?`<ul class="res">${res.map(c=>{const t=vigente(c);return `<li><button type="button" data-add="${esc(c.k)}"><div class="d">${esc(c.d)}<div class="m">${t?'<span class="chip c-dir">Directo</span>':'<span class="chip c-cot">A cotizar</span>'}${c.c==='Katana'?' <span class="chip c-gr">Katana</span>':''}${c.c==='Nuevo'?' <span class="chip c-gr">Nuevo</span>':''} ${esc(c.s||'Sin proveedor habitual')}${c.u?' · '+esc(c.u):''}</div></div><div class="p">${c.p!=null?fmt(c.p)+(c.u?'<div style="font-size:11px;font-weight:600;color:var(--tx2)">/ '+esc(c.u)+'</div>':''):''}</div></button></li>`}).join('')}
+    <div class="sub">Primero elige qué vas a pedir. Si tiene precio de menos de 6 meses se pide directo; si no, Paty lo cotiza.</div>
+    <div style="font-size:13px;font-weight:700;color:var(--tx2);margin:6px 0 4px">¿Qué vas a pedir?</div>
+    <div class="row2">
+      <button type="button" class="btn s tp ${tipoPed==='ins'?'':'gh'}" style="width:100%;min-height:52px" data-tp="ins" aria-pressed="${tipoPed==='ins'}">Insumos<small>guantes, gases, consumibles</small></button>
+      <button type="button" class="btn s tp ${tipoPed==='mat'?'':'gh'}" style="width:100%;min-height:52px" data-tp="mat" aria-pressed="${tipoPed==='mat'}">Materiales<small>materia prima · Katana</small></button>
+    </div>
+    ${tipoPed?`<label class="f" for="q">Buscar ${tipoPed==='mat'?'material':'insumo'} por SKU o nombre</label>
+    <input type="search" id="q" placeholder="${tipoPed==='mat'?'Ej. solera cobre 1/2, DUN001':'Ej. INS-0179, CO2, guante, disco'}" value="${esc(busq)}" autocomplete="off">`:''}
+    ${tipoPed&&busq.trim().length>=2?`<ul class="res">${res.map(c=>{const t=vigente(c);return `<li><button type="button" data-add="${esc(c.k)}"><div class="d">${etq(c)}<div class="m">${t?'<span class="chip c-dir">Directo</span>':'<span class="chip c-cot">A cotizar</span>'}${c.c==='Katana'?' <span class="chip c-gr">Katana</span>':''}${c.c==='Nuevo'?' <span class="chip c-gr">Nuevo</span>':''} ${esc(c.s||'Sin proveedor habitual')}${c.u?' · '+esc(c.u):''}</div></div><div class="p">${c.p!=null?fmt(c.p)+(c.u?'<div style="font-size:11px;font-weight:600;color:var(--tx2)">/ '+esc(c.u)+'</div>':''):''}</div></button></li>`}).join('')}
       ${YO.altas?`<li><button type="button" data-nuevo="1"><div class="d"><b>¿No está?</b> Proponer “${esc(busq.trim())}” como artículo nuevo<div class="m">Lo aprueba Moisés antes de entrar al catálogo</div></div></button></li>`:`<li><div class="d" style="padding:10px 12px;font-size:13px;color:var(--tx2)">¿No está en el catálogo? Pide a Lupita o a Uriel que lo den de alta.</div></li>`}</ul>`:''}
   </div>
   ${altaForm?`<div class="card"><h2>Proponer artículo nuevo</h2><div class="sub">Llega a Moisés para que lo apruebe. Al aprobarse entra al catálogo y la primera compra se cotiza.</div>
@@ -310,16 +343,17 @@ function vPedir(){
 }
 function buscar(q){
   const ws=q.toUpperCase().split(/\s+/).filter(Boolean);
-  return CAT.filter(c=>{const d=c.d.toUpperCase(); return ws.every(w=>d.includes(w));}).slice(0,25);
+  return CAT.filter(c=>{ if(tipoPed==='mat'?c.c!=='Katana':c.c==='Katana') return false; const d=(c.k+' '+c.d).toUpperCase(); return ws.every(w=>d.includes(w));}).slice(0,25);
 }
 function reqCard(r){
   const tot=r.lines.reduce((a,l)=>a+(['rechazado','cancelado'].includes(l.est)?0:imp(l)),0);
   const mia = YO && r.quien===YO.id;
+  const puedeBorrar = YO && (YO.id==='paty'||YO.id==='moises');
   return `<div class="card"><div class="row" style="justify-content:space-between"><h2>${r.folio}</h2><span class="num">${fmt(tot)}</span></div>
-  <div class="sub">${fFecha(r.fecha)} · ${NOMBRES[r.quien]||r.quien} · ${esc(r.para)}</div>
-  ${r.lines.map((l,i)=>`<div class="ln"><div class="a"><b>${esc(l.d)}</b><span>${nfmt(l.qty)} ${esc(l.u||'pz')} · ${l.prov?esc(l.prov):'proveedor por definir'} · ${l.precio!=null?fmt(l.precio)+' c/u':'sin precio'}</span>
-    ${flow(l)}${(mia||YO.id==='paty')&&['cotizar','autorizar','pedir'].includes(l.est)?`<button class="lk" type="button" data-cancel="${r.id}:${i}" style="background:none;border:0;color:var(--tx3);font-size:12px;padding:4px 0">Cancelar este concepto</button>`:''}</div>
-    <div class="z"><span class="chip ${EST[l.est][1]}">${EST[l.est][0]}${l.est==='parcial'?` ${l.rec}/${l.qty}`:''}</span>${l.po?`<div style="font-size:11px;color:var(--tx2);margin-top:4px">${esc(l.po)} Katana</div>`:(l.rfqPo?`<div style="font-size:11px;color:var(--tx2);margin-top:4px">RFQ ${esc(l.rfqPo)}</div>`:'')}${l.katErr?`<div class="chip c-bad" style="margin-top:4px">Falta recibir en Katana</div>`:''}
+  <div class="sub">${fFecha(r.fecha)} · ${NOMBRES[r.quien]||r.quien} · ${esc(r.para)}${puedeBorrar?` · <button class="lk bad" type="button" data-borrar="${r.id}">Borrar requisición</button>`:''}</div>
+  ${r.lines.map((l,i)=>`<div class="ln"><div class="a"><b>${etq(l)}</b><span>${nfmt(l.qty)} ${esc(l.u||'pz')} · ${l.prov?esc(l.prov):'proveedor por definir'} · ${l.precio!=null?fmt(l.precio)+' c/u':'sin precio'}</span>
+    ${flow(l)}${(mia||YO.id==='paty')&&['cotizar','autorizar','pedir'].includes(l.est)?`<button class="lk" type="button" data-cancel="${r.id}:${i}" style="background:none;border:0;color:var(--tx3);font-size:12px;padding:4px 0">Cancelar este concepto</button>`:''}${puedeBorrar&&r.lines.length>1?`<button class="lk bad" type="button" data-borrarl="${r.id}:${i}" style="margin-left:10px">Borrar concepto</button>`:''}</div>
+    <div class="z"><span class="chip ${EST[l.est][1]}">${EST[l.est][0]}${l.est==='parcial'?` ${l.rec}/${l.qty}`:''}</span>${l.po?`<div style="font-size:11px;color:var(--tx2);margin-top:4px">${esc(l.po)} Katana</div>`:l.oc?`<div style="font-size:11px;color:var(--tx2);margin-top:4px">${esc(l.oc)}</div>`:l.rfqPo?`<div style="font-size:11px;color:var(--tx2);margin-top:4px">RFQ-${esc(l.rfqPo)}</div>`:l.rfqI?`<div style="font-size:11px;color:var(--tx2);margin-top:4px">${esc(l.rfqI)}</div>`:''}${l.katErr?`<div class="chip c-bad" style="margin-top:4px">Falta recibir en Katana</div>`:''}
     ${l.est==='autorizar'?`<div style="font-size:11px;color:var(--tx3);margin-top:4px">autoriza ${NOMBRES[autorizador(l)]}</div>`:''}</div></div>`).join('')}
   </div>`;
 }
@@ -339,7 +373,7 @@ function vTodas(){
   + (REQS.length ? REQS.slice().reverse().map(reqCard).join('') : '<div class="card empty">Aún no hay requisiciones.</div>');
 }
 function autLine({r,l,i}){
-  return `<div class="ln"><div class="a"><b>${esc(l.d)}</b><span>${r.folio} · ${NOMBRES[r.quien]} · ${esc(r.para)}</span><span>${nfmt(l.qty)} ${esc(l.u||'pz')} × ${fmt(l.precio)} · ${esc(l.prov||'proveedor por definir')}${l.tipo==='cotizar'?' · cotizado':''}</span>
+  return `<div class="ln"><div class="a"><b>${etq(l)}</b><span>${r.folio} · ${NOMBRES[r.quien]} · ${esc(r.para)}</span><span>${nfmt(l.qty)} ${esc(l.u||'pz')} × ${fmt(l.precio)} · ${esc(l.prov||'proveedor por definir')}${l.tipo==='cotizar'?' · cotizado':''}</span>
     ${YO&&(YO.id==='paty'||YO.id==='moises')&&!l.po?modoSel(r.id+':'+i,'compra'):''}
     <div class="row" style="margin-top:8px"><button class="btn s ok" type="button" data-aut="${r.id}:${i}">Autorizar</button><button class="btn s bad" type="button" data-rech="${r.id}:${i}">Rechazar</button></div></div>
     <div class="z"><div class="num">${fmt(imp(l))}</div></div></div>`;
@@ -364,41 +398,51 @@ function vPend(){
   const esKat = l => /^K\d+$/.test(l.k||'');
   const katSinRfq = cot.filter(x=>esKat(x.l) && !x.l.poId);
   const fueraKat = cot.filter(x=>!esKat(x.l));
+  const insSinRfq = fueraKat.filter(x=>!x.l.rfqI);
   const provOpts = sel => `<option value="">Proveedor…</option>`+PROVS.map(p=>`<option ${p===sel?'selected':''}>${esc(p)}</option>`).join('')+`<option value="__otro">Otro (escribir)…</option>`;
   return `
   <div class="card"><h2>1 · A cotizar <span class="chip c-cot">${cot.length}</span></h2>
     <div class="sub">Insumos nuevos o con precio vencido. Tú eliges a qué proveedores mandar y cuál gana; el precio ganador entra al catálogo.</div>
-    ${katSinRfq.length?`<button class="btn s" type="button" data-rfqkat="1" style="margin-bottom:8px">Crear RFQ + PDF (${katSinRfq.length} artículo(s) de Katana)</button><div class="sub" style="margin:-4px 0 8px">Crea la RFQ en Katana (borrador, proveedor "COTIZACIÓN ABIERTA") y te da el PDF al instante para mandarlo a tus proveedores.</div>`:''}
-    ${fueraKat.length>1?`<button class="btn s gh" type="button" data-rfqall="1" style="margin-bottom:8px">PDF RFQ de insumos fuera de Katana (${fueraKat.length})</button>`:''}
+    ${katSinRfq.length?bloqueRFQ('k', katSinRfq, 'RFQ de materiales (Katana)', 'Marca los renglones que van juntos y elige a qué proveedor se manda. El folio es el de la siguiente PO de Katana (RFQ-PO-…); al confirmarla se vuelve esa misma PO.', rfqProvK):''}
+    ${insSinRfq.length?bloqueRFQ('i', insSinRfq, 'RFQ de insumos', 'Marca los insumos que van juntos y elige a qué proveedor se manda. Sale con folio RFQI; al pedirlo, la orden lleva el mismo número (OCI).', rfqProvI):''}
     ${cot.length?cot.map(({r,l,i})=>{ const key=r.id+':'+i; const cs=(borradorCot[key]||l.cot||[]).slice(); while(cs.length<3) cs.push({prov:'',precio:null});
-      return `<div class="ln" style="display:block"><b style="font-size:14px">${esc(l.d)}</b><div style="font-size:12px;color:var(--tx2)">${nfmt(l.qty)} ${esc(l.u||'pz')} · ${r.folio} · ${NOMBRES[r.quien]} · ${esc(r.para)}</div>
+      return `<div class="ln" style="display:block"><b style="font-size:14px">${etq(l)}</b><div style="font-size:12px;color:var(--tx2)">${nfmt(l.qty)} ${esc(l.u||'pz')} · ${r.folio} · ${NOMBRES[r.quien]} · ${esc(r.para)}</div>
       ${modoSel(key, compraForm[key]?'compra':'rfq')}
       ${compraForm[key]?`<div class="cot"><select id="cm-p-${r.id}-${i}" aria-label="Proveedor">${provOpts(l.prov||'')}</select><input type="number" step="0.01" inputmode="decimal" id="cm-v-${r.id}-${i}" placeholder="$ c/u" value="${l.precio??''}" aria-label="Precio"><button class="btn s ok" type="button" data-acompra="${key}">Listo</button></div><div class="sub" style="margin:4px 0 0">Compra directa: sin cotizar, pasa a autorizar.</div>`:`
       ${cs.map((c,j)=>`<div class="cot"><select id="cp-${r.id}-${i}-${j}" data-cot="${key}:${j}:prov" aria-label="Proveedor ${j+1}">${provOpts(c.prov)}${c.prov&&!PROVS.includes(c.prov)?`<option selected>${esc(c.prov)}</option>`:''}</select>
         <input type="number" step="0.01" inputmode="decimal" id="cv-${r.id}-${i}-${j}" placeholder="$ c/u" value="${c.precio??''}" data-cot="${key}:${j}:precio" aria-label="Precio ${j+1}">
         <button class="btn s gh win" type="button" data-win="${key}:${j}" ${c.prov&&c.precio?'':'disabled'}>Gana</button></div>`).join('')}`}
-      ${l.poId?`<div class="row" style="margin-top:8px"><a class="btn s" style="display:inline-flex;align-items:center;text-decoration:none" href="https://factory.katanamrp.com/purchaseorder/${l.poId}" target="_blank" rel="noopener">RFQ ${esc(l.rfqPo||'')} · abrir en Katana</a></div>`
-        : esKat(l) ? `<div class="sub" style="margin:8px 0 0">Artículo de Katana: usa "Crear RFQ en Katana" arriba.</div>`
-        : `<div class="row" style="margin-top:8px"><button class="btn s" type="button" data-rfqpdf="${key}">PDF RFQ</button><button class="btn s gh" type="button" data-rfqtxt="${key}">Copiar texto</button></div>`}
+      ${l.poId?`<div class="row" style="margin-top:8px"><a class="btn s" style="display:inline-flex;align-items:center;text-decoration:none" href="https://factory.katanamrp.com/purchaseorder/${l.poId}" target="_blank" rel="noopener">RFQ-${esc(l.rfqPo||'')}${l.rfqProv?' · '+esc(l.rfqProv):''} · abrir en Katana</a></div>`
+        : l.rfqI ? `<div class="row" style="margin-top:8px"><button class="btn s gh" type="button" data-rfqipdf="${esc(l.rfqI)}">PDF ${esc(l.rfqI)}${l.rfqProv?' · '+esc(l.rfqProv):''}</button></div>`
+        : `<div class="sub" style="margin:8px 0 0">Inclúyelo en la RFQ de ${esKat(l)?'materiales':'insumos'} de arriba.</div>`}
       ${l.katErr?`<div class="chip c-bad" style="margin-top:6px">${esc(l.katErr)}</div>`:''}
       </div>`}).join(''):'<div class="empty">Nada por cotizar.</div>'}
   </div>
   <div class="card"><h2>2 · Por autorizar <span class="chip c-aut">${aut.length}</span></h2>
     <div class="sub">Conceptos de hasta ${fmt(LIMITE)}. Los de más le llegan a Moisés.</div>
     ${aut.length?aut.map(autLine).join(''):'<div class="empty">Nada por autorizar.</div>'}
-    ${esp.length?`<div class="grp"><span>Esperando a Moisés</span><span class="chip c-aut">${esp.length}</span></div>${esp.map(({r,l})=>`<div class="ln"><div class="a"><b>${esc(l.d)}</b><span>${r.folio} · ${nfmt(l.qty)} ${esc(l.u||'pz')}</span></div><div class="z num">${fmt(imp(l))}</div></div>`).join('')}`:''}
+    ${esp.length?`<div class="grp"><span>Esperando a Moisés</span><span class="chip c-aut">${esp.length}</span></div>${esp.map(({r,l})=>`<div class="ln"><div class="a"><b>${etq(l)}</b><span>${r.folio} · ${nfmt(l.qty)} ${esc(l.u||'pz')}</span></div><div class="z num">${fmt(imp(l))}</div></div>`).join('')}`:''}
   </div>
   <div class="card"><h2>3 · Por pedir <span class="chip c-ped">${ped.length}</span></h2>
     <div class="sub">Autorizado, agrupado por proveedor. Al pedir se genera el PDF de la orden para mandarlo al proveedor.</div>
-    ${Object.entries(porPO).map(([id,xs])=>{ const l0=xs[0].l; return `<div class="grp"><span>${esc(l0.rfqPo||'PO')} · ${esc(l0.prov||'')}</span><span class="num">${fmt(xs.reduce((a,x)=>a+imp(x.l),0))}</span></div>
-      ${xs.map(({r,l})=>`<div class="ln"><div class="a"><b>${esc(l.d)}</b><span>${r.folio} · ${NOMBRES[r.quien]} · ${nfmt(l.qty)} ${esc(l.u||'pz')} × ${fmt(l.precio)}</span></div><div class="z num">${fmt(imp(l))}</div></div>`).join('')}
+    ${Object.entries(porPO).map(([id,xs])=>{ const l0=xs[0].l; return `<div class="grp"><span>RFQ-${esc(l0.rfqPo||'PO')} · ${esc(l0.prov||'')}</span><span class="num">${fmt(xs.reduce((a,x)=>a+imp(x.l),0))}</span></div>
+      ${xs.map(({r,l})=>`<div class="ln"><div class="a"><b>${etq(l)}</b><span>${r.folio} · ${NOMBRES[r.quien]} · ${nfmt(l.qty)} ${esc(l.u||'pz')} × ${fmt(l.precio)}</span></div><div class="z num">${fmt(imp(l))}</div></div>`).join('')}
       <div class="row" style="margin-top:6px"><a class="btn s gh" style="display:inline-flex;align-items:center;text-decoration:none" href="https://factory.katanamrp.com/purchaseorder/${id}" target="_blank" rel="noopener">Abrir en Katana</a><button class="btn s" type="button" data-confpo="${id}">Confirmar ${esc(l0.rfqPo||'PO')} como orden de compra + PDF</button></div>
       <div class="sub" style="margin:6px 0 0">Pasa la RFQ a orden de compra (No recibida) con el mismo folio y te da el PDF al instante para mandarlo al proveedor.</div>`; }).join('')}
     ${ped.length?Object.entries(porProv).map(([p,xs])=>`<div class="grp"><span>${p?esc(p):'Sin proveedor'}</span><span class="num">${fmt(xs.reduce((a,x)=>a+imp(x.l),0))}</span></div>
-      ${xs.map(({r,l,i})=>`<div class="ln"><div class="a"><b>${esc(l.d)}</b><span>${r.folio} · ${NOMBRES[r.quien]} · ${nfmt(l.qty)} ${esc(l.u||'pz')} × ${fmt(l.precio)}</span>${p?'':`<select id="ap-${r.id}-${i}" data-asig="${r.id}:${i}" style="margin-top:6px" aria-label="Asignar proveedor">${provOpts('')}</select>`}</div><div class="z num">${fmt(imp(l))}</div></div>`).join('')}
+      ${xs.map(({r,l,i})=>`<div class="ln"><div class="a"><b>${etq(l)}</b><span>${r.folio} · ${NOMBRES[r.quien]} · ${nfmt(l.qty)} ${esc(l.u||'pz')} × ${fmt(l.precio)}</span>${p?'':`<select id="ap-${r.id}-${i}" data-asig="${r.id}:${i}" style="margin-top:6px" aria-label="Asignar proveedor">${provOpts('')}</select>`}</div><div class="z num">${fmt(imp(l))}</div></div>`).join('')}
       ${p?(()=>{ const todoKat=xs.every(x=>/^K\d+$/.test(x.l.k||'')); return `<div class="row" style="margin-top:6px"><button class="btn s gh" type="button" data-pedtxt="${esc(p)}">Copiar pedido</button><button class="btn s gh" type="button" data-pedir="${esc(p)}">Pedir solo en la estación + PDF</button>${todoKat?`<button class="btn s" type="button" data-kpo="${esc(p)}">Crear PO en Katana + PDF</button>`:''}</div>${todoKat?'':'<div class="sub" style="margin:6px 0 0">Para crear PO en Katana, todo lo de este proveedor debe venir de Katana.</div>'}`; })():''}`).join(''):'<div class="empty">Nada por pedir.</div>'}
   </div>
   ${vEnviados()}`;
+}
+function bloqueRFQ(t, xs, titulo, sub, provSel){
+  const sel = xs.filter(x=>!rfqExcl.has(x.r.id+':'+x.i));
+  const opts = `<option value="">COTIZACIÓN ABIERTA (varios proveedores)</option>`+(provSel&&!PROVS.includes(provSel)?`<option selected>${esc(provSel)}</option>`:'')+PROVS.map(p=>`<option ${p===provSel?'selected':''}>${esc(p)}</option>`).join('')+`<option value="__otro">Otro (escribir)…</option>`;
+  return `<div style="border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:10px;background:var(--bg)"><b style="font-size:14px">${titulo}</b>
+    <div class="sub" style="margin:2px 0 6px">${sub}</div>
+    <div class="molist" style="margin-top:0;max-height:260px">${xs.map(({r,l,i})=>`<label class="mochk"><input type="checkbox" data-rfqsel="${r.id}:${i}" ${rfqExcl.has(r.id+':'+i)?'':'checked'}><span>${etq(l)}<small>${nfmt(l.qty)} ${esc(l.u||'pz')} · ${r.folio} · ${NOMBRES[r.quien]||r.quien} · ${esc(r.para)}</small></span></label>`).join('')}</div>
+    <label class="f" for="rfqp-${t}">Proveedor</label><select id="rfqp-${t}" data-rfqprov="${t}">${opts}</select>
+    <button class="btn s" type="button" data-rfqgo="${t}" style="margin-top:8px" ${sel.length?'':'disabled'}>Crear RFQ + PDF (${sel.length} renglón${sel.length===1?'':'es'})</button></div>`;
 }
 let PDFG = {};
 let compraForm = {};
@@ -407,14 +451,14 @@ function gruposEnviados(){
   const lim = new Date(Date.now()-45*864e5).toISOString().slice(0,10);
   const g = {};
   allLines().filter(x=>['pedido','parcial','recibido','facturado'].includes(x.l.est) && (x.l.pedidoF||'')>=lim).forEach(x=>{
-    const k=(x.l.prov||'—')+'|'+(x.l.po||x.l.pedidoF||''); (g[k]=g[k]||[]).push(x); });
+    const k=(x.l.prov||'—')+'|'+(x.l.po||x.l.oc||x.l.pedidoF||''); (g[k]=g[k]||[]).push(x); });
   return g;
 }
 function vEnviados(){
   PDFG = gruposEnviados(); const ks=Object.keys(PDFG).sort((a,b)=>(PDFG[b][0].l.pedidoF||'').localeCompare(PDFG[a][0].l.pedidoF||''));
   return `<div class="card"><h2>4 · Pedidos enviados <span class="chip c-gr">${ks.length}</span></h2><div class="sub">Últimos 45 días. Genera el PDF de la orden para mandarlo al proveedor por WhatsApp o correo.</div>
-  ${ks.length?ks.map(k=>{ const xs=PDFG[k], l0=xs[0].l; return `<div class="ln"><div class="a"><b>${esc(l0.prov||'—')}</b><span>${l0.po?esc(l0.po)+' · ':''}${fFecha(l0.pedidoF)} · ${xs.length} concepto(s) · ${[...new Set(xs.map(x=>x.r.folio))].join(', ')}</span></div>
-    <div class="z"><div class="num">${fmt(xs.reduce((a,x)=>a+imp(x.l),0))}</div><button class="btn s gh" type="button" data-pdfg="${esc(k)}" style="margin-top:6px">PDF</button></div></div>`; }).join(''):'<div class="empty">Aún no hay pedidos enviados.</div>'}</div>`;
+  ${ks.length?ks.map(k=>{ const xs=PDFG[k], l0=xs[0].l, no=l0.po||l0.oc||''; return `<div class="ln"><div class="a"><b>${esc(l0.prov||'—')}</b><span>${no?esc(no)+' · ':''}${fFecha(l0.pedidoF)} · ${xs.length} concepto(s) · ${[...new Set(xs.map(x=>x.r.folio))].join(', ')}</span></div>
+    <div class="z"><div class="num">${fmt(xs.reduce((a,x)=>a+imp(x.l),0))}</div><button class="btn s gh" type="button" data-pdfg="${esc(k)}" style="margin-top:6px">PDF</button>${no&&YO&&(YO.id==='paty'||YO.id==='moises')?`<div><button class="lk bad" type="button" data-borrarped="${esc(no)}">Borrar pedido</button></div>`:''}</div></div>`; }).join(''):'<div class="empty">Aún no hay pedidos enviados.</div>'}</div>`;
 }
 
 /* ---------------- PDF con el formato de las plantillas de Katana (RFQ / Orden de compra) ---------------- */
@@ -434,14 +478,14 @@ function numLetras(n){
   s+=cien(res); s=s.trim()||'CERO';
   return `${s} PESOS ${String(cen).padStart(2,'0')}/100 M.N.`;
 }
-async function pdfDoc(tipo, folio, xs){
+async function pdfDoc(tipo, folio, xs, provRfq){
   const rfq = tipo==='rfq';
   await cargarScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
   await cargarScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js');
   const { jsPDF } = window.jspdf; const doc = new jsPDF({ unit:'mm', format:'letter' });
   const W = doc.internal.pageSize.getWidth(), H = doc.internal.pageSize.getHeight();
-  const prov = rfq ? 'COTIZACIÓN ABIERTA' : (xs[0].l.prov || '—');
-  let pinfo = null; if(!rfq){ try{ pinfo = (await api('/proveedor?n='+encodeURIComponent(prov))).info; }catch(e){} }
+  const prov = rfq ? (provRfq || xs[0].l.rfqProv || 'COTIZACIÓN ABIERTA') : (xs[0].l.prov || '—');
+  let pinfo = null; if(prov!=='COTIZACIÓN ABIERTA'){ try{ pinfo = (await api('/proveedor?n='+encodeURIComponent(prov))).info; }catch(e){} }
   const correo = YO && YO.id==='moises' ? 'moises.pena@dimaco-mx.com' : 'patricia.pena@dimaco-mx.com';
   const money = n => '$'+Number(n||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
   let d1=null, d2=null, s1=[1,1], s2=[1,1];
@@ -458,8 +502,8 @@ async function pdfDoc(tipo, folio, xs){
   const sol=[...new Set(xs.map(x=>SOL_NOMBRE[x.r.quien]||x.r.quien))].join(', ');
   doc.text(doc.splitTextToSize(`Referencia: ${mos}`, W/2-20), 14, 41);
   doc.text(doc.splitTextToSize(`Solicita: ${sol}`, W/2-20), 14, 51);
-  const sku = l => { const p=String(l.d).split(' · '); return p.length>1?p[p.length-1]:''; };
-  const desc = l => { const p=String(l.d).split(' · '); return (p.length>1?p.slice(0,-1).join(' · '):l.d) + (/SOLERA/i.test(l.d)?'  (mide 144" / 3.66 m)':''); };
+  const sku = l => skuDe(l);
+  const desc = l => nomDe(l) + (/SOLERA/i.test(l.d)?'  (mide 144" / 3.66 m)':'');
   const head = rfq ? [['SKU','Descripción','Medidas','Cantidad']] : [['SKU','Descripción','Medidas','Cantidad','Precio unitario','Importe']];
   const body = xs.map(({l})=>{ const base=[sku(l), desc(l), l.u||'pz', nfmt(l.qty)]; return rfq?base:base.concat([money(l.precio), money(imp(l))]); });
   doc.autoTable({ startY: 62, head, body, styles:{ fontSize:8.5, cellPadding:2 }, headStyles:{ fillColor:[31,95,168] },
@@ -483,11 +527,11 @@ async function pdfDoc(tipo, folio, xs){
   return new File([doc.output('blob')], nombre, {type:'application/pdf'});
 }
 let PDF_LISTO = null, PDF_COLA = [];
-async function prepararPDF(tipo, folio, keys){
+async function prepararPDF(tipo, folio, keys, provRfq){
   const xs = keys.map(k=>{ const x=ref(k); return x.l?{r:x.r,l:x.l}:null; }).filter(Boolean);
   if(!xs.length){ toast('No encontré los artículos para el PDF'); return; }
   toast('Generando PDF…');
-  try{ const f = await pdfDoc(tipo, folio, xs); const m=document.getElementById('envio'); if(PDF_LISTO && m && !m.hidden){ PDF_COLA.push(f); mostrarEnvio(); } else { PDF_LISTO = f; mostrarEnvio(); } }catch(e){ toast(e.message); }
+  try{ const f = await pdfDoc(tipo, folio, xs, provRfq); const m=document.getElementById('envio'); if(PDF_LISTO && m && !m.hidden){ PDF_COLA.push(f); mostrarEnvio(); } else { PDF_LISTO = f; mostrarEnvio(); } }catch(e){ toast(e.message); }
 }
 function mostrarEnvio(){
   let m=document.getElementById('envio'); if(!m){ m=document.createElement('div'); m.id='envio'; document.body.appendChild(m); }
@@ -506,7 +550,7 @@ function vRecibir(){
   const L=allLines().filter(x=>x.l.est==='pedido'||x.l.est==='parcial');
   const g={}; L.forEach(x=>{const p=x.l.prov||'—';(g[p]=g[p]||[]).push(x);});
   return `<div class="card"><h2>Recibir material</h2><div class="sub">Anota cuántas piezas llegaron de cada renglón. Fecha y hora se ponen solas. Si falta algo, queda abierto y Paty recibe aviso.</div>
-  ${L.length?Object.entries(g).map(([p,xs])=>`<div class="grp"><span>${esc(p)}</span></div>${xs.map(({r,l,i})=>{const falta=l.qty-l.rec;return `<div class="ln"><div class="a"><b>${esc(l.d)}</b><span>${r.folio}${l.po?' · '+esc(l.po):''} · pedido el ${fFecha(l.pedidoF)} · pidió ${nfmt(l.qty)}${l.rec?` · ya llegaron ${nfmt(l.rec)}`:''}</span><span><b style="display:inline;color:var(--warn)">Faltan ${nfmt(falta)}</b></span></div>
+  ${L.length?Object.entries(g).map(([p,xs])=>`<div class="grp"><span>${esc(p)}</span></div>${xs.map(({r,l,i})=>{const falta=l.qty-l.rec;return `<div class="ln"><div class="a"><b>${etq(l)}</b><span>${r.folio}${l.po?' · '+esc(l.po):''} · pedido el ${fFecha(l.pedidoF)} · pidió ${nfmt(l.qty)}${l.rec?` · ya llegaron ${nfmt(l.rec)}`:''}</span><span><b style="display:inline;color:var(--warn)">Faltan ${nfmt(falta)}</b></span></div>
     <div class="z"><input class="qty" type="number" min="0" max="${falta}" inputmode="numeric" id="rc-${r.id}-${i}" value="${falta}" aria-label="Piezas que llegaron"><div style="margin-top:6px"><button class="btn s ok" type="button" data-rec="${r.id}:${i}">Llegó</button></div></div></div>`}).join('')}`).join(''):'<div class="empty">No hay material en camino.</div>'}
   </div>`;
 }
@@ -515,7 +559,7 @@ function vFacturas(){
   const g={}; L.forEach(x=>{const p=x.l.prov||'—';(g[p]=g[p]||[]).push(x);});
   return `<div class="card"><h2>Facturas · martes y viernes</h2><div class="sub">Cruce de lo pedido contra lo que recibió Ely y lo facturado. Captura el subtotal de la factura (sin IVA); solo se registra en Bind lo que cuadra.</div>
   ${L.length?Object.entries(g).map(([p,xs],gi)=>{const esp=xs.reduce((a,x)=>a+x.l.rec*(x.l.precio||0),0);return `<div class="grp"><span>${esc(p)}</span></div>
-    ${xs.map(({r,l})=>`<div class="ln"><div class="a"><b>${esc(l.d)}</b><span>${r.folio} · pedido ${nfmt(l.qty)} · recibido ${nfmt(l.rec)} · ${fmt(l.precio)} c/u</span></div><div class="z num">${fmt(l.rec*(l.precio||0))}</div></div>`).join('')}
+    ${xs.map(({r,l})=>`<div class="ln"><div class="a"><b>${etq(l)}</b><span>${r.folio} · pedido ${nfmt(l.qty)} · recibido ${nfmt(l.rec)} · ${fmt(l.precio)} c/u</span></div><div class="z num">${fmt(l.rec*(l.precio||0))}</div></div>`).join('')}
     <div class="tot"><span>Debe facturar</span><span class="num">${fmt(esp)}</span></div>
     <div class="row2" style="margin-top:8px"><div><label class="f" for="ff-${gi}" style="margin-top:0">Folio factura</label><input type="text" id="ff-${gi}" placeholder="Ej. A-1234"></div>
     <div><label class="f" for="fs-${gi}" style="margin-top:0">Subtotal</label><input type="number" step="0.01" inputmode="decimal" id="fs-${gi}" data-fac="${gi}" data-esp="${esp}" placeholder="$"></div></div>
@@ -535,6 +579,25 @@ app.addEventListener('click',async e=>{
   const b=e.target.closest('button'); if(!b) return;
   const d=b.dataset;
   if(b.id==='salir'){ salir(); return; }
+  if(b.id==='sonido'){ activarAudio(); setTimeout(()=>{ sonar(); render(); toast('Sonido activo: suena cuando Uriel o Gerardo piden material'); },150); return; }
+  if(d.tp){ tipoPed=d.tp; busq=''; guardarCarrito(); render(); const q=document.getElementById('q'); if(q) q.focus(); return; }
+  if(d.borrar||d.borrarl||d.borrarped){
+    if(!confirmar2(b,'Toca otra vez para borrar')) return;
+    const motivo = ((window.prompt&&window.prompt('Motivo (opcional)'))||'').trim();
+    if(d.borrarped) accion({tipo:'borrarPedido',no:d.borrarped,motivo});
+    else if(d.borrar) accion({tipo:'borrar',rid:+d.borrar,motivo});
+    else { const x=ref(d.borrarl); accion({tipo:'borrar',rid:x.rid,i:x.i,motivo}); }
+    return; }
+  if(d.rfqgo){ const t=d.rfqgo;
+    const xs=allLines().filter(x=>x.l.est==='cotizar' && (t==='k' ? (esKatK(x.l.k)&&!x.l.poId) : (!esKatK(x.l.k)&&!x.l.rfqI)) && !rfqExcl.has(x.r.id+':'+x.i));
+    if(!xs.length){ toast('Marca al menos un renglón'); return; }
+    const prov = t==='k'?rfqProvK:rfqProvI;
+    if(t==='k' && !confirmar2(b,'Confirmar: crear RFQ en Katana')) return;
+    b.disabled=true; b.textContent=t==='k'?'Creando RFQ en Katana…':'Creando RFQ…';
+    const r=await accion({tipo:t==='k'?'rfqKatana':'rfqInsumos', keys:xs.map(x=>x.r.id+':'+x.i), prov});
+    if(r&&r.po){ if(t==='k') rfqProvK=''; else rfqProvI=''; prepararPDF('rfq', r.po.no, r.po.keys, r.po.prov); }
+    return; }
+  if(d.rfqipdf){ const xs=allLines().filter(x=>x.l.rfqI===d.rfqipdf); prepararPDF('rfq', d.rfqipdf, xs.map(x=>x.r.id+':'+x.i)); return; }
   if(d.tab){ TAB=d.tab; render(); window.scrollTo(0,0); return; }
   if(d.add){ const c=BYK[d.add]; if(!carrito.find(x=>x.k===c.k)) carrito.push(modoReq?{k:c.k,d:c.d,qty:1,modo:modoReq}:{k:c.k,d:c.d,qty:1}); busq=''; guardarCarrito(); render(); toast('Agregado'); return; }
   if(d.nuevo){ altaForm={d:busq.trim().toUpperCase()}; busq=''; render(); const x=document.getElementById('al-u'); if(x) x.focus(); return; }
@@ -554,7 +617,7 @@ app.addEventListener('click',async e=>{
     const r = await accion({tipo:'crear', para: paraTipo==='planta'?'Uso planta':mos.join(', '), items: carrito.map(x=>{ const c=x.k?BYK[x.k]:null; return {k:x.k,d:x.d,qty:x.qty,modo:'compra',prov:x.prov||(c&&c.s)||'',precio:x.precio||(c&&c.p)||null}; })});
     if(!r){ b.disabled=false; return; }
     modoReq=''; carrito=[]; paraTipo=''; mos=[]; moFil=''; guardarCarrito(); render();
-    for(const p of provs){ const d=await accion({tipo: kat?'katanaPO':'pedir', prov:p, rid:r.rid}); if(d&&d.po) await prepararPDF('oc', d.po.no, d.po.keys); }
+    for(const p of provs){ const d=await accion({tipo: kat?'katanaPO':'pedir', prov:p, rid:r.rid}); if(d) for(const po of (d.pos||(d.po?[d.po]:[]))) await prepararPDF('oc', po.no, po.keys); }
     return;
   }
   if(b.id==='enviar'){
@@ -572,18 +635,18 @@ app.addEventListener('click',async e=>{
   if(d.rfqtxt){ const {r,l}=ref(d.rfqtxt); copiar(`Solicitud de cotización · DIMACO METALMECANICA\nFolio: ${r.folio}\n\nFavor de cotizar:\n- ${nfmt(l.qty)} ${esc(l.u||'pz')} · ${l.d}\n\nIndicar precio unitario sin IVA y tiempo de entrega.\nResponder a Patricia Peña.`); return; }
   if(d.pedtxt){ const xs=allLines().filter(x=>x.l.est==='pedir'&&x.l.prov===d.pedtxt); const tot=xs.reduce((a,x)=>a+imp(x.l),0);
     copiar(`Pedido · DIMACO METALMECANICA · ${d.pedtxt}\n\n`+xs.map(x=>`- ${nfmt(x.l.qty)} ${esc(x.l.u||'pz')} · ${x.l.d} · ${fmt(x.l.precio)} c/u = ${fmt(imp(x.l))}`).join('\n')+`\n\nSubtotal: ${fmt(tot)} + IVA\nReferencia: ${[...new Set(xs.map(x=>x.r.folio))].join(', ')}\nFacturar y enviar a Patricia Peña.`); return; }
-  if(d.pedir){ const d3=await accion({tipo:'pedir',prov:d.pedir}); if(d3&&d3.po) prepararPDF('oc', d3.po.no, d3.po.keys); return; }
+  if(d.pedir){ const d3=await accion({tipo:'pedir',prov:d.pedir}); if(d3) for(const po of (d3.pos||(d3.po?[d3.po]:[]))) await prepararPDF('oc', po.no, po.keys); return; }
   if(d.modo){ const [key,m]=d.modo.split('|'); const x=ref(key);
     if(m==='rfq'){ if(x.l.est!=='cotizar') accion({tipo:'aRFQ',rid:x.rid,i:x.i}); else { delete compraForm[key]; render(); } }
     else { if(x.l.est==='cotizar'){ compraForm[key]=true; render(); } } return; }
   if(d.acompra){ const x=ref(d.acompra); const pv=document.getElementById('cm-p-'+x.rid+'-'+x.i).value, pr=document.getElementById('cm-v-'+x.rid+'-'+x.i).value;
     const r0=await accion({tipo:'aCompra',rid:x.rid,i:x.i,prov:pv,precio:pr}); if(r0) delete compraForm[d.acompra]; render(); return; }
-  if(d.rfqkat){ if(b.dataset.ok!=='1'){ b.dataset.ok='1'; b.textContent='Confirmar: crear RFQ en Katana'; b.classList.add('ok'); setTimeout(()=>{ if(b.isConnected){ b.dataset.ok=''; render(); } },5000); return; }
+  if(false&&d.rfqkat){ if(b.dataset.ok!=='1'){ b.dataset.ok='1'; b.textContent='Confirmar: crear RFQ en Katana'; b.classList.add('ok'); setTimeout(()=>{ if(b.isConnected){ b.dataset.ok=''; render(); } },5000); return; }
     b.disabled=true; b.textContent='Creando RFQ en Katana…'; const d0=await accion({tipo:'rfqKatana'}); if(d0&&d0.po) prepararPDF('rfq', d0.po.no, d0.po.keys); return; }
   if(d.confpo){ if(b.dataset.ok!=='1'){ b.dataset.ok='1'; b.textContent='Toca otra vez para confirmar'; b.classList.add('ok'); setTimeout(()=>{ if(b.isConnected){ b.dataset.ok=''; render(); } },5000); return; }
     b.disabled=true; b.textContent='Confirmando en Katana…'; const d1=await accion({tipo:'confirmarPO',poId:+d.confpo}); if(d1&&d1.po) prepararPDF('oc', d1.po.no, d1.po.keys); return; }
   if(d.rfqpdf){ prepararPDF('rfq', 'RFQ-'+ref(d.rfqpdf).r.folio, [d.rfqpdf]); return; }
-  if(d.rfqall){ const xs=allLines().filter(x=>x.l.est==='cotizar'&&!/^K\d+$/.test(x.l.k||'')); prepararPDF('rfq', 'RFQ-'+[...new Set(xs.map(x=>x.r.folio))].join('-'), xs.map(x=>x.r.id+':'+x.i)); return; }
+  if(false&&d.rfqall){ const xs=allLines().filter(x=>x.l.est==='cotizar'&&!/^K\d+$/.test(x.l.k||'')); prepararPDF('rfq', 'RFQ-'+[...new Set(xs.map(x=>x.r.folio))].join('-'), xs.map(x=>x.r.id+':'+x.i)); return; }
 
   if(d.pdfg){ const xs=PDFG[d.pdfg]; if(xs) prepararPDF('oc', xs[0].l.po||xs[0].l.oc||('OC-'+xs[0].r.folio), xs.map(x=>x.r.id+':'+x.i)); return; }
   if(d.kpo){ if(b.dataset.ok!=='1'){ b.dataset.ok='1'; b.textContent='Confirmar: crear PO en Katana'; b.classList.add('ok'); setTimeout(()=>{ if(b.isConnected){ b.dataset.ok=''; b.textContent='Crear PO en Katana'; b.classList.remove('ok'); } },5000); return; }
@@ -608,6 +671,8 @@ app.addEventListener('change',async e=>{
   if(d.cpp!=null){ let v=t.value; if(v==='__otro'){ v=((window.prompt&&window.prompt('Nombre del proveedor'))||'').trim(); } carrito[+d.cpp].prov=v||''; guardarCarrito(); render(); return; }
   if(d.cpv!=null){ render(); return; }
   if(d.qi!=null){ render(); return; }
+  if(d.rfqsel){ if(t.checked) rfqExcl.delete(d.rfqsel); else rfqExcl.add(d.rfqsel); const y=window.scrollY; render(); window.scrollTo(0,y); return; }
+  if(d.rfqprov){ let v=t.value; if(v==='__otro'){ v=((window.prompt&&window.prompt('Nombre del proveedor'))||'').trim(); } if(d.rfqprov==='k') rfqProvK=v; else rfqProvI=v; const y=window.scrollY; render(); window.scrollTo(0,y); return; }
   if(d.mo){ const i=mos.indexOf(d.mo); if(t.checked&&i<0) mos.push(d.mo); if(!t.checked&&i>=0) mos.splice(i,1); guardarCarrito(); const y=window.scrollY; render(); window.scrollTo(0,y); return; }
   if(d.cot){ const [rid,i,j,f]=d.cot.split(':'); const key=rid+':'+i; const x=ref(key);
     const cs=(borradorCot[key]||x.l.cot||[]).map(c=>Object.assign({},c)); while(cs.length<3) cs.push({prov:'',precio:null});
