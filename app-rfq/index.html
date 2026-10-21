@@ -191,6 +191,7 @@ function revisarAlertas(al){
 }
 function confirmar2(b, txt){ if(b.dataset.ok==='1') return true; b.dataset.ok='1'; const t=b.textContent; b.textContent=txt; setTimeout(()=>{ if(b.isConnected){ b.dataset.ok=''; b.textContent=t; } },5000); return false; }
 let tipoPed = '', rfqExcl = new Set(), rfqProvK = '', rfqProvI = '';
+let armDoc = 'rfq', armTipo = 'mat', armProv = '', armSel = new Set(), armPrecio = {};
 
 let PIN = ''; try{ PIN = localStorage.getItem('rfq-pin')||''; }catch(e){}
 let YO = null, CAT = [], BYK = {}, REQS = [], ALTAS = [], PROVS = [], MOS = null, TAB = '', cargando = false, altaForm = null;
@@ -404,11 +405,10 @@ function vPend(){
   const fueraKat = cot.filter(x=>!esKat(x.l));
   const insSinRfq = fueraKat.filter(x=>!x.l.rfqI);
   const provOpts = sel => `<option value="">Proveedor…</option>`+PROVS.map(p=>`<option ${p===sel?'selected':''}>${esc(p)}</option>`).join('')+`<option value="__otro">Otro (escribir)…</option>`;
-  return `
+  return `${vArmar()}
   <div class="card"><h2>1 · A cotizar <span class="chip c-cot">${cot.length}</span></h2>
     <div class="sub">Insumos nuevos o con precio vencido. Tú eliges a qué proveedores mandar y cuál gana; el precio ganador entra al catálogo.</div>
-    ${katSinRfq.length?bloqueRFQ('k', katSinRfq, 'RFQ de materiales (Katana)', 'Marca los renglones que van juntos y elige a qué proveedor se manda. El folio es el de la siguiente PO de Katana (RFQ-PO-…); al confirmarla se vuelve esa misma PO.', rfqProvK):''}
-    ${insSinRfq.length?bloqueRFQ('i', insSinRfq, 'RFQ de insumos', 'Marca los insumos que van juntos y elige a qué proveedor se manda. Sale con folio RFQI; al pedirlo, la orden lleva el mismo número (OCI).', rfqProvI):''}
+
     ${cot.length?cot.map(({r,l,i})=>{ const key=r.id+':'+i; const cs=(borradorCot[key]||l.cot||[]).slice(); while(cs.length<3) cs.push({prov:'',precio:null});
       return `<div class="ln" style="display:block"><b style="font-size:14px">${etq(l)}</b><div style="font-size:12px;color:var(--tx2)">${nfmt(l.qty)} ${esc(l.u||'pz')} · ${r.folio} · ${NOMBRES[r.quien]} · ${esc(r.para)}</div>
       ${modoSel(key, compraForm[key]?'compra':'rfq')}
@@ -418,7 +418,7 @@ function vPend(){
         <button class="btn s gh win" type="button" data-win="${key}:${j}" ${c.prov&&c.precio?'':'disabled'}>Gana</button></div>`).join('')}`}
       ${l.poId?`<div class="row" style="margin-top:8px"><a class="btn s" style="display:inline-flex;align-items:center;text-decoration:none" href="https://factory.katanamrp.com/purchaseorder/${l.poId}" target="_blank" rel="noopener">RFQ-${esc(l.rfqPo||'')}${l.rfqProv?' · '+esc(l.rfqProv):''} · abrir en Katana</a></div>`
         : l.rfqI ? `<div class="row" style="margin-top:8px"><button class="btn s gh" type="button" data-rfqipdf="${esc(l.rfqI)}">PDF ${esc(l.rfqI)}${l.rfqProv?' · '+esc(l.rfqProv):''}</button></div>`
-        : `<div class="sub" style="margin:8px 0 0">Inclúyelo en la RFQ de ${esKat(l)?'materiales':'insumos'} de arriba.</div>`}
+        : `<div class="sub" style="margin:8px 0 0">Mándalo a cotizar o cómpralo desde "Armar RFQ o compra" (arriba).</div>`}
       ${l.katErr?`<div class="chip c-bad" style="margin-top:6px">${esc(l.katErr)}</div>`:''}
       </div>`}).join(''):'<div class="empty">Nada por cotizar.</div>'}
   </div>
@@ -438,6 +438,39 @@ function vPend(){
       ${p?(()=>{ const todoKat=xs.every(x=>/^K\d+$/.test(x.l.k||'')); return `<div class="row" style="margin-top:6px"><button class="btn s gh" type="button" data-pedtxt="${esc(p)}">Copiar pedido</button><button class="btn s gh" type="button" data-pedir="${esc(p)}">Pedir solo en la estación + PDF</button>${todoKat?`<button class="btn s" type="button" data-kpo="${esc(p)}">Crear PO en Katana + PDF</button>`:''}</div>${todoKat?'':'<div class="sub" style="margin:6px 0 0">Para crear PO en Katana, todo lo de este proveedor debe venir de Katana.</div>'}`; })():''}`).join(''):'<div class="empty">Nada por pedir.</div>'}
   </div>
   ${vEnviados()}`;
+}
+/* Armar RFQ o compra: RFQ/Compra → Materiales/Insumos → proveedor → marcar SKU (junta lo que pidió cada estación) */
+function armLineas(){
+  const esM = armTipo==='mat';
+  return allLines().filter(({l})=>{
+    if(esKatK(l.k)!==esM) return false;
+    if(armDoc==='rfq') return l.est==='cotizar' && (esM ? !l.poId : !l.rfqI);
+    return ['cotizar','autorizar','pedir'].includes(l.est) && !l.poId && !l.po && !l.oc;
+  });
+}
+function armGrupos(){ const g={}; armLineas().forEach(x=>{ const k=x.l.k||('N:'+x.l.d); (g[k]=g[k]||[]).push(x); }); return g; }
+function armPrecioDe(k, xs){ if(armPrecio[k]!=null) return armPrecio[k]; const c=BYK[k]; const l0=xs[0].l; return l0.precio!=null ? l0.precio : (c&&c.p!=null ? c.p : null); }
+function vArmar(){
+  const G=armGrupos(), ks=Object.keys(G); [...armSel].forEach(k=>{ if(!G[k]) armSel.delete(k); });
+  const sel=ks.filter(k=>armSel.has(k)); let tot=0, faltaP=0;
+  const filas = ks.map(k=>{ const xs=G[k], l0=xs[0].l, q=xs.reduce((a,x)=>a+x.l.qty,0), on=armSel.has(k);
+    const pr = armDoc==='compra' ? armPrecioDe(k,xs) : null; if(on&&armDoc==='compra'){ if(pr>0) tot+=pr*q; else faltaP++; }
+    const quien = xs.map(x=>`${x.r.folio} · ${NOMBRES[x.r.quien]||x.r.quien} · ${esc(x.r.para)} · ${nfmt(x.l.qty)}`).join('<br>');
+    return `<div class="mochk" style="cursor:default"><input type="checkbox" data-armk="${esc(k)}" ${on?'checked':''} aria-label="Incluir ${esc(skuDe(l0)||l0.d)}"><span style="flex:1">${etq(l0)}<small><b>${nfmt(q)} ${esc(l0.u||'pz')}</b> en total${xs.length>1?` · ${xs.length} solicitudes`:''}</small><small>${quien}</small></span>
+      ${armDoc==='compra'?`<span style="flex:none;width:112px"><input type="number" step="0.01" inputmode="decimal" data-armp="${esc(k)}" value="${pr??''}" placeholder="$ c/u" aria-label="Precio unitario" style="padding:8px"><small style="text-align:right">${pr>0?fmt(pr*q):''}</small></span>`:''}</div>`; }).join('');
+  const opts = `<option value="">${armDoc==='rfq'?'COTIZACIÓN ABIERTA (varios proveedores)':'Escoge el proveedor…'}</option>`+(armProv&&!PROVS.includes(armProv)?`<option selected>${esc(armProv)}</option>`:'')+PROVS.map(p=>`<option ${p===armProv?'selected':''}>${esc(p)}</option>`).join('')+`<option value="__otro">Otro (escribir)…</option>`;
+  const puede = sel.length && (armDoc==='rfq' || (armProv && !faltaP));
+  const folio = armDoc==='rfq' ? (armTipo==='mat'?'RFQ-PO (Katana)':'RFQI') : (armTipo==='mat'?'PO en Katana':'OCI');
+  return `<div class="card"><h2>Armar RFQ o compra</h2>
+    <div class="sub">Escoge qué vas a hacer, el tipo y el proveedor; luego marca los SKU que van con ese proveedor. Si un SKU lo pidieron varias estaciones, se juntan en un solo renglón.</div>
+    <div class="row2"><div class="modo" role="group" aria-label="RFQ o compra" style="margin-top:0"><button type="button" data-armdoc="rfq" aria-pressed="${armDoc==='rfq'}">RFQ</button><button type="button" data-armdoc="compra" aria-pressed="${armDoc==='compra'}">Compra</button></div>
+      <div class="modo" role="group" aria-label="Materiales o insumos" style="margin-top:0"><button type="button" data-armtipo="mat" aria-pressed="${armTipo==='mat'}">Materiales</button><button type="button" data-armtipo="ins" aria-pressed="${armTipo==='ins'}">Insumos</button></div></div>
+    <label class="f" for="arm-prov">Proveedor</label><select id="arm-prov" data-armprov="1">${opts}</select>
+    ${ks.length?`<div class="row" style="justify-content:space-between;margin:10px 0 0"><span class="k">${ks.length} SKU pendiente(s)</span><button class="lk" type="button" data-armtodos="1">${sel.length===ks.length?'Quitar todos':'Marcar todos'}</button></div><div class="molist" style="max-height:420px;margin-top:4px">${filas}</div>`:`<div class="empty">No hay ${armTipo==='mat'?'materiales':'insumos'} pendientes ${armDoc==='rfq'?'por cotizar':'por comprar'}.</div>`}
+    ${armDoc==='compra'&&sel.length?`<div class="tot"><span>Total (sin IVA)${faltaP?` · falta precio en ${faltaP}`:''}</span><span class="num">${fmt(tot)}</span></div>`:''}
+    <button class="btn" type="button" data-armgo="1" style="margin-top:10px" ${puede?'':'disabled'}>${armDoc==='rfq'?'Crear RFQ':'Crear compra'} + PDF · ${sel.length} SKU · ${folio}</button>
+    ${armDoc==='compra'?`<div class="sub" style="margin:6px 0 0">Hasta ${fmt(LIMITE)} por renglón queda autorizado al crearla; lo de más le llega a Moisés para autorizar.</div>`:''}
+  </div>`;
 }
 function bloqueRFQ(t, xs, titulo, sub, provSel){
   const sel = xs.filter(x=>!rfqExcl.has(x.r.id+':'+x.i));
@@ -601,6 +634,19 @@ app.addEventListener('click',async e=>{
     const r=await accion({tipo:t==='k'?'rfqKatana':'rfqInsumos', keys:xs.map(x=>x.r.id+':'+x.i), prov});
     if(r&&r.po){ if(t==='k') rfqProvK=''; else rfqProvI=''; prepararPDF('rfq', r.po.no, r.po.keys, r.po.prov); }
     return; }
+  if(d.armdoc){ armDoc=d.armdoc; armSel.clear(); render(); return; }
+  if(d.armtipo){ armTipo=d.armtipo; armSel.clear(); render(); return; }
+  if(d.armtodos){ const ks=Object.keys(armGrupos()); if(ks.every(k=>armSel.has(k))) armSel.clear(); else ks.forEach(k=>armSel.add(k)); const y=window.scrollY; render(); window.scrollTo(0,y); return; }
+  if(d.armgo){
+    const G=armGrupos(), ks=Object.keys(G).filter(k=>armSel.has(k)); if(!ks.length) return;
+    const keys=[], precios={}; ks.forEach(k=>{ const pr=armDoc==='compra'?armPrecioDe(k,G[k]):null; G[k].forEach(x=>{ const kk=x.r.id+':'+x.i; keys.push(kk); if(pr!=null) precios[kk]=pr; }); });
+    const mat=armTipo==='mat';
+    if(mat && !confirmar2(b, armDoc==='rfq'?'Confirmar: crear RFQ en Katana':'Confirmar: crear PO en Katana')) return;
+    b.disabled=true; b.textContent='Creando…';
+    const body = armDoc==='rfq' ? {tipo: mat?'rfqKatana':'rfqInsumos', keys, prov: armProv} : {tipo:'compraArmada', keys, prov: armProv, precios, mat};
+    const r=await accion(body);
+    if(r){ armSel.clear(); armPrecio={}; const pos=r.pos||(r.po?[r.po]:[]); for(const po of pos) await prepararPDF(po.tipo||'oc', po.no, po.keys, po.prov); }
+    return; }
   if(d.rfqipdf){ const xs=allLines().filter(x=>x.l.rfqI===d.rfqipdf); prepararPDF('rfq', d.rfqipdf, xs.map(x=>x.r.id+':'+x.i)); return; }
   if(d.tab){ TAB=d.tab; render(); window.scrollTo(0,0); return; }
   if(d.add){ const c=BYK[d.add]; if(!carrito.find(x=>x.k===c.k)) carrito.push(modoReq?{k:c.k,d:c.d,qty:1,modo:modoReq}:{k:c.k,d:c.d,qty:1}); busq=''; guardarCarrito(); render(); toast('Agregado'); return; }
@@ -675,6 +721,9 @@ app.addEventListener('change',async e=>{
   if(d.cpp!=null){ let v=t.value; if(v==='__otro'){ v=((window.prompt&&window.prompt('Nombre del proveedor'))||'').trim(); } carrito[+d.cpp].prov=v||''; guardarCarrito(); render(); return; }
   if(d.cpv!=null){ render(); return; }
   if(d.qi!=null){ render(); return; }
+  if(d.armk){ if(t.checked) armSel.add(d.armk); else armSel.delete(d.armk); const y=window.scrollY; render(); window.scrollTo(0,y); return; }
+  if(d.armprov){ let v=t.value; if(v==='__otro'){ v=((window.prompt&&window.prompt('Nombre del proveedor'))||'').trim(); } armProv=v; const y=window.scrollY; render(); window.scrollTo(0,y); return; }
+  if(d.armp){ armPrecio[d.armp]=t.value===''?null:+t.value; const y=window.scrollY; render(); window.scrollTo(0,y); return; }
   if(d.rfqsel){ if(t.checked) rfqExcl.delete(d.rfqsel); else rfqExcl.add(d.rfqsel); const y=window.scrollY; render(); window.scrollTo(0,y); return; }
   if(d.rfqprov){ let v=t.value; if(v==='__otro'){ v=((window.prompt&&window.prompt('Nombre del proveedor'))||'').trim(); } if(d.rfqprov==='k') rfqProvK=v; else rfqProvI=v; const y=window.scrollY; render(); window.scrollTo(0,y); return; }
   if(d.mo){ const i=mos.indexOf(d.mo); if(t.checked&&i<0) mos.push(d.mo); if(!t.checked&&i>=0) mos.splice(i,1); guardarCarrito(); const y=window.scrollY; render(); window.scrollTo(0,y); return; }
