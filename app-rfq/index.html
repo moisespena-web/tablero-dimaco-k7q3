@@ -404,23 +404,21 @@ function vPend(){
   const katSinRfq = cot.filter(x=>esKat(x.l) && !x.l.poId);
   const fueraKat = cot.filter(x=>!esKat(x.l));
   const insSinRfq = fueraKat.filter(x=>!x.l.rfqI);
+  const enRfq = cot.filter(x=>x.l.rfqI||x.l.poId);
+  const porRfq = {}; enRfq.forEach(x=>{ const no = x.l.rfqI || ('RFQ-'+(x.l.rfqPo||'PO')); (porRfq[no]=porRfq[no]||[]).push(x); });
   const provOpts = sel => `<option value="">Proveedor…</option>`+PROVS.map(p=>`<option ${p===sel?'selected':''}>${esc(p)}</option>`).join('')+`<option value="__otro">Otro (escribir)…</option>`;
   return `${vArmar()}
-  <div class="card"><h2>1 · A cotizar <span class="chip c-cot">${cot.length}</span></h2>
-    <div class="sub">Insumos nuevos o con precio vencido. Tú eliges a qué proveedores mandar y cuál gana; el precio ganador entra al catálogo.</div>
-
-    ${cot.length?cot.map(({r,l,i})=>{ const key=r.id+':'+i; const cs=(borradorCot[key]||l.cot||[]).slice(); while(cs.length<3) cs.push({prov:'',precio:null});
-      return `<div class="ln" style="display:block"><b style="font-size:14px">${etq(l)}</b><div style="font-size:12px;color:var(--tx2)">${nfmt(l.qty)} ${esc(l.u||'pz')} · ${r.folio} · ${NOMBRES[r.quien]} · ${esc(r.para)}</div>
-      ${modoSel(key, compraForm[key]?'compra':'rfq')}
-      ${compraForm[key]?`<div class="cot"><select id="cm-p-${r.id}-${i}" aria-label="Proveedor">${provOpts(l.prov||'')}</select><input type="number" step="0.01" inputmode="decimal" id="cm-v-${r.id}-${i}" placeholder="$ c/u" value="${l.precio??''}" aria-label="Precio"><button class="btn s ok" type="button" data-acompra="${key}">Listo</button></div><div class="sub" style="margin:4px 0 0">Compra directa: sin cotizar, pasa a autorizar.</div>`:`
-      ${cs.map((c,j)=>`<div class="cot"><select id="cp-${r.id}-${i}-${j}" data-cot="${key}:${j}:prov" aria-label="Proveedor ${j+1}">${provOpts(c.prov)}${c.prov&&!PROVS.includes(c.prov)?`<option selected>${esc(c.prov)}</option>`:''}</select>
-        <input type="number" step="0.01" inputmode="decimal" id="cv-${r.id}-${i}-${j}" placeholder="$ c/u" value="${c.precio??''}" data-cot="${key}:${j}:precio" aria-label="Precio ${j+1}">
-        <button class="btn s gh win" type="button" data-win="${key}:${j}" ${c.prov&&c.precio?'':'disabled'}>Gana</button></div>`).join('')}`}
-      ${l.poId?`<div class="row" style="margin-top:8px"><a class="btn s" style="display:inline-flex;align-items:center;text-decoration:none" href="https://factory.katanamrp.com/purchaseorder/${l.poId}" target="_blank" rel="noopener">RFQ-${esc(l.rfqPo||'')}${l.rfqProv?' · '+esc(l.rfqProv):''} · abrir en Katana</a></div>`
-        : l.rfqI ? `<div class="row" style="margin-top:8px"><button class="btn s gh" type="button" data-rfqipdf="${esc(l.rfqI)}">PDF ${esc(l.rfqI)}${l.rfqProv?' · '+esc(l.rfqProv):''}</button></div>`
-        : `<div class="sub" style="margin:8px 0 0">Mándalo a cotizar o cómpralo desde "Armar RFQ o compra" (arriba).</div>`}
-      ${l.katErr?`<div class="chip c-bad" style="margin-top:6px">${esc(l.katErr)}</div>`:''}
-      </div>`}).join(''):'<div class="empty">Nada por cotizar.</div>'}
+  <div class="card"><h2>1 · Cotizaciones por recibir <span class="chip c-cot">${enRfq.length}</span></h2>
+    <div class="sub">Lo que ya se mandó a cotizar. Captura lo que contestó cada proveedor y toca <b>Gana</b>: pasa a autorizar y el precio entra al catálogo.</div>
+    ${Object.keys(porRfq).length?Object.entries(porRfq).map(([no,xs])=>{ const l0=xs[0].l;
+      return `<div class="grp" style="margin-top:16px;align-items:center"><span>${esc(no)} · ${esc(l0.rfqProv||'Cotización abierta')}</span>
+        ${l0.poId?`<a class="btn s gh" style="display:inline-flex;align-items:center;text-decoration:none" href="https://factory.katanamrp.com/purchaseorder/${l0.poId}" target="_blank" rel="noopener">Abrir en Katana</a>`:`<button class="btn s gh" type="button" data-rfqipdf="${esc(l0.rfqI)}">PDF</button>`}</div>
+      ${xs.map(({r,l,i})=>{ const key=r.id+':'+i; const cs=(borradorCot[key]||l.cot||[]).slice(); while(cs.length<3) cs.push({prov:'',precio:null});
+        return `<div class="ln" style="display:block"><b style="font-size:14px">${etq(l)}</b><div style="font-size:12px;color:var(--tx2)">${nfmt(l.qty)} ${esc(l.u||'pz')} · ${r.folio} · ${NOMBRES[r.quien]} · ${esc(r.para)}</div>
+        ${cs.map((c,j)=>`<div class="cot"><select id="cp-${r.id}-${i}-${j}" data-cot="${key}:${j}:prov" aria-label="Proveedor ${j+1}">${provOpts(c.prov)}${c.prov&&!PROVS.includes(c.prov)?`<option selected>${esc(c.prov)}</option>`:''}</select>
+          <input type="number" step="0.01" inputmode="decimal" id="cv-${r.id}-${i}-${j}" placeholder="$ c/u" value="${c.precio??''}" data-cot="${key}:${j}:precio" aria-label="Precio ${j+1}">
+          <button class="btn s gh win" type="button" data-win="${key}:${j}" ${c.prov&&c.precio?'':'disabled'}>Gana</button></div>`).join('')}
+        ${l.katErr?`<div class="chip c-bad" style="margin-top:6px">${esc(l.katErr)}</div>`:''}</div>`; }).join('')}`; }).join(''):'<div class="empty">No hay cotizaciones pendientes. Manda a cotizar desde "Armar RFQ o compra".</div>'}
   </div>
   <div class="card"><h2>2 · Por autorizar <span class="chip c-aut">${aut.length}</span></h2>
     <div class="sub">Conceptos de hasta ${fmt(LIMITE)}. Los de más le llegan a Moisés.</div>
