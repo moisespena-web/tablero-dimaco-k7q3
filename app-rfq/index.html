@@ -276,9 +276,11 @@ function cuentas(){
 }
 const vigente = c => c && c.p!=null && venc(c.f||'2026-10-19') >= hoyISO();
 const provOptsG = sel => `<option value="">Proveedor…</option>`+(sel&&!PROVS.includes(sel)?`<option selected>${esc(sel)}</option>`:'')+PROVS.map(p=>`<option ${p===sel?'selected':''}>${esc(p)}</option>`).join('')+`<option value="__otro">Otro (escribir)…</option>`;
-const paraOk = () => paraTipo==='planta' || (paraTipo==='mo' && mos.length>0);
+const hayMat = () => carrito.some(l=>esKatK(l.k));   // los materiales de Katana siempre van a una MO, nunca uso planta
+const paraOk = () => (paraTipo==='planta' && !hayMat()) || (paraTipo==='mo' && mos.length>0);
 
 function vPedir(){
+  if(paraTipo==='planta' && hayMat()) paraTipo='mo';
   const res = busq.trim().length>=2 ? buscar(busq) : [];
   let tot=0, hayCot=false;
   const comprador = YO && (YO.id==='paty'||YO.id==='moises');
@@ -325,8 +327,10 @@ function vPedir(){
     <div style="font-size:13px;font-weight:700;color:var(--tx2);margin:10px 0 4px">¿Para qué es?</div>
     <div class="row2">
       <button type="button" class="btn s ${paraTipo==='mo'?'':'gh'}" style="width:100%" data-para="mo" aria-pressed="${paraTipo==='mo'}">Para MO(s)</button>
-      <button type="button" class="btn s ${paraTipo==='planta'?'':'gh'}" style="width:100%" data-para="planta" aria-pressed="${paraTipo==='planta'}">Uso planta</button>
+      <button type="button" class="btn s ${paraTipo==='planta'?'':'gh'}" style="width:100%" data-para="planta" aria-pressed="${paraTipo==='planta'}" ${hayMat()?'disabled':''}>Uso planta</button>
     </div>
+    ${hayMat()?`<div class="sub" style="margin:6px 0 0;color:var(--warn)">Llevas materiales de Katana: se piden para una MO, no para uso planta.</div>`:''}
+    ${carrito.length&&!paraOk()?`<div class="sub" style="margin:6px 0 0;color:var(--bad)">${paraTipo==='mo'?'Marca al menos una MO para poder enviar.':'Elige para qué es: MO o uso planta.'}</div>`:''}
     ${paraTipo==='mo'?(MOS?`<label class="f" for="mofil">MOs abiertas en Katana · marca una o varias</label>
       ${mos.length?`<div class="chips" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px">${mos.map(n=>`<button type="button" class="chip c-ped" data-unmo="${esc(n)}" style="border:0;font-size:13px;padding:4px 8px">${esc(n)} ×</button>`).join('')}</div>`:''}
       <input type="search" id="mofil" placeholder="Filtrar: número, producto o SKU" value="${esc(moFil)}" autocomplete="off">
