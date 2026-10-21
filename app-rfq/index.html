@@ -133,7 +133,7 @@ input[type=number]{font-variant-numeric:tabular-nums}
 
 <meta http-equiv="Cache-Control" content="no-cache">
 <script>
-const APPVER='v15';
+const APPVER='v16';
 (async()=>{ try{ const t=await (await fetch('index.html?_='+Date.now(),{cache:'no-store'})).text(); const m=t.match(/APPVER='([^']+)'/); if(m&&m[1]!==APPVER){ location.replace(location.pathname+'?v='+m[1]); } }catch(e){} })();
 document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible') fetch('index.html?_='+Date.now(),{cache:'no-store'}).then(r=>r.text()).then(t=>{ const m=t.match(/APPVER='([^']+)'/); if(m&&m[1]!==APPVER) location.replace(location.pathname+'?v='+m[1]); }).catch(()=>{}); });
 </script>
@@ -558,8 +558,7 @@ async function pdfDoc(tipo, folio, xs, provRfq){
     const fila=(t,v,b)=>{ doc.setFont('helvetica',b?'bold':'normal'); doc.text(t, W-48, y, {align:'right'}); doc.text(v, W-14, y, {align:'right'}); y+=5.5; };
     fila('Subtotal', money(sub)); fila('IVA (16%)', money(iva)); fila('Total', money(tot), true);
     doc.setFont('helvetica','normal'); y+=2; doc.text(doc.splitTextToSize(`Importe con letra: ${numLetras(tot)} · Moneda: MXN`, W-28), 14, y); y+=10;
-    doc.text(`Autorizó: M. Peña`, 14, y); y+=6;
-    doc.text(doc.splitTextToSize(`Favor de confirmar esta orden y su fecha de entrega. Enviar la factura a ${correo} indicando el folio ${folio}.`, W-28), 14, y); y+=12;
+    doc.text(doc.splitTextToSize(`Favor de confirmar esta orden y su fecha de entrega. Enviar la factura a compras@dimaco-mx.com y factura@dimaco-mx.com indicando el folio ${folio}.`, W-28), 14, y); y+=12;
   }
   doc.setFontSize(8); doc.setTextColor(90);
   doc.text(doc.splitTextToSize('La recepción del material no garantiza la aceptación del mismo, hasta verificar el cumplimiento de las especificaciones solicitadas.', W-60), 14, H-16);
