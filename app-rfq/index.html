@@ -133,8 +133,8 @@ input[type=number]{font-variant-numeric:tabular-nums}
 
 <meta http-equiv="Cache-Control" content="no-cache">
 <script>
-const APPVER='v26';
-const APPFECHA='21-oct-2026 23:00';
+const APPVER='v27';
+const APPFECHA='21-oct-2026 23:10';
 document.addEventListener('DOMContentLoaded',()=>{ const b=document.getElementById('ver'); if(b){ b.textContent='Versión '+APPVER+' · revisada '+APPFECHA+' · toca para actualizar'; b.onclick=()=>location.replace(location.pathname+'?v='+Date.now()); } });
 (async()=>{ try{ const t=await (await fetch('index.html?_='+Date.now(),{cache:'no-store'})).text(); const m=t.match(/APPVER='([^']+)'/); if(m&&m[1]!==APPVER){ location.replace(location.pathname+'?v='+m[1]); } }catch(e){} })();
 document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible') fetch('index.html?_='+Date.now(),{cache:'no-store'}).then(r=>r.text()).then(t=>{ const m=t.match(/APPVER='([^']+)'/); if(m&&m[1]!==APPVER) location.replace(location.pathname+'?v='+m[1]); }).catch(()=>{}); });
@@ -247,7 +247,7 @@ async function accion(body, okMsg){
     REQS = d.reqs; ALTAS = d.altas||ALTAS; PROVS = d.provs;
     if(d.cat){ Object.entries(d.cat).forEach(([k,o])=>{ if(BYK[k]) Object.assign(BYK[k],{p:o.p,s:o.s||BYK[k].s,f:o.f}); else { const n={k,d:o.d,p:o.p,s:o.s,f:o.f,c:'Nuevo'}; CAT.push(n); BYK[k]=n; } }); }
     render(); toast(okMsg || d.msg || 'Listo'); revisarAlertas(d.alertas); return d;
-  }catch(e){ toast(e.message); return null; }
+  }catch(e){ render(); toast(e.message); return null; }
 }
 
 /* ---------------- vistas ---------------- */
@@ -453,15 +453,15 @@ function armGrupos(tipo){ const g={}; armLineas(tipo).forEach(x=>{ const k=x.l.k
 function armPrecioDe(k, xs){ if(armPrecio[k]!=null) return armPrecio[k]; const c=BYK[k]; const l0=xs[0].l; return l0.precio!=null ? l0.precio : (c&&c.p!=null ? c.p : null); }
 // Paso 1 (Moisés, 21-oct-2026): renglón 1 RFQ/Compra · renglón 2 botón que despliega lo pedido (cantidad + material, cuadro con la MO) y cuadro para seleccionar · renglón 3 proveedor
 function armFila(x){
-  const {r,l,i}=x, key=r.id+':'+i, on=armSel.has(key);
+  const {r,l,i}=x, key=r.id+':'+i, yaRfq=!!(l.rfqI||l.poId), bloq=armDoc==='rfq'&&yaRfq, on=!bloq&&armSel.has(key);
   const pr = armDoc==='compra' ? (armPrecio[key]!=null ? armPrecio[key] : (l.precio!=null ? l.precio : ((BYK[l.k]||{}).p ?? null))) : null;
-  return `<label class="mochk" style="align-items:center"><input type="checkbox" data-armk="${key}" ${on?'checked':''} aria-label="Seleccionar ${esc(nomDe(l))}">
-    <span style="flex:1;min-width:0"><b style="font-size:15px">${nfmt(l.qty)}</b> ${esc(l.u||'pz')} · ${esc(nomDe(l))}<small>${esc(skuDe(l)||'')} · pidió ${NOMBRES[r.quien]||r.quien} · ${r.folio}${l.rfqI||l.rfqPo?` · RFQ enviado ${esc(l.rfqI||('RFQ-'+l.rfqPo))}`:''}</small></span>
+  return `<label class="mochk" style="align-items:center"><input type="checkbox" data-armk="${key}" ${on?'checked':''} ${bloq?'disabled':''} aria-label="Seleccionar ${esc(nomDe(l))}">
+    <span style="flex:1;min-width:0"><b style="font-size:15px">${nfmt(l.qty)}</b> ${esc(l.u||'pz')} · ${esc(nomDe(l))}<small>${esc(skuDe(l)||'')} · pidió ${NOMBRES[r.quien]||r.quien} · ${r.folio}${l.rfqI||l.rfqPo?` · RFQ enviado ${esc(l.rfqI||('RFQ-'+l.rfqPo))}`:''}</small>${bloq?`<button class="btn s gh" type="button" data-reenv="${key}" style="margin-top:6px">Ya tiene RFQ · volver a enviar el PDF</button>`:''}</span>
     <span style="flex:none;max-width:38%;border:1px solid var(--line);border-radius:8px;padding:6px 8px;font-size:12px;font-weight:700;text-align:center;background:var(--panel)">${esc(r.para||'—')}</span>
     ${armDoc==='compra'?`<input type="number" step="0.01" inputmode="decimal" data-armp="${key}" value="${pr??''}" placeholder="$ c/u" aria-label="Precio unitario" style="flex:none;width:92px;padding:8px">`:''}</label>`;
 }
 function vArmar(){
-  const M=armLineas('mat'), I=armLineas('ins'), todos=new Set([...M,...I].map(x=>x.r.id+':'+x.i));
+  const M=armLineas('mat'), I=armLineas('ins'), todos=new Set([...M,...I].filter(x=>!(armDoc==='rfq'&&(x.l.rfqI||x.l.poId))).map(x=>x.r.id+':'+x.i));
   [...armSel].forEach(k=>{ if(!todos.has(k)) armSel.delete(k); });
   const selM=M.filter(x=>armSel.has(x.r.id+':'+x.i)), selI=I.filter(x=>armSel.has(x.r.id+':'+x.i));
   const mezcla = selM.length && selI.length, sel=selM.length+selI.length, prov=armProvs.uno||'';
@@ -585,12 +585,19 @@ async function prepararPDF(tipo, folio, keys, provRfq){
 function mostrarEnvio(){
   let m=document.getElementById('envio'); if(!m){ m=document.createElement('div'); m.id='envio'; document.body.appendChild(m); }
   m.className='envio'; m.innerHTML=`<div class="card" role="dialog" aria-label="Enviar PDF"><h2>${esc(PDF_LISTO.name)}</h2><div class="sub">Listo para mandarlo al proveedor.${PDF_COLA.length?` Después sigue${PDF_COLA.length>1?'n':''} ${PDF_COLA.length} más.`:''}</div>
-    <div class="row"><button class="btn s" type="button" id="env-share">Enviar (WhatsApp / correo)</button><button class="btn s gh" type="button" id="env-dl">Descargar</button><button class="btn s gh" type="button" id="env-x">${PDF_COLA.length?'Siguiente':'Cerrar'}</button></div></div>`;
+    <div class="row"><button class="btn s" type="button" id="env-wa" style="background:#25D366;border-color:#25D366">WhatsApp</button><button class="btn s" type="button" id="env-mail">Correo</button><button class="btn s gh" type="button" id="env-dl">Descargar</button><button class="btn s gh" type="button" id="env-x">${PDF_COLA.length?'Siguiente':'Cerrar'}</button></div></div>`;
   m.hidden=false;
 }
 document.addEventListener('click', async e=>{
-  const b=e.target.closest('#env-share,#env-dl,#env-x'); if(!b||!PDF_LISTO) return;
+  const b=e.target.closest('#env-share,#env-wa,#env-mail,#env-dl,#env-x'); if(!b||!PDF_LISTO) return;
   if(b.id==='env-x'){ if(PDF_COLA.length){ PDF_LISTO=PDF_COLA.shift(); mostrarEnvio(); } else document.getElementById('envio').hidden=true; return; }
+  if(b.id==='env-wa'||b.id==='env-mail'){
+    // En el celular se abre el menú de compartir con el PDF adjunto: escoge WhatsApp o Mail. En computadora se descarga y se abre WhatsApp Web o el correo para adjuntarlo
+    const folio=PDF_LISTO.name.replace(/\.pdf$/,'').replace(/_/g,' '), msg=`DIMACO METALMECANICA · ${folio}. Le comparto el documento en PDF.`;
+    try{ if(navigator.canShare && navigator.canShare({files:[PDF_LISTO]})){ await navigator.share({files:[PDF_LISTO], title:folio, text:msg}); return; } }catch(err){ if(err&&err.name==='AbortError') return; }
+    const a=document.createElement('a'); a.href=URL.createObjectURL(PDF_LISTO); a.download=PDF_LISTO.name; document.body.appendChild(a); a.click(); a.remove();
+    window.open(b.id==='env-wa' ? 'https://wa.me/?text='+encodeURIComponent(msg) : 'mailto:?subject='+encodeURIComponent('DIMACO · '+folio)+'&body='+encodeURIComponent(msg+'\n\n(Adjuntar el PDF descargado)'), '_blank');
+    toast('PDF descargado: adjúntalo en el mensaje'); return; }
   if(b.id==='env-share'){ try{ if(navigator.canShare && navigator.canShare({files:[PDF_LISTO]})){ await navigator.share({files:[PDF_LISTO], title:PDF_LISTO.name}); return; } }catch(err){ if(err&&err.name==='AbortError') return; } }
   const a=document.createElement('a'); a.href=URL.createObjectURL(PDF_LISTO); a.download=PDF_LISTO.name; document.body.appendChild(a); a.click(); a.remove(); toast('PDF descargado');
 });
@@ -659,6 +666,10 @@ app.addEventListener('click',async e=>{
     const r=await accion(body);
     if(r){ armSel.clear(); armPrecio={}; const pos=r.pos||(r.po?[r.po]:[]); for(const po of pos) await prepararPDF(po.tipo||'oc', po.no, po.keys, po.prov); }
     return; }
+  if(d.reenv){ const x=ref(d.reenv); const l=x.l; let keys, folio;
+    if(l.rfqI){ folio=l.rfqI; keys=allLines().filter(y=>y.l.rfqI===l.rfqI).map(y=>y.r.id+':'+y.i); }
+    else { folio='RFQ-'+(l.rfqPo||'PO'); keys=allLines().filter(y=>y.l.poId&&y.l.poId===l.poId).map(y=>y.r.id+':'+y.i); }
+    prepararPDF('rfq', folio, keys, l.rfqProv); return; }
   if(d.rfqipdf){ const xs=allLines().filter(x=>x.l.rfqI===d.rfqipdf); prepararPDF('rfq', d.rfqipdf, xs.map(x=>x.r.id+':'+x.i)); return; }
   if(d.tab){ TAB=d.tab; render(); window.scrollTo(0,0); return; }
   if(d.add){ const c=BYK[d.add]; if(!carrito.find(x=>x.k===c.k)) carrito.push(modoReq?{k:c.k,d:c.d,qty:1,modo:modoReq}:{k:c.k,d:c.d,qty:1}); busq=''; guardarCarrito(); render(); toast('Agregado'); return; }
