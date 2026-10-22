@@ -134,8 +134,8 @@ input[type=number]{font-variant-numeric:tabular-nums}
 
 <meta http-equiv="Cache-Control" content="no-cache">
 <script>
-const APPVER='v34';
-const APPFECHA='22-oct-2026 01:25';
+const APPVER='v35';
+const APPFECHA='22-oct-2026 07:30';
 document.addEventListener('DOMContentLoaded',()=>{ const b=document.getElementById('ver'); if(b){ b.textContent='Versión '+APPVER+' · revisada '+APPFECHA+' · toca para actualizar'; b.onclick=()=>location.replace(location.pathname+'?v='+Date.now()); } });
 (async()=>{ try{ const t=await (await fetch('index.html?_='+Date.now(),{cache:'no-store'})).text(); const m=t.match(/APPVER='([^']+)'/); if(m&&m[1]!==APPVER){ location.replace(location.pathname+'?v='+m[1]); } }catch(e){} })();
 document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible') fetch('index.html?_='+Date.now(),{cache:'no-store'}).then(r=>r.text()).then(t=>{ const m=t.match(/APPVER='([^']+)'/); if(m&&m[1]!==APPVER) location.replace(location.pathname+'?v='+m[1]); }).catch(()=>{}); });
@@ -602,7 +602,8 @@ async function pdfDoc(tipo, folio, xs, provRfq){
   doc.text(doc.splitTextToSize('La recepción del material no garantiza la aceptación del mismo, hasta verificar el cumplimiento de las especificaciones solicitadas.', W-60), 14, H-16);
   doc.setTextColor(0);
   if(d2){ const h=20, w=h*s2[0]/s2[1]; doc.addImage(d2,'PNG',W-14-w,H-12-h,w,h); }
-  const nombre = (rfq?'RFQ_':'PO_')+folio.replace(/[^A-Za-z0-9-]+/g,'_')+'.pdf';
+  // El nombre del archivo es el folio tal cual (PO-66, RFQ-PO-66, OCI0001…); solo se antepone RFQ/OC si el folio no lo trae
+  const fol=folio.replace(/[^A-Za-z0-9-]+/g,'_'), nombre = (/^(RFQ|PO|OC)/i.test(fol) ? fol : (rfq?'RFQ_':'OC_')+fol)+'.pdf';
   return new File([doc.output('blob')], nombre, {type:'application/pdf'});
 }
 let PDF_LISTO = null, PDF_COLA = [];
