@@ -134,8 +134,8 @@ input[type=number]{font-variant-numeric:tabular-nums}
 
 <meta http-equiv="Cache-Control" content="no-cache">
 <script>
-const APPVER='v31';
-const APPFECHA='22-oct-2026 00:20';
+const APPVER='v32';
+const APPFECHA='22-oct-2026 00:30';
 document.addEventListener('DOMContentLoaded',()=>{ const b=document.getElementById('ver'); if(b){ b.textContent='Versión '+APPVER+' · revisada '+APPFECHA+' · toca para actualizar'; b.onclick=()=>location.replace(location.pathname+'?v='+Date.now()); } });
 (async()=>{ try{ const t=await (await fetch('index.html?_='+Date.now(),{cache:'no-store'})).text(); const m=t.match(/APPVER='([^']+)'/); if(m&&m[1]!==APPVER){ location.replace(location.pathname+'?v='+m[1]); } }catch(e){} })();
 document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible') fetch('index.html?_='+Date.now(),{cache:'no-store'}).then(r=>r.text()).then(t=>{ const m=t.match(/APPVER='([^']+)'/); if(m&&m[1]!==APPVER) location.replace(location.pathname+'?v='+m[1]); }).catch(()=>{}); });
@@ -373,7 +373,7 @@ function reqCard(r){
   <div class="sub">${fFecha(r.fecha)} · ${NOMBRES[r.quien]||r.quien} · ${esc(r.para)}${puedeBorrar?` · <button class="lk bad" type="button" data-borrar="${r.id}">Borrar requisición</button>`:''}</div>
   ${r.lines.map((l,i)=>`<div class="ln"><div class="a"><b>${etq(l)}</b><span>${nfmt(l.qty)} ${esc(l.u||'pz')} · ${l.prov?esc(l.prov):'proveedor por definir'} · ${l.precio!=null?fmt(l.precio)+' c/u':'sin precio'}</span>
     ${flow(l)}${(mia||YO.id==='paty')&&['cotizar','autorizar','pedir'].includes(l.est)?`<button class="lk" type="button" data-cancel="${r.id}:${i}" style="background:none;border:0;color:var(--tx3);font-size:12px;padding:4px 0">Cancelar este concepto</button>`:''}${puedeBorrar&&r.lines.length>1?`<button class="lk bad" type="button" data-borrarl="${r.id}:${i}" style="margin-left:10px">Borrar concepto</button>`:''}</div>
-    <div class="z"><span class="chip ${EST[l.est][1]}">${EST[l.est][0]}${l.est==='parcial'?` ${l.rec}/${l.qty}`:''}</span>${l.po?`<div style="font-size:11px;color:var(--tx2);margin-top:4px">${esc(l.po)} Katana</div>`:l.oc?`<div style="font-size:11px;color:var(--tx2);margin-top:4px">${esc(l.oc)}</div>`:l.rfqPo?`<div style="font-size:11px;color:var(--tx2);margin-top:4px">RFQ-${esc(l.rfqPo)}</div>`:l.rfqI?`<div style="font-size:11px;color:var(--tx2);margin-top:4px">${esc(l.rfqI)}</div>`:''}${l.katErr?`<div class="chip c-bad" style="margin-top:4px">Falta recibir en Katana</div>`:''}
+    <div class="z"><span class="chip ${EST[l.est][1]}">${l.est==='cotizar'&&(l.rfqI||l.poId)?'RFQ enviado':EST[l.est][0]}${l.est==='parcial'?` ${l.rec}/${l.qty}`:''}</span>${l.po?`<div style="font-size:11px;color:var(--tx2);margin-top:4px">${esc(l.po)} Katana</div>`:l.oc?`<div style="font-size:11px;color:var(--tx2);margin-top:4px">${esc(l.oc)}</div>`:l.rfqPo?`<div style="font-size:11px;color:var(--tx2);margin-top:4px">RFQ-${esc(l.rfqPo)}</div>`:l.rfqI?`<div style="font-size:11px;color:var(--tx2);margin-top:4px">${esc(l.rfqI)}</div>`:''}${l.katErr?`<div class="chip c-bad" style="margin-top:4px">Falta recibir en Katana</div>`:''}
     ${l.est==='autorizar'?`<div style="font-size:11px;color:var(--tx3);margin-top:4px">autoriza ${NOMBRES[autorizador(l)]}</div>`:''}</div></div>`).join('')}
   </div>`;
 }
@@ -421,7 +421,7 @@ function vPend(){
   const enRfq = cot.filter(x=>x.l.rfqI||x.l.poId);
   const porRfq = {}; enRfq.forEach(x=>{ const no = x.l.rfqI || ('RFQ-'+(x.l.rfqPo||'PO')); (porRfq[no]=porRfq[no]||[]).push(x); });
   const provOpts = sel => `<option value="">Proveedor…</option>`+PROVS.map(p=>`<option ${p===sel?'selected':''}>${esc(p)}</option>`).join('')+`<option value="__otro">Otro (escribir)…</option>`;
-  return `${vArmar()}
+  return `${vArmar()}${vRfqEnviados()}
   ${(aut.length||esp.length)?`<div class="card"><h2>Paso 3 · Por autorizar <span class="chip c-aut">${aut.length}</span></h2>
     <div class="sub">Conceptos de hasta ${fmt(LIMITE)}. Los de más le llegan a Moisés.</div>
     ${aut.map(autLine).join('')}
@@ -445,7 +445,8 @@ function armLineas(tipo){
   const esM = tipo==='mat';
   return allLines().filter(({l})=>{
     if(esKatK(l.k)!==esM) return false;
-    // RFQ y Compra muestran lo mismo: todo lo pendiente (lo ya cotizado lleva la marca "RFQ enviado")
+    // RFQ: solo lo que todavía no se ha cotizado. Compra: todo lo pendiente, también lo cotizado (lleva su folio de RFQ)
+    if(armDoc==='rfq' && (l.rfqI||l.poId)) return false;
     // Compra: solo lo que nadie ha trabajado todavía (sin RFQ enviado). Lo ya comprado pasa a Por autorizar / Por pedir y no se repite aquí
     return l.est==='cotizar' && !l.po && !l.oc;
   });
@@ -460,6 +461,16 @@ function armFila(x){
     <span style="flex:1;min-width:0"><b style="font-size:15px">${nfmt(l.qty)}</b> ${esc(l.u||'pz')} · ${esc(nomDe(l))}<small>${esc(skuDe(l)||'')} · pidió ${NOMBRES[r.quien]||r.quien} · ${r.folio}${l.rfqI||l.rfqPo?` · RFQ enviado ${esc(l.rfqI||('RFQ-'+l.rfqPo))}`:''}</small></span>
     <span style="flex:none;max-width:38%;border:1px solid var(--line);border-radius:8px;padding:6px 8px;font-size:12px;font-weight:700;text-align:center;background:var(--panel)">${esc(r.para||'—')}</span>
     ${armDoc==='compra'?`<input type="number" step="0.01" inputmode="decimal" data-armp="${key}" value="${pr??''}" placeholder="$ c/u" aria-label="Precio unitario" style="flex:none;width:92px;padding:8px">`:''}</label>`;
+}
+function vRfqEnviados(){
+  const g={}; allLines().filter(x=>x.l.est==='cotizar'&&(x.l.rfqI||x.l.poId)).forEach(x=>{ const f=x.l.rfqI||('RFQ-'+(x.l.rfqPo||'PO')); (g[f]=g[f]||[]).push(x); });
+  const fs=Object.keys(g).sort().reverse(); if(!fs.length) return '';
+  const fechaRfq=l=>{ const h=(l.hist||[]).filter(e=>/cotizar|RFQ/i.test(e.que)).pop(); return h?fFecha(String(h.f).slice(0,10)):''; };
+  return `<div class="card"><h2>RFQ enviados <span class="chip c-cot">${fs.length}</span></h2>
+    <div class="sub">Lo que ya se mandó a cotizar y espera respuesta. Cuando el proveedor conteste, haz la compra desde <b>Compra</b> arriba.</div>
+    ${fs.map(f=>{ const xs=g[f], l0=xs[0].l; return `<div class="grp" style="margin-top:14px;align-items:center"><span>${esc(f)} · ${esc(l0.rfqProv||'sin proveedor')}${fechaRfq(l0)?' · '+fechaRfq(l0):''}</span><button class="btn s gh" type="button" data-reenv="${xs[0].r.id}:${xs[0].i}">PDF</button></div>
+      ${xs.map(({r,l})=>`<div class="ln"><div class="a"><b>${nfmt(l.qty)} ${esc(l.u||'pz')} · ${esc(nomDe(l))}</b><span>${esc(skuDe(l)||'')} · ${r.folio} · ${NOMBRES[r.quien]||r.quien} · ${esc(r.para)}</span></div></div>`).join('')}`; }).join('')}
+  </div>`;
 }
 function vArmar(){
   const M=armLineas('mat'), I=armLineas('ins'), todos=new Set([...M,...I].map(x=>x.r.id+':'+x.i));
