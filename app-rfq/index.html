@@ -134,8 +134,8 @@ input[type=number]{font-variant-numeric:tabular-nums}
 
 <meta http-equiv="Cache-Control" content="no-cache">
 <script>
-const APPVER='v33';
-const APPFECHA='22-oct-2026 01:05';
+const APPVER='v34';
+const APPFECHA='22-oct-2026 01:25';
 document.addEventListener('DOMContentLoaded',()=>{ const b=document.getElementById('ver'); if(b){ b.textContent='Versión '+APPVER+' · revisada '+APPFECHA+' · toca para actualizar'; b.onclick=()=>location.replace(location.pathname+'?v='+Date.now()); } });
 (async()=>{ try{ const t=await (await fetch('index.html?_='+Date.now(),{cache:'no-store'})).text(); const m=t.match(/APPVER='([^']+)'/); if(m&&m[1]!==APPVER){ location.replace(location.pathname+'?v='+m[1]); } }catch(e){} })();
 document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible') fetch('index.html?_='+Date.now(),{cache:'no-store'}).then(r=>r.text()).then(t=>{ const m=t.match(/APPVER='([^']+)'/); if(m&&m[1]!==APPVER) location.replace(location.pathname+'?v='+m[1]); }).catch(()=>{}); });
@@ -473,6 +473,7 @@ function vMisRfq(){
     <div class="sub">Todo lo que se ha mandado a cotizar. ${abiertos} esperando respuesta. Cuando el proveedor conteste, haz la compra en Pendientes → Compra.</div>
     ${fs.map(f=>{ const xs=g[f], l0=xs[0].l, abierto=xs.some(x=>x.l.est==='cotizar');
       return `<div class="grp" style="margin-top:16px;align-items:center"><span>${esc(f)} · ${esc(l0.rfqProv||'sin proveedor')}${fechaRfq(l0)?' · '+fechaRfq(l0):''} <span class="chip ${abierto?'c-cot':'c-ok'}">${abierto?'Esperando cotización':'Ya se compró'}</span></span><button class="btn s gh" type="button" data-reenv="${xs[0].r.id}:${xs[0].i}">PDF</button></div>
+      ${l0.rfqProv?'':`<label class="f" for="rp-${esc(f)}">¿A qué proveedor se mandó?</label><select id="rp-${esc(f)}" data-rfqprov2="${xs.map(x=>x.r.id+':'+x.i).join(',')}"><option value="">Escoge el proveedor…</option>${PROVS.map(p=>`<option>${esc(p)}</option>`).join('')}</select>`}
       ${xs.map(({r,l})=>`<div class="ln"><div class="a"><b>${nfmt(l.qty)} ${esc(l.u||'pz')} · ${esc(nomDe(l))}</b><span>${esc(skuDe(l)||'')} · ${r.folio} · ${NOMBRES[r.quien]||r.quien} · ${esc(r.para)}</span></div><div class="z"><span class="chip ${EST[l.est][1]}">${l.est==='cotizar'?'RFQ enviado':EST[l.est][0]}</span></div></div>`).join('')}`; }).join('')}
   </div>`;
 }
@@ -694,8 +695,9 @@ app.addEventListener('click',async e=>{
     if(armDoc==='rfq'){ xs0.filter(x=>x.l.rfqI||x.l.poId).forEach(x=>{ const f=x.l.rfqI||('RFQ-'+(x.l.rfqPo||'PO')); (g[f]=g[f]||[]).push(x.r.id+':'+x.i); }); xs=xs0.filter(x=>!(x.l.rfqI||x.l.poId)); }
     if(xs.length && mat && !confirmar2(b, armDoc==='rfq'?'Confirmar: crear RFQ en Katana':'Confirmar: crear PO en Katana')) return;
     // Lo que ya tenía folio de RFQ solo vuelve a sacar su PDF, ahora con el proveedor escogido
-    if(!xs.length){ armSel.clear(); render(); for(const [f,ks] of Object.entries(g)) await prepararPDF('rfq', f, ks, armProv); return; }
-    for(const [f,ks] of Object.entries(g)) await prepararPDF('rfq', f, ks, armProv);
+    const guardaProv=async()=>{ const ks=Object.values(g).flat(); if(ks.length&&armProv) await accion({tipo:'rfqProv', keys:ks, prov:armProv}); };
+    if(!xs.length){ armSel.clear(); await guardaProv(); for(const [f,ks] of Object.entries(g)) await prepararPDF('rfq', f, ks, armProv); return; }
+    await guardaProv(); for(const [f,ks] of Object.entries(g)) await prepararPDF('rfq', f, ks, armProv);
     xs.forEach(x=>{ const kk=x.r.id+':'+x.i; keys.push(kk); if(armDoc==='compra'){ const pr=armPrecio[kk]!=null?armPrecio[kk]:(x.l.precio!=null?x.l.precio:((BYK[x.l.k]||{}).p??null)); if(pr!=null) precios[kk]=pr; } });
     b.disabled=true; b.textContent='Creando…';
     const body = armDoc==='rfq' ? {tipo: mat?'rfqKatana':'rfqInsumos', keys, prov: armProv} : {tipo:'compraArmada', keys, prov: armProv, precios, mat};
@@ -795,6 +797,7 @@ app.addEventListener('change',async e=>{
   if(d.cpv!=null){ render(); return; }
   if(d.qi!=null){ render(); return; }
   if(d.armk){ if(t.checked) armSel.add(d.armk); else armSel.delete(d.armk); const y=window.scrollY; render(); window.scrollTo(0,y); return; }
+  if(d.rfqprov2){ if(t.value) accion({tipo:'rfqProv', keys:d.rfqprov2.split(','), prov:t.value}); return; }
   if(d.armprov){ let v=t.value; if(v==='__otro'){ v=((window.prompt&&window.prompt('Nombre del proveedor'))||'').trim(); } armProvs[d.armprov]=v; const y=window.scrollY; render(); window.scrollTo(0,y); return; }
   if(d.armp){ armPrecio[d.armp]=t.value===''?null:+t.value; const y=window.scrollY; render(); window.scrollTo(0,y); return; }
   if(d.rfqsel){ if(t.checked) rfqExcl.delete(d.rfqsel); else rfqExcl.add(d.rfqsel); const y=window.scrollY; render(); window.scrollTo(0,y); return; }
