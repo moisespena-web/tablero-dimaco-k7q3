@@ -133,8 +133,8 @@ input[type=number]{font-variant-numeric:tabular-nums}
 
 <meta http-equiv="Cache-Control" content="no-cache">
 <script>
-const APPVER='v19';
-const APPFECHA='21-oct-2026 21:55';
+const APPVER='v20';
+const APPFECHA='21-oct-2026 22:10';
 document.addEventListener('DOMContentLoaded',()=>{ const b=document.getElementById('ver'); if(b){ b.textContent='Versión '+APPVER+' · revisada '+APPFECHA+' · toca para actualizar'; b.onclick=()=>location.replace(location.pathname+'?v='+Date.now()); } });
 (async()=>{ try{ const t=await (await fetch('index.html?_='+Date.now(),{cache:'no-store'})).text(); const m=t.match(/APPVER='([^']+)'/); if(m&&m[1]!==APPVER){ location.replace(location.pathname+'?v='+m[1]); } }catch(e){} })();
 document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible') fetch('index.html?_='+Date.now(),{cache:'no-store'}).then(r=>r.text()).then(t=>{ const m=t.match(/APPVER='([^']+)'/); if(m&&m[1]!==APPVER) location.replace(location.pathname+'?v='+m[1]); }).catch(()=>{}); });
@@ -344,7 +344,12 @@ function vPedir(){
       const kat = carrito.every(l=>/^K\d+$/.test(l.k||''));
       return `<div class="card" style="margin:12px 0 0;padding:12px;background:var(--panel)"><b style="font-size:14px">O pídelo tú directo al proveedor</b>
       <div class="sub" style="margin:2px 0 8px">${listo?'Se registra, queda autorizado y sale el PDF de la orden de compra para mandarlo.':'Para pedir tú: marca todo como <b>Compra</b> con proveedor y precio.'}</div>
-      <div class="row"><button class="btn s ok" type="button" id="yo-est" ${listo&&paraOk()?'':'disabled'}>Pedir yo (estación) + PDF</button>${kat?`<button class="btn s gh" type="button" id="yo-kat" ${listo&&paraOk()?'':'disabled'}>Pedir yo con PO en Katana + PDF</button>`:''}</div></div>`; })():''}
+      <div class="row"><button class="btn s ok" type="button" id="yo-est" ${listo&&paraOk()?'':'disabled'}>Pedir yo (estación) + PDF</button>${kat?`<button class="btn s gh" type="button" id="yo-kat" ${listo&&paraOk()?'':'disabled'}>Pedir yo con PO en Katana + PDF</button>`:''}</div>
+      ${(()=>{ const ins=carrito.every(l=>!/^K\d+$/.test(l.k||'')), mezcla=!kat&&!ins;
+        return `<div style="border-top:1px solid var(--line);margin-top:12px;padding-top:10px"><b style="font-size:14px">O haz tú el RFQ (solicitud de cotización)</b>
+        <div class="sub" style="margin:2px 0 6px">${mezcla?'Materiales e insumos van en RFQ separados: deja solo unos u otros.':`Se registra la requisición y sale el PDF del RFQ${kat?' con el folio RFQ-PO de Katana':' con folio RFQI'}.`}</div>
+        <label class="f" for="yo-rfqprov">Proveedor</label><select id="yo-rfqprov"><option value="">COTIZACIÓN ABIERTA (varios proveedores)</option>${PROVS.map(p=>`<option>${esc(p)}</option>`).join('')}</select>
+        <button class="btn s" type="button" id="yo-rfq" style="margin-top:8px" ${!mezcla&&paraOk()?'':'disabled'}>Hacer yo el RFQ + PDF</button></div>`; })()}</div>`; })():''}
     <div class="sub" style="margin-top:8px;margin-bottom:0">Folio y fecha se ponen solos. Le llega a Paty.</div>
   </div>`;
 }
@@ -677,6 +682,19 @@ app.addEventListener('click',async e=>{
     if(!r){ b.disabled=false; return; }
     modoReq=''; carrito=[]; paraTipo=''; mos=[]; moFil=''; guardarCarrito(); render();
     for(const p of provs){ const d=await accion({tipo: kat?'katanaPO':'pedir', prov:p, rid:r.rid}); if(d) for(const po of (d.pos||(d.po?[d.po]:[]))) await prepararPDF('oc', po.no, po.keys); }
+    return;
+  }
+  if(b.id==='yo-rfq'){
+    const kat=carrito.every(l=>/^K\d+$/.test(l.k||'')); const prov=(document.getElementById('yo-rfqprov')||{}).value||'';
+    if(kat && !confirmar2(b,'Confirmar: crear RFQ en Katana')) return;
+    b.disabled=true; b.textContent='Creando…';
+    const r = await accion({tipo:'crear', para: paraTipo==='planta'?'Uso planta':mos.join(', '), items: carrito.map(x=>({k:x.k,d:x.d,qty:x.qty,modo:'rfq'}))});
+    if(!r){ b.disabled=false; b.textContent='Hacer yo el RFQ + PDF'; return; }
+    const n=carrito.length; modoReq=''; carrito=[]; paraTipo=''; mos=[]; moFil=''; guardarCarrito(); render();
+    const keys=[...Array(n).keys()].map(i=>r.rid+':'+i);
+    const d2=await accion({tipo: kat?'rfqKatana':'rfqInsumos', keys, prov});
+    if(d2){ const pos=d2.pos||(d2.po?[d2.po]:[]); for(const po of pos) await prepararPDF(po.tipo||'rfq', po.no, po.keys, po.prov); }
+    else toast(r.folio+' quedó registrada; el RFQ lo puedes armar en Pendientes');
     return;
   }
   if(b.id==='enviar'){
