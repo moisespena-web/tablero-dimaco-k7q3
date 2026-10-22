@@ -133,7 +133,9 @@ input[type=number]{font-variant-numeric:tabular-nums}
 
 <meta http-equiv="Cache-Control" content="no-cache">
 <script>
-const APPVER='v18';
+const APPVER='v19';
+const APPFECHA='21-oct-2026 21:55';
+document.addEventListener('DOMContentLoaded',()=>{ const b=document.getElementById('ver'); if(b){ b.textContent='Versión '+APPVER+' · revisada '+APPFECHA+' · toca para actualizar'; b.onclick=()=>location.replace(location.pathname+'?v='+Date.now()); } });
 (async()=>{ try{ const t=await (await fetch('index.html?_='+Date.now(),{cache:'no-store'})).text(); const m=t.match(/APPVER='([^']+)'/); if(m&&m[1]!==APPVER){ location.replace(location.pathname+'?v='+m[1]); } }catch(e){} })();
 document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible') fetch('index.html?_='+Date.now(),{cache:'no-store'}).then(r=>r.text()).then(t=>{ const m=t.match(/APPVER='([^']+)'/); if(m&&m[1]!==APPVER) location.replace(location.pathname+'?v='+m[1]); }).catch(()=>{}); });
 </script>
@@ -142,7 +144,7 @@ document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==
 <div id="app">
   <div class="hdr">
     <div class="logos"><img alt="DIMACO" src="logo-dimaco.png"></div>
-    <div><h1>Estación RFQ</h1><p>Insumos y materiales · DIMACO</p></div>
+    <div><h1>Estación RFQ</h1><p>Insumos y materiales · DIMACO</p><button type="button" id="ver" class="lk" style="padding:2px 0;font-size:11px" title="Toca para recargar la última versión"></button></div>
     <img class="mg" alt="Marca Guanajuato Internacional" src="logo-mg.png">
   </div>
   <div id="quien"></div>
