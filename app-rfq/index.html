@@ -134,8 +134,8 @@ input[type=number]{font-variant-numeric:tabular-nums}
 
 <meta http-equiv="Cache-Control" content="no-cache">
 <script>
-const APPVER='v32';
-const APPFECHA='22-oct-2026 00:30';
+const APPVER='v33';
+const APPFECHA='22-oct-2026 01:05';
 document.addEventListener('DOMContentLoaded',()=>{ const b=document.getElementById('ver'); if(b){ b.textContent='Versión '+APPVER+' · revisada '+APPFECHA+' · toca para actualizar'; b.onclick=()=>location.replace(location.pathname+'?v='+Date.now()); } });
 (async()=>{ try{ const t=await (await fetch('index.html?_='+Date.now(),{cache:'no-store'})).text(); const m=t.match(/APPVER='([^']+)'/); if(m&&m[1]!==APPVER){ location.replace(location.pathname+'?v='+m[1]); } }catch(e){} })();
 document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible') fetch('index.html?_='+Date.now(),{cache:'no-store'}).then(r=>r.text()).then(t=>{ const m=t.match(/APPVER='([^']+)'/); if(m&&m[1]!==APPVER) location.replace(location.pathname+'?v='+m[1]); }).catch(()=>{}); });
@@ -166,7 +166,7 @@ const venc = iso => { const d=new Date(iso+'T12:00:00'); d.setMonth(d.getMonth()
 const imp = l => (l.precio||0)*l.qty;
 const autorizador = l => imp(l) > LIMITE ? 'moises' : 'paty';
 const NOMBRES = {ely:'Ely',uriel:'Uriel',gerardo:'Gerardo',lupita:'Lupita',paty:'Paty',moises:'Moisés'};
-const TABN = {pedir:'Pedir',mias:'Mis req.',recibir:'Recibir',pend:'Pendientes',facturas:'Facturas',autorizar:'Autorizar',todas:'Todas'};
+const TABN = {pedir:'Pedir',mias:'Mis req.',recibir:'Recibir',pend:'Pendientes',facturas:'Facturas',autorizar:'Autorizar',rfqs:'Mis RFQ',todas:'Todas'};
 const EST = {
   cotizar:['A cotizar','c-cot'], autorizar:['Por autorizar','c-aut'], pedir:['Autorizado · por pedir','c-ped'],
   pedido:['Pedido','c-ped'], parcial:['Llegó parcial','c-aut'], recibido:['Recibido','c-ok'],
@@ -204,8 +204,8 @@ try{ const d=JSON.parse(localStorage.getItem('rfq-carrito')||'null'); if(d){ car
 const guardarCarrito = () => { try{ localStorage.setItem('rfq-carrito',JSON.stringify({c:carrito,t:paraTipo,m:mos,tp:tipoPed})); }catch(e){} };
 
 function tabsDe(u){
-  if(u==='paty') return ['pend','pedir','facturas','mias','todas'];
-  if(u==='moises') return ['autorizar','pend','pedir','facturas','mias','todas'];
+  if(u==='paty') return ['pend','rfqs','pedir','facturas','mias','todas'];
+  if(u==='moises') return ['autorizar','pend','rfqs','pedir','facturas','mias','todas'];
   if(u==='ely') return ['pedir','mias','recibir'];
   return ['pedir','mias'];
 }
@@ -266,7 +266,7 @@ function render(){
   const tb={recibir:c.recibir,pend:c.paty,facturas:c.facturas,autorizar:c.moises};
   tabs.hidden=false;
   tabs.innerHTML = tabsDe(YO.id).map(t=>`<button type="button" role="tab" data-tab="${t}" aria-selected="${t===TAB}">${TABN[t]}${tb[t]?`<span class="bd">${tb[t]}</span>`:''}</button>`).join('');
-  v.innerHTML = ({pedir:vPedir,mias:vMias,recibir:vRecibir,pend:vPend,facturas:vFacturas,autorizar:vAutorizar,todas:vTodas})[TAB]();
+  v.innerHTML = ({pedir:vPedir,mias:vMias,recibir:vRecibir,pend:vPend,facturas:vFacturas,autorizar:vAutorizar,rfqs:vMisRfq,todas:vTodas})[TAB]();
 }
 const allLines = () => REQS.flatMap(r=>r.lines.map((l,i)=>({r,l,i})));
 function cuentas(){
@@ -421,7 +421,7 @@ function vPend(){
   const enRfq = cot.filter(x=>x.l.rfqI||x.l.poId);
   const porRfq = {}; enRfq.forEach(x=>{ const no = x.l.rfqI || ('RFQ-'+(x.l.rfqPo||'PO')); (porRfq[no]=porRfq[no]||[]).push(x); });
   const provOpts = sel => `<option value="">Proveedor…</option>`+PROVS.map(p=>`<option ${p===sel?'selected':''}>${esc(p)}</option>`).join('')+`<option value="__otro">Otro (escribir)…</option>`;
-  return `${vArmar()}${vRfqEnviados()}
+  return `${vArmar()}
   ${(aut.length||esp.length)?`<div class="card"><h2>Paso 3 · Por autorizar <span class="chip c-aut">${aut.length}</span></h2>
     <div class="sub">Conceptos de hasta ${fmt(LIMITE)}. Los de más le llegan a Moisés.</div>
     ${aut.map(autLine).join('')}
@@ -461,6 +461,20 @@ function armFila(x){
     <span style="flex:1;min-width:0"><b style="font-size:15px">${nfmt(l.qty)}</b> ${esc(l.u||'pz')} · ${esc(nomDe(l))}<small>${esc(skuDe(l)||'')} · pidió ${NOMBRES[r.quien]||r.quien} · ${r.folio}${l.rfqI||l.rfqPo?` · RFQ enviado ${esc(l.rfqI||('RFQ-'+l.rfqPo))}`:''}</small></span>
     <span style="flex:none;max-width:38%;border:1px solid var(--line);border-radius:8px;padding:6px 8px;font-size:12px;font-weight:700;text-align:center;background:var(--panel)">${esc(r.para||'—')}</span>
     ${armDoc==='compra'?`<input type="number" step="0.01" inputmode="decimal" data-armp="${key}" value="${pr??''}" placeholder="$ c/u" aria-label="Precio unitario" style="flex:none;width:92px;padding:8px">`:''}</label>`;
+}
+// Pestaña "Mis RFQ" (Moisés, 22-oct-2026): historial de todos los RFQ hechos, con su proveedor, fecha, estado de cada artículo y PDF
+function vMisRfq(){
+  const g={}; allLines().filter(x=>x.l.rfqI||x.l.poId||x.l.rfqPo).forEach(x=>{ const f=x.l.rfqI||('RFQ-'+(x.l.rfqPo||'PO')); (g[f]=g[f]||[]).push(x); });
+  const fechaRfq=l=>{ const h=(l.hist||[]).filter(e=>/cotizar|RFQ/i.test(e.que)).pop(); return h?fFecha(String(h.f).slice(0,10)):''; };
+  const fs=Object.keys(g).sort((a,b)=>(fechaRfq(g[b][0].l)||'').split('/').reverse().join('').localeCompare((fechaRfq(g[a][0].l)||'').split('/').reverse().join(''))||b.localeCompare(a));
+  if(!fs.length) return '<div class="card empty">Todavía no hay RFQ. Se crean en Pendientes → RFQ → Ver lo pedido.</div>';
+  const abiertos=fs.filter(f=>g[f].some(x=>x.l.est==='cotizar')).length;
+  return `<div class="card"><h2>Mis RFQ <span class="chip c-cot">${fs.length}</span></h2>
+    <div class="sub">Todo lo que se ha mandado a cotizar. ${abiertos} esperando respuesta. Cuando el proveedor conteste, haz la compra en Pendientes → Compra.</div>
+    ${fs.map(f=>{ const xs=g[f], l0=xs[0].l, abierto=xs.some(x=>x.l.est==='cotizar');
+      return `<div class="grp" style="margin-top:16px;align-items:center"><span>${esc(f)} · ${esc(l0.rfqProv||'sin proveedor')}${fechaRfq(l0)?' · '+fechaRfq(l0):''} <span class="chip ${abierto?'c-cot':'c-ok'}">${abierto?'Esperando cotización':'Ya se compró'}</span></span><button class="btn s gh" type="button" data-reenv="${xs[0].r.id}:${xs[0].i}">PDF</button></div>
+      ${xs.map(({r,l})=>`<div class="ln"><div class="a"><b>${nfmt(l.qty)} ${esc(l.u||'pz')} · ${esc(nomDe(l))}</b><span>${esc(skuDe(l)||'')} · ${r.folio} · ${NOMBRES[r.quien]||r.quien} · ${esc(r.para)}</span></div><div class="z"><span class="chip ${EST[l.est][1]}">${l.est==='cotizar'?'RFQ enviado':EST[l.est][0]}</span></div></div>`).join('')}`; }).join('')}
+  </div>`;
 }
 function vRfqEnviados(){
   const g={}; allLines().filter(x=>x.l.est==='cotizar'&&(x.l.rfqI||x.l.poId)).forEach(x=>{ const f=x.l.rfqI||('RFQ-'+(x.l.rfqPo||'PO')); (g[f]=g[f]||[]).push(x); });
