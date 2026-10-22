@@ -133,8 +133,8 @@ input[type=number]{font-variant-numeric:tabular-nums}
 
 <meta http-equiv="Cache-Control" content="no-cache">
 <script>
-const APPVER='v29';
-const APPFECHA='21-oct-2026 23:30';
+const APPVER='v30';
+const APPFECHA='22-oct-2026 00:15';
 document.addEventListener('DOMContentLoaded',()=>{ const b=document.getElementById('ver'); if(b){ b.textContent='Versión '+APPVER+' · revisada '+APPFECHA+' · toca para actualizar'; b.onclick=()=>location.replace(location.pathname+'?v='+Date.now()); } });
 (async()=>{ try{ const t=await (await fetch('index.html?_='+Date.now(),{cache:'no-store'})).text(); const m=t.match(/APPVER='([^']+)'/); if(m&&m[1]!==APPVER){ location.replace(location.pathname+'?v='+m[1]); } }catch(e){} })();
 document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible') fetch('index.html?_='+Date.now(),{cache:'no-store'}).then(r=>r.text()).then(t=>{ const m=t.match(/APPVER='([^']+)'/); if(m&&m[1]!==APPVER) location.replace(location.pathname+'?v='+m[1]); }).catch(()=>{}); });
@@ -595,7 +595,9 @@ document.addEventListener('click', async e=>{
   if(b.id==='env-wa'||b.id==='env-mail'){
     // En el celular se abre el menú de compartir con el PDF adjunto: escoge WhatsApp o Mail. En computadora se descarga y se abre WhatsApp Web o el correo para adjuntarlo
     const folio=PDF_LISTO.name.replace(/\.pdf$/,'').replace(/_/g,' '), msg=`DIMACO METALMECANICA · ${folio}. Le comparto el documento en PDF.`;
-    try{ if(navigator.canShare && navigator.canShare({files:[PDF_LISTO]})){ await navigator.share({files:[PDF_LISTO], title:folio, text:msg}); return; } }catch(err){ if(err&&err.name==='AbortError') return; }
+    // En la Mac el menú de compartir no trae WhatsApp: ahí se descarga el PDF y se abre WhatsApp para adjuntarlo. En el celular sí sale en el menú
+    const movil=/iPhone|iPad|Android/i.test(navigator.userAgent);
+    if(movil||b.id==='env-mail'){ try{ if(navigator.canShare && navigator.canShare({files:[PDF_LISTO]})){ await navigator.share({files:[PDF_LISTO], title:folio, text:msg}); return; } }catch(err){ if(err&&err.name==='AbortError') return; } }
     const a=document.createElement('a'); a.href=URL.createObjectURL(PDF_LISTO); a.download=PDF_LISTO.name; document.body.appendChild(a); a.click(); a.remove();
     window.open(b.id==='env-wa' ? 'https://wa.me/?text='+encodeURIComponent(msg) : 'mailto:?subject='+encodeURIComponent('DIMACO · '+folio)+'&body='+encodeURIComponent(msg+'\n\n(Adjuntar el PDF descargado)'), '_blank');
     toast('PDF descargado: adjúntalo en el mensaje'); return; }
