@@ -528,5 +528,79 @@
   "imgs": [
    "36A6789-0011-1.png"
   ]
+ },
+ "37A10284-0002": {
+  "desc": "NEUTRAL BAR .375 x 2.000 x 28.000",
+  "plano": "Solera recta sin barrenos ni doblez",
+  "ref": "37A10284 · P.2-3",
+  "nota": "",
+  "imgs": [
+   "37A10284-0002-1.png"
+  ]
+ },
+ "37A10786A-0006": {
+  "desc": "LINK .250 x .750 x 20.375",
+  "plano": "Sin barrenos · dobleces en F.S./N.S. (diagrama de doblez P.3, 6-9)",
+  "ref": "37A10786A · P.6 + diagrama de doblez",
+  "nota": "",
+  "imgs": [
+   "37A10786A-0006-1.png",
+   "37A10786A-0006-2.png"
+  ]
+ },
+ "37A10786A-0009": {
+  "desc": "LINK .250 x 1.000 x 26.813",
+  "plano": "Sin barrenos · dobleces en F.S./N.S. (diagrama de doblez P.3, 6-9)",
+  "ref": "37A10786A · P.9 + diagrama de doblez",
+  "nota": "",
+  "imgs": [
+   "37A10786A-0009-1.png",
+   "37A10786A-0009-2.png"
+  ]
+ },
+ "37A12917-0001": {
+  "desc": "TAP PAD .250 x 2.000 x 3.563",
+  "plano": "FIG. 2: 1 barreno 9/16\" · 1 doblez (B N.S.)",
+  "ref": "37A12917 · FIG. 2, parte 1",
+  "nota": "",
+  "imgs": [
+   "37A12917-0001-1.png"
+  ]
+ },
+ "37A14129-0002": {
+  "desc": "NEU. BAR .250 x 2.000 x 25.000",
+  "plano": "Solera recta sin barrenos ni doblez (renglón 2 de la tabla; sin figura)",
+  "ref": "37A14129 · tabla, parte 2",
+  "nota": "",
+  "imgs": [
+   "37A14129-0002-1.png"
+  ]
+ },
+ "37A14129-0004": {
+  "desc": "NEU. BAR .250 x 1.000 x 25.000",
+  "plano": "Solera recta sin barrenos ni doblez (renglón 4 de la tabla; sin figura)",
+  "ref": "37A14129 · tabla, parte 4",
+  "nota": "",
+  "imgs": [
+   "37A14129-0004-1.png"
+  ]
+ },
+ "37A14154-0002": {
+  "desc": "NEU. BAR .375 x 2.000 x 32.000",
+  "plano": "Solera recta sin barrenos ni doblez (renglón 2 de la tabla; sin figura)",
+  "ref": "37A14154 REV2 · tabla, parte 2",
+  "nota": "",
+  "imgs": [
+   "37A14154-0002-1.png"
+  ]
+ },
+ "37A7698-0002": {
+  "desc": "WELD STRIP .125 x .750 x 4.000",
+  "plano": "Solera recta sin barrenos ni doblez (renglón 2 de la tabla; sin figura)",
+  "ref": "37A7698 · tabla, parte 2",
+  "nota": "",
+  "imgs": [
+   "37A7698-0002-1.png"
+  ]
  }
 }
