@@ -133,8 +133,8 @@ input[type=number]{font-variant-numeric:tabular-nums}
 
 <meta http-equiv="Cache-Control" content="no-cache">
 <script>
-const APPVER='v27';
-const APPFECHA='21-oct-2026 23:10';
+const APPVER='v28';
+const APPFECHA='21-oct-2026 23:20';
 document.addEventListener('DOMContentLoaded',()=>{ const b=document.getElementById('ver'); if(b){ b.textContent='Versión '+APPVER+' · revisada '+APPFECHA+' · toca para actualizar'; b.onclick=()=>location.replace(location.pathname+'?v='+Date.now()); } });
 (async()=>{ try{ const t=await (await fetch('index.html?_='+Date.now(),{cache:'no-store'})).text(); const m=t.match(/APPVER='([^']+)'/); if(m&&m[1]!==APPVER){ location.replace(location.pathname+'?v='+m[1]); } }catch(e){} })();
 document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible') fetch('index.html?_='+Date.now(),{cache:'no-store'}).then(r=>r.text()).then(t=>{ const m=t.match(/APPVER='([^']+)'/); if(m&&m[1]!==APPVER) location.replace(location.pathname+'?v='+m[1]); }).catch(()=>{}); });
@@ -453,15 +453,15 @@ function armGrupos(tipo){ const g={}; armLineas(tipo).forEach(x=>{ const k=x.l.k
 function armPrecioDe(k, xs){ if(armPrecio[k]!=null) return armPrecio[k]; const c=BYK[k]; const l0=xs[0].l; return l0.precio!=null ? l0.precio : (c&&c.p!=null ? c.p : null); }
 // Paso 1 (Moisés, 21-oct-2026): renglón 1 RFQ/Compra · renglón 2 botón que despliega lo pedido (cantidad + material, cuadro con la MO) y cuadro para seleccionar · renglón 3 proveedor
 function armFila(x){
-  const {r,l,i}=x, key=r.id+':'+i, yaRfq=!!(l.rfqI||l.poId), bloq=armDoc==='rfq'&&yaRfq, on=!bloq&&armSel.has(key);
+  const {r,l,i}=x, key=r.id+':'+i, on=armSel.has(key);
   const pr = armDoc==='compra' ? (armPrecio[key]!=null ? armPrecio[key] : (l.precio!=null ? l.precio : ((BYK[l.k]||{}).p ?? null))) : null;
-  return `<label class="mochk" style="align-items:center"><input type="checkbox" data-armk="${key}" ${on?'checked':''} ${bloq?'disabled':''} aria-label="Seleccionar ${esc(nomDe(l))}">
-    <span style="flex:1;min-width:0"><b style="font-size:15px">${nfmt(l.qty)}</b> ${esc(l.u||'pz')} · ${esc(nomDe(l))}<small>${esc(skuDe(l)||'')} · pidió ${NOMBRES[r.quien]||r.quien} · ${r.folio}${l.rfqI||l.rfqPo?` · RFQ enviado ${esc(l.rfqI||('RFQ-'+l.rfqPo))}`:''}</small>${bloq?`<button class="btn s gh" type="button" data-reenv="${key}" style="margin-top:6px">Ya tiene RFQ · volver a enviar el PDF</button>`:''}</span>
+  return `<label class="mochk" style="align-items:center"><input type="checkbox" data-armk="${key}" ${on?'checked':''} aria-label="Seleccionar ${esc(nomDe(l))}">
+    <span style="flex:1;min-width:0"><b style="font-size:15px">${nfmt(l.qty)}</b> ${esc(l.u||'pz')} · ${esc(nomDe(l))}<small>${esc(skuDe(l)||'')} · pidió ${NOMBRES[r.quien]||r.quien} · ${r.folio}${l.rfqI||l.rfqPo?` · RFQ enviado ${esc(l.rfqI||('RFQ-'+l.rfqPo))}`:''}</small></span>
     <span style="flex:none;max-width:38%;border:1px solid var(--line);border-radius:8px;padding:6px 8px;font-size:12px;font-weight:700;text-align:center;background:var(--panel)">${esc(r.para||'—')}</span>
     ${armDoc==='compra'?`<input type="number" step="0.01" inputmode="decimal" data-armp="${key}" value="${pr??''}" placeholder="$ c/u" aria-label="Precio unitario" style="flex:none;width:92px;padding:8px">`:''}</label>`;
 }
 function vArmar(){
-  const M=armLineas('mat'), I=armLineas('ins'), todos=new Set([...M,...I].filter(x=>!(armDoc==='rfq'&&(x.l.rfqI||x.l.poId))).map(x=>x.r.id+':'+x.i));
+  const M=armLineas('mat'), I=armLineas('ins'), todos=new Set([...M,...I].map(x=>x.r.id+':'+x.i));
   [...armSel].forEach(k=>{ if(!todos.has(k)) armSel.delete(k); });
   const selM=M.filter(x=>armSel.has(x.r.id+':'+x.i)), selI=I.filter(x=>armSel.has(x.r.id+':'+x.i));
   const mezcla = selM.length && selI.length, sel=selM.length+selI.length, prov=armProvs.uno||'';
@@ -658,9 +658,14 @@ app.addEventListener('click',async e=>{
     if(d.armgo){
     const armProv=armProvs.uno||''; const M=armLineas('mat').filter(x=>armSel.has(x.r.id+':'+x.i)), I=armLineas('ins').filter(x=>armSel.has(x.r.id+':'+x.i));
     if(!(M.length||I.length) || (M.length&&I.length)) return;
-    const xs=M.length?M:I, mat=M.length>0, keys=[], precios={};
+    const xs0=M.length?M:I, mat=M.length>0, keys=[], precios={};
+    let xs=xs0; const g={};
+    if(armDoc==='rfq'){ xs0.filter(x=>x.l.rfqI||x.l.poId).forEach(x=>{ const f=x.l.rfqI||('RFQ-'+(x.l.rfqPo||'PO')); (g[f]=g[f]||[]).push(x.r.id+':'+x.i); }); xs=xs0.filter(x=>!(x.l.rfqI||x.l.poId)); }
+    if(xs.length && mat && !confirmar2(b, armDoc==='rfq'?'Confirmar: crear RFQ en Katana':'Confirmar: crear PO en Katana')) return;
+    // Lo que ya tenía folio de RFQ solo vuelve a sacar su PDF, ahora con el proveedor escogido
+    if(!xs.length){ armSel.clear(); render(); for(const [f,ks] of Object.entries(g)) await prepararPDF('rfq', f, ks, armProv); return; }
+    for(const [f,ks] of Object.entries(g)) await prepararPDF('rfq', f, ks, armProv);
     xs.forEach(x=>{ const kk=x.r.id+':'+x.i; keys.push(kk); if(armDoc==='compra'){ const pr=armPrecio[kk]!=null?armPrecio[kk]:(x.l.precio!=null?x.l.precio:((BYK[x.l.k]||{}).p??null)); if(pr!=null) precios[kk]=pr; } });
-    if(mat && !confirmar2(b, armDoc==='rfq'?'Confirmar: crear RFQ en Katana':'Confirmar: crear PO en Katana')) return;
     b.disabled=true; b.textContent='Creando…';
     const body = armDoc==='rfq' ? {tipo: mat?'rfqKatana':'rfqInsumos', keys, prov: armProv} : {tipo:'compraArmada', keys, prov: armProv, precios, mat};
     const r=await accion(body);
