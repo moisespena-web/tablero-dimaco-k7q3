@@ -133,8 +133,8 @@ input[type=number]{font-variant-numeric:tabular-nums}
 
 <meta http-equiv="Cache-Control" content="no-cache">
 <script>
-const APPVER='v28';
-const APPFECHA='21-oct-2026 23:20';
+const APPVER='v29';
+const APPFECHA='21-oct-2026 23:30';
 document.addEventListener('DOMContentLoaded',()=>{ const b=document.getElementById('ver'); if(b){ b.textContent='Versión '+APPVER+' · revisada '+APPFECHA+' · toca para actualizar'; b.onclick=()=>location.replace(location.pathname+'?v='+Date.now()); } });
 (async()=>{ try{ const t=await (await fetch('index.html?_='+Date.now(),{cache:'no-store'})).text(); const m=t.match(/APPVER='([^']+)'/); if(m&&m[1]!==APPVER){ location.replace(location.pathname+'?v='+m[1]); } }catch(e){} })();
 document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible') fetch('index.html?_='+Date.now(),{cache:'no-store'}).then(r=>r.text()).then(t=>{ const m=t.match(/APPVER='([^']+)'/); if(m&&m[1]!==APPVER) location.replace(location.pathname+'?v='+m[1]); }).catch(()=>{}); });
@@ -540,15 +540,16 @@ async function pdfDoc(tipo, folio, xs, provRfq){
   if(d1){ const h=18, w=Math.min(46,h*s1[0]/s1[1]); doc.addImage(d1,'PNG',14,10,w,w*s1[1]/s1[0]); }
   doc.setFont('helvetica','bold'); doc.setFontSize(15); doc.text(rfq?(/^RFQ/i.test(folio)?folio:`RFQ ${folio}`):`Orden de compra ${folio}`, W-14, 16, {align:'right'});
   doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.text('Fecha: '+fFecha(hoyISO()), W-14, 22, {align:'right'});
-  doc.text('DIMACO METALMECANICA', 14, 36);
+  // Datos fiscales de DIMACO (RFC del CFDI emisor; domicilio de Bind/Katana)
+  doc.text(['DIMACO METALMECANICA SA DE CV','RFC: DME101130DP8','Carretera Estatal Silao-Romita Km 3+100','Lucero de Ramales, Silao, Gto. C.P. 36283'], 14, 36);
   doc.setFont('helvetica','bold'); doc.text('Proveedor', W/2+4, 36); doc.setFont('helvetica','normal');
   const pl=[prov]; if(pinfo){ const a=pinfo.a; if(a) pl.push([a.line_1,a.line_2].filter(Boolean).join(' '), [a.city,a.state,a.zip].filter(Boolean).join(', ')); if(pinfo.t) pl.push('Tel. '+pinfo.t); if(pinfo.e) pl.push(pinfo.e); }
-  if(!rfq) pl.push('RFC: '+(pinfo&&pinfo.rfc?pinfo.rfc:''));
+  pl.splice(1,0,'RFC: '+(pinfo&&pinfo.rfc?pinfo.rfc:''));
   doc.text(pl.filter(Boolean).map(s=>doc.splitTextToSize(String(s),W/2-20)).flat(), W/2+4, 41);
   const mos=[...new Set(xs.flatMap(x=>String(x.r.para||'').split(/\s*,\s*/)).filter(Boolean))].join(', ');
   const sol=[...new Set(xs.map(x=>SOL_NOMBRE[x.r.quien]||x.r.quien))].join(', ');
-  doc.text(doc.splitTextToSize(`Referencia: ${mos}`, W/2-20), 14, 41);
-  doc.text(doc.splitTextToSize(`Solicita: ${sol}`, W/2-20), 14, 51);
+  doc.text(doc.splitTextToSize(`Referencia: ${mos}`, W/2-20), 14, 58);
+  doc.text(doc.splitTextToSize(`Solicita: ${sol}`, W/2-20), 14, 64);
   const sku = l => skuDe(l);
   const desc = l => nomDe(l) + (/SOLERA/i.test(l.d)?'  (mide 144" / 3.66 m)':'');
   // Por ahora (pedido de Moisés, 21-oct-2026) la orden de compra sale SIN precios; para volver a mostrarlos, OC_SIN_PRECIOS = false
@@ -556,11 +557,11 @@ async function pdfDoc(tipo, folio, xs, provRfq){
   // Orden de columnas que pidió Moisés: Item · Cantidad · Unidad · SKU · Nombre
   const head = sinP ? [['Item','Cantidad','Unidad','SKU','Nombre']] : [['Item','Cantidad','Unidad','SKU','Nombre','Precio unitario','Importe']];
   const body = xs.map(({l},n)=>{ const base=[String(n+1), nfmt(l.qty), l.u||'pz', sku(l), desc(l)]; return sinP?base:base.concat([money(l.precio), money(imp(l))]); });
-  doc.autoTable({ startY: 62, head, body, styles:{ fontSize:8.5, cellPadding:2 }, headStyles:{ fillColor:[31,95,168] },
+  doc.autoTable({ startY: 74, head, body, styles:{ fontSize:8.5, cellPadding:2 }, headStyles:{ fillColor:[31,95,168] },
     columnStyles: sinP ? { 0:{cellWidth:12,halign:'center'}, 1:{cellWidth:20,halign:'right'}, 2:{cellWidth:24}, 3:{cellWidth:34} } : { 0:{cellWidth:11,halign:'center'}, 1:{cellWidth:18,halign:'right'}, 2:{cellWidth:20}, 3:{cellWidth:28}, 5:{cellWidth:25,halign:'right'}, 6:{cellWidth:27,halign:'right'} } });
   let y = doc.lastAutoTable.finalY + 6; doc.setFontSize(9);
   if(rfq){
-    doc.text(doc.splitTextToSize(`Favor de cotizar indicando precio unitario sin IVA, tiempo de entrega, condiciones de pago y vigencia. Enviar su cotización a ${correo} mencionando el folio ${folio}.`, W-28), 14, y); y+=14;
+    y+=8; doc.text(doc.splitTextToSize(`Favor de cotizar indicando precio unitario, tiempo de entrega, condiciones de pago y vigencia. Enviar su cotización a compras@dimaco-mx.com mencionando el folio ${folio}.`, W-28), 14, y); y+=14;
   } else {
     if(!OC_SIN_PRECIOS){ const sub=xs.reduce((a,x)=>a+imp(x.l),0), iva=sub*0.16, tot=sub+iva;
     const fila=(t,v,b)=>{ doc.setFont('helvetica',b?'bold':'normal'); doc.text(t, W-48, y, {align:'right'}); doc.text(v, W-14, y, {align:'right'}); y+=5.5; };
