@@ -133,8 +133,8 @@ input[type=number]{font-variant-numeric:tabular-nums}
 
 <meta http-equiv="Cache-Control" content="no-cache">
 <script>
-const APPVER='v20';
-const APPFECHA='21-oct-2026 22:10';
+const APPVER='v21';
+const APPFECHA='21-oct-2026 22:15';
 document.addEventListener('DOMContentLoaded',()=>{ const b=document.getElementById('ver'); if(b){ b.textContent='Versión '+APPVER+' · revisada '+APPFECHA+' · toca para actualizar'; b.onclick=()=>location.replace(location.pathname+'?v='+Date.now()); } });
 (async()=>{ try{ const t=await (await fetch('index.html?_='+Date.now(),{cache:'no-store'})).text(); const m=t.match(/APPVER='([^']+)'/); if(m&&m[1]!==APPVER){ location.replace(location.pathname+'?v='+m[1]); } }catch(e){} })();
 document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible') fetch('index.html?_='+Date.now(),{cache:'no-store'}).then(r=>r.text()).then(t=>{ const m=t.match(/APPVER='([^']+)'/); if(m&&m[1]!==APPVER) location.replace(location.pathname+'?v='+m[1]); }).catch(()=>{}); });
@@ -541,7 +541,7 @@ async function pdfDoc(tipo, folio, xs, provRfq){
   let d1=null, d2=null, s1=[1,1], s2=[1,1];
   try{ d1=await imgData('logo-dimaco.png'); s1=await imgSize(d1); d2=await imgData('logo-mg.png'); s2=await imgSize(d2); }catch(e){}
   if(d1){ const h=18, w=Math.min(46,h*s1[0]/s1[1]); doc.addImage(d1,'PNG',14,10,w,w*s1[1]/s1[0]); }
-  doc.setFont('helvetica','bold'); doc.setFontSize(15); doc.text(rfq?`RFQ: ${folio}`:`Orden de compra ${folio}`, W-14, 16, {align:'right'});
+  doc.setFont('helvetica','bold'); doc.setFontSize(15); doc.text(rfq?(/^RFQ/i.test(folio)?folio:`RFQ ${folio}`):`Orden de compra ${folio}`, W-14, 16, {align:'right'});
   doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.text('Fecha: '+fFecha(hoyISO()), W-14, 22, {align:'right'});
   doc.text('DIMACO METALMECANICA', 14, 36);
   doc.setFont('helvetica','bold'); doc.text('Proveedor', W/2+4, 36); doc.setFont('helvetica','normal');
@@ -556,10 +556,11 @@ async function pdfDoc(tipo, folio, xs, provRfq){
   const desc = l => nomDe(l) + (/SOLERA/i.test(l.d)?'  (mide 144" / 3.66 m)':'');
   // Por ahora (pedido de Moisés, 21-oct-2026) la orden de compra sale SIN precios; para volver a mostrarlos, OC_SIN_PRECIOS = false
   const OC_SIN_PRECIOS = true, sinP = rfq || OC_SIN_PRECIOS;
-  const head = sinP ? [['SKU','Descripción','Medidas','Cantidad']] : [['SKU','Descripción','Medidas','Cantidad','Precio unitario','Importe']];
-  const body = xs.map(({l})=>{ const base=[sku(l), desc(l), l.u||'pz', nfmt(l.qty)]; return sinP?base:base.concat([money(l.precio), money(imp(l))]); });
+  // Orden de columnas que pidió Moisés: Item · Cantidad · Unidad · SKU · Nombre
+  const head = sinP ? [['Item','Cantidad','Unidad','SKU','Nombre']] : [['Item','Cantidad','Unidad','SKU','Nombre','Precio unitario','Importe']];
+  const body = xs.map(({l},n)=>{ const base=[String(n+1), nfmt(l.qty), l.u||'pz', sku(l), desc(l)]; return sinP?base:base.concat([money(l.precio), money(imp(l))]); });
   doc.autoTable({ startY: 62, head, body, styles:{ fontSize:8.5, cellPadding:2 }, headStyles:{ fillColor:[31,95,168] },
-    columnStyles: sinP ? { 0:{cellWidth:30}, 2:{cellWidth:28}, 3:{cellWidth:20,halign:'right'} } : { 0:{cellWidth:26}, 2:{cellWidth:24}, 3:{cellWidth:19,halign:'right'}, 4:{cellWidth:26,halign:'right'}, 5:{cellWidth:28,halign:'right'} } });
+    columnStyles: sinP ? { 0:{cellWidth:12,halign:'center'}, 1:{cellWidth:20,halign:'right'}, 2:{cellWidth:24}, 3:{cellWidth:34} } : { 0:{cellWidth:11,halign:'center'}, 1:{cellWidth:18,halign:'right'}, 2:{cellWidth:20}, 3:{cellWidth:28}, 5:{cellWidth:25,halign:'right'}, 6:{cellWidth:27,halign:'right'} } });
   let y = doc.lastAutoTable.finalY + 6; doc.setFontSize(9);
   if(rfq){
     doc.text(doc.splitTextToSize(`Favor de cotizar indicando precio unitario sin IVA, tiempo de entrega, condiciones de pago y vigencia. Enviar su cotización a ${correo} mencionando el folio ${folio}.`, W-28), 14, y); y+=14;
