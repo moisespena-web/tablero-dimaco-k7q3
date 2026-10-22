@@ -16,6 +16,7 @@
 <link rel="apple-touch-icon" href="icon.png?v=3">
 <link rel="icon" type="image/png" href="icon.png?v=3">
 <title>Estación RFQ · DIMACO</title>
+<script src="prov-rfc.js?v=1"></script>
 <style>html,body{margin:0}:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}[hidden]{display:none!important}img{max-width:100%}</style>
 <style>
 /* Layout: una columna tipo app de estación (máx. 560px), barra de rol arriba, pestañas por rol, tarjetas por renglón */
@@ -133,8 +134,8 @@ input[type=number]{font-variant-numeric:tabular-nums}
 
 <meta http-equiv="Cache-Control" content="no-cache">
 <script>
-const APPVER='v30';
-const APPFECHA='22-oct-2026 00:15';
+const APPVER='v31';
+const APPFECHA='22-oct-2026 00:20';
 document.addEventListener('DOMContentLoaded',()=>{ const b=document.getElementById('ver'); if(b){ b.textContent='Versión '+APPVER+' · revisada '+APPFECHA+' · toca para actualizar'; b.onclick=()=>location.replace(location.pathname+'?v='+Date.now()); } });
 (async()=>{ try{ const t=await (await fetch('index.html?_='+Date.now(),{cache:'no-store'})).text(); const m=t.match(/APPVER='([^']+)'/); if(m&&m[1]!==APPVER){ location.replace(location.pathname+'?v='+m[1]); } }catch(e){} })();
 document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible') fetch('index.html?_='+Date.now(),{cache:'no-store'}).then(r=>r.text()).then(t=>{ const m=t.match(/APPVER='([^']+)'/); if(m&&m[1]!==APPVER) location.replace(location.pathname+'?v='+m[1]); }).catch(()=>{}); });
@@ -544,7 +545,9 @@ async function pdfDoc(tipo, folio, xs, provRfq){
   doc.text(['DIMACO METALMECANICA SA DE CV','RFC: DME101130DP8','Carretera Estatal Silao-Romita Km 3+100','Lucero de Ramales, Silao, Gto. C.P. 36283'], 14, 36);
   doc.setFont('helvetica','bold'); doc.text('Proveedor', W/2+4, 36); doc.setFont('helvetica','normal');
   const pl=[prov]; if(pinfo){ const a=pinfo.a; if(a) pl.push([a.line_1,a.line_2].filter(Boolean).join(' '), [a.city,a.state,a.zip].filter(Boolean).join(', ')); if(pinfo.t) pl.push('Tel. '+pinfo.t); if(pinfo.e) pl.push(pinfo.e); }
-  pl.splice(1,0,'RFC: '+(pinfo&&pinfo.rfc?pinfo.rfc:''));
+  const nP=x=>String(x||'').toUpperCase().replace(/[^A-Z0-9 ]/g,' ').replace(/\b(S|SA|DE|RL|CV|SAPI|SC|SPR|C|V|R|L|A)\b/g,' ').replace(/\s+/g,' ').trim();
+  const rfcP=(pinfo&&pinfo.rfc)||((window.PROV_RFC||{})[nP(prov)])||'';
+  pl.splice(1,0,'RFC: '+rfcP);
   doc.text(pl.filter(Boolean).map(s=>doc.splitTextToSize(String(s),W/2-20)).flat(), W/2+4, 41);
   const mos=[...new Set(xs.flatMap(x=>String(x.r.para||'').split(/\s*,\s*/)).filter(Boolean))].join(', ');
   const sol=[...new Set(xs.map(x=>SOL_NOMBRE[x.r.quien]||x.r.quien))].join(', ');
