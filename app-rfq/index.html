@@ -133,8 +133,8 @@ input[type=number]{font-variant-numeric:tabular-nums}
 
 <meta http-equiv="Cache-Control" content="no-cache">
 <script>
-const APPVER='v25';
-const APPFECHA='21-oct-2026 22:55';
+const APPVER='v26';
+const APPFECHA='21-oct-2026 23:00';
 document.addEventListener('DOMContentLoaded',()=>{ const b=document.getElementById('ver'); if(b){ b.textContent='Versión '+APPVER+' · revisada '+APPFECHA+' · toca para actualizar'; b.onclick=()=>location.replace(location.pathname+'?v='+Date.now()); } });
 (async()=>{ try{ const t=await (await fetch('index.html?_='+Date.now(),{cache:'no-store'})).text(); const m=t.match(/APPVER='([^']+)'/); if(m&&m[1]!==APPVER){ location.replace(location.pathname+'?v='+m[1]); } }catch(e){} })();
 document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible') fetch('index.html?_='+Date.now(),{cache:'no-store'}).then(r=>r.text()).then(t=>{ const m=t.match(/APPVER='([^']+)'/); if(m&&m[1]!==APPVER) location.replace(location.pathname+'?v='+m[1]); }).catch(()=>{}); });
@@ -444,7 +444,7 @@ function armLineas(tipo){
   const esM = tipo==='mat';
   return allLines().filter(({l})=>{
     if(esKatK(l.k)!==esM) return false;
-    if(armDoc==='rfq') return l.est==='cotizar' && (esM ? !l.poId : !l.rfqI);
+    // RFQ y Compra muestran lo mismo: todo lo pendiente (lo ya cotizado lleva la marca "RFQ enviado")
     // Compra: solo lo que nadie ha trabajado todavía (sin RFQ enviado). Lo ya comprado pasa a Por autorizar / Por pedir y no se repite aquí
     return l.est==='cotizar' && !l.po && !l.oc;
   });
