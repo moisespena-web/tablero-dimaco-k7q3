@@ -602,5 +602,23 @@
   "imgs": [
    "37A7698-0002-1.png"
   ]
+ },
+ "37A10685A-0003": {
+  "desc": "TERMINAL .250 x 1.000 x 4.688",
+  "plano": "2 barrenos (Ø.438 y Ø.228) · 1 doblez (línea N.S.)",
+  "ref": "37A10685A · P.3",
+  "nota": "",
+  "imgs": [
+   "37A10685A-0003-1.png"
+  ]
+ },
+ "37A5901-0001": {
+  "desc": "LINK .250 x 1.000 x 3.063 (cobre)",
+  "plano": "2 barrenos Ø.312",
+  "ref": "37A5901 · P.1",
+  "nota": "",
+  "imgs": [
+   "37A5901-0001-1.png"
+  ]
  }
 }
