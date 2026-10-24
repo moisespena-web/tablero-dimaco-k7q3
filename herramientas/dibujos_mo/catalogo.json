@@ -620,5 +620,41 @@
   "imgs": [
    "37A5901-0001-1.png"
   ]
+ },
+ "37A10786A-0001": {
+  "desc": "TAP .250 x .750 x 3.375",
+  "plano": "1 barreno .228 · sin doblez (el diagrama de doblez es para P.3, 6-9)",
+  "ref": "37A10786A · P.1",
+  "nota": "Katana trae Doblez y el plano de P.1 no lleva doblez",
+  "imgs": [
+   "37A10786A-0001-1.png"
+  ]
+ },
+ "37A12254-0002": {
+  "desc": "TERMINAL .250 x 1.500 x 7.750",
+  "plano": "1 barreno .563 + 1 barreno .228 · sin doblez",
+  "ref": "37A12254 · P.2",
+  "nota": "Katana trae Doblez y el plano no muestra doblez",
+  "imgs": [
+   "37A12254-0002-1.png"
+  ]
+ },
+ "37A14130-0002": {
+  "desc": "CONN. BAR .250 x 1.000 x 12.375",
+  "plano": "2 barrenos .313 · sin doblez",
+  "ref": "37A14130 · P.2",
+  "nota": "",
+  "imgs": [
+   "37A14130-0002-1.png"
+  ]
+ },
+ "37A8292-0002": {
+  "desc": "TERMINAL 1/4 x 2 x 5 1/8",
+  "plano": "2 barrenos .437 · sin doblez",
+  "ref": "37A8292 · P.2",
+  "nota": "",
+  "imgs": [
+   "37A8292-0002-1.png"
+  ]
  }
 }
