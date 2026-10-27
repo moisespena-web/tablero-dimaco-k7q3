@@ -134,8 +134,8 @@ input[type=number]{font-variant-numeric:tabular-nums}
 
 <meta http-equiv="Cache-Control" content="no-cache">
 <script>
-const APPVER='v35';
-const APPFECHA='22-oct-2026 07:30';
+const APPVER='v36';
+const APPFECHA='27-oct-2026 18:00';
 document.addEventListener('DOMContentLoaded',()=>{ const b=document.getElementById('ver'); if(b){ b.textContent='Versión '+APPVER+' · revisada '+APPFECHA+' · toca para actualizar'; b.onclick=()=>location.replace(location.pathname+'?v='+Date.now()); } });
 (async()=>{ try{ const t=await (await fetch('index.html?_='+Date.now(),{cache:'no-store'})).text(); const m=t.match(/APPVER='([^']+)'/); if(m&&m[1]!==APPVER){ location.replace(location.pathname+'?v='+m[1]); } }catch(e){} })();
 document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible') fetch('index.html?_='+Date.now(),{cache:'no-store'}).then(r=>r.text()).then(t=>{ const m=t.match(/APPVER='([^']+)'/); if(m&&m[1]!==APPVER) location.replace(location.pathname+'?v='+m[1]); }).catch(()=>{}); });
@@ -470,9 +470,13 @@ function vMisRfq(){
   if(!fs.length) return '<div class="card empty">Todavía no hay RFQ. Se crean en Pendientes → RFQ → Ver lo pedido.</div>';
   const abiertos=fs.filter(f=>g[f].some(x=>x.l.est==='cotizar')).length;
   return `<div class="card"><h2>Mis RFQ <span class="chip c-cot">${fs.length}</span></h2>
-    <div class="sub">Todo lo que se ha mandado a cotizar. ${abiertos} esperando respuesta. Cuando el proveedor conteste, haz la compra en Pendientes → Compra.</div>
+    <div class="sub">Todo lo que se ha mandado a cotizar y en qué va. ${abiertos} esperando respuesta. Si el RFQ se convierte en orden de compra en Katana, aquí cambia solo a <b>PO confirmada</b> (se revisa cada pocos minutos).</div>
     ${fs.map(f=>{ const xs=g[f], l0=xs[0].l, abierto=xs.some(x=>x.l.est==='cotizar');
-      return `<div class="grp" style="margin-top:16px;align-items:center"><span>${esc(f)} · ${esc(l0.rfqProv||'sin proveedor')}${fechaRfq(l0)?' · '+fechaRfq(l0):''} <span class="chip ${abierto?'c-cot':'c-ok'}">${abierto?'Esperando cotización':'Ya se compró'}</span></span><button class="btn s gh" type="button" data-reenv="${xs[0].r.id}:${xs[0].i}">PDF</button></div>
+      const vivos=xs.filter(x=>!['cancelado','rechazado'].includes(x.l.est)), poNo=(vivos.find(x=>x.l.po)||{l:{}}).l.po||'';
+      const todosRec=vivos.length&&vivos.every(x=>['recibido','facturado'].includes(x.l.est));
+      const [txt,cls]= abierto ? ['Esperando cotización','c-cot'] : todosRec ? ['Recibido'+(poNo?' · '+poNo:''),'c-ok'] : vivos.some(x=>['pedido','parcial'].includes(x.l.est)) ? ['PO confirmada'+(poNo?' · '+poNo:'')+(vivos[0].l.prov?' · '+vivos[0].l.prov:''),'c-ped'] : ['En proceso','c-aut'];
+      const err=(xs.find(x=>x.l.katErr)||{l:{}}).l.katErr;
+      return `<div class="grp" style="margin-top:16px;align-items:center"><span>${esc(f)} · ${esc(l0.rfqProv||l0.prov||'sin proveedor')}${fechaRfq(l0)?' · '+fechaRfq(l0):''} <span class="chip ${cls}">${esc(txt)}</span>${err?` <span class="chip c-bad">${esc(err)}</span>`:''}</span><button class="btn s gh" type="button" data-reenv="${xs[0].r.id}:${xs[0].i}">PDF</button></div>
       ${l0.rfqProv?'':`<label class="f" for="rp-${esc(f)}">¿A qué proveedor se mandó?</label><select id="rp-${esc(f)}" data-rfqprov2="${xs.map(x=>x.r.id+':'+x.i).join(',')}"><option value="">Escoge el proveedor…</option>${PROVS.map(p=>`<option>${esc(p)}</option>`).join('')}</select>`}
       ${xs.map(({r,l})=>`<div class="ln"><div class="a"><b>${nfmt(l.qty)} ${esc(l.u||'pz')} · ${esc(nomDe(l))}</b><span>${esc(skuDe(l)||'')} · ${r.folio} · ${NOMBRES[r.quien]||r.quien} · ${esc(r.para)}</span></div><div class="z"><span class="chip ${EST[l.est][1]}">${l.est==='cotizar'?'RFQ enviado':EST[l.est][0]}</span></div></div>`).join('')}`; }).join('')}
   </div>`;
@@ -530,7 +534,7 @@ function gruposEnviados(){
 }
 function vEnviados(){
   PDFG = gruposEnviados(); const ks=Object.keys(PDFG).sort((a,b)=>(PDFG[b][0].l.pedidoF||'').localeCompare(PDFG[a][0].l.pedidoF||''));
-  return `<div class="card"><h2>4 · Pedidos enviados <span class="chip c-gr">${ks.length}</span></h2><div class="sub">Últimos 45 días. Genera el PDF de la orden para mandarlo al proveedor por WhatsApp o correo.</div>
+  return `<div class="card"><h2>PO confirmadas <span class="chip c-gr">${ks.length}</span></h2><div class="sub">Órdenes de compra de los últimos 45 días (de la estación o confirmadas en Katana). Ely las recibe en <b>Recibir</b>; aquí sacas el PDF para el proveedor.</div>
   ${ks.length?ks.map(k=>{ const xs=PDFG[k], l0=xs[0].l, no=l0.po||l0.oc||''; return `<div class="ln"><div class="a"><b>${esc(l0.prov||'—')}</b><span>${no?esc(no)+' · ':''}${fFecha(l0.pedidoF)} · ${xs.length} concepto(s) · ${[...new Set(xs.map(x=>x.r.folio))].join(', ')}</span></div>
     <div class="z"><div class="num">${fmt(xs.reduce((a,x)=>a+imp(x.l),0))}</div><button class="btn s gh" type="button" data-pdfg="${esc(k)}" style="margin-top:6px">PDF</button>${no&&YO&&(YO.id==='paty'||YO.id==='moises')?`<div><button class="lk bad" type="button" data-borrarped="${esc(no)}">Borrar pedido</button></div>`:''}</div></div>`; }).join(''):'<div class="empty">Aún no hay pedidos enviados.</div>'}</div>`;
 }
