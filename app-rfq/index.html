@@ -134,8 +134,10 @@ input[type=number]{font-variant-numeric:tabular-nums}
 
 <meta http-equiv="Cache-Control" content="no-cache">
 <script>
-const APPVER='v36';
-const APPFECHA='27-oct-2026 18:00';
+const APPVER='v37';
+const APPFECHA='27-oct-2026 19:00';
+// Lo cancelado ya no se muestra en ninguna vista (sigue guardado en el servidor)
+function sinCanc(rs){ return (rs||[]).map(r=>({...r,lines:(r.lines||[]).map((l,i)=>({...l,_i:i})).filter(l=>l.est!=='cancelado')})).filter(r=>r.lines.length); }
 document.addEventListener('DOMContentLoaded',()=>{ const b=document.getElementById('ver'); if(b){ b.textContent='Versión '+APPVER+' · revisada '+APPFECHA+' · toca para actualizar'; b.onclick=()=>location.replace(location.pathname+'?v='+Date.now()); } });
 (async()=>{ try{ const t=await (await fetch('index.html?_='+Date.now(),{cache:'no-store'})).text(); const m=t.match(/APPVER='([^']+)'/); if(m&&m[1]!==APPVER){ location.replace(location.pathname+'?v='+m[1]); } }catch(e){} })();
 document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible') fetch('index.html?_='+Date.now(),{cache:'no-store'}).then(r=>r.text()).then(t=>{ const m=t.match(/APPVER='([^']+)'/); if(m&&m[1]!==APPVER) location.replace(location.pathname+'?v='+m[1]); }).catch(()=>{}); });
@@ -225,7 +227,7 @@ async function entrar(){
     const yo = await api('/yo'); YO = yo.yo; TAB = TAB && tabsDe(YO.id).includes(TAB) ? TAB : tabsDe(YO.id)[0];
     try{ localStorage.setItem('rfq-pin',PIN); }catch(e){}
     const [c,d] = await Promise.all([api('/catalogo'), api('/datos')]);
-    CAT = c.catalogo; BYK = Object.fromEntries(CAT.map(x=>[x.k,x])); REQS = d.reqs; ALTAS = d.altas||[]; PROVS = d.provs;
+    CAT = c.catalogo; BYK = Object.fromEntries(CAT.map(x=>[x.k,x])); REQS = sinCanc(d.reqs); ALTAS = d.altas||[]; PROVS = d.provs;
     cargando=false; render(); revisarAlertas(d.alertas);
     api('/mos').then(m=>{ MOS=m; if(TAB==='pedir') render(); }).catch(()=>{ MOS={mafesa:0,mos:[],nota:'No se pudo leer Katana'}; });
   }catch(e){ cargando=false; if(YO===null) { render(); if(e.message!=='PIN incorrecto') toast(e.message.includes('fetch')?'Sin conexión con el servidor':e.message); } }
@@ -237,7 +239,7 @@ async function refrescar(){
   if(document.hidden || (a && (a.tagName==='INPUT'||a.tagName==='SELECT'))){   // sin redibujar: solo revisa si hay alertas nuevas
     if(ALERTA_PARA.includes(YO.id)) try{ const d=await api('/datos'); revisarAlertas(d.alertas); }catch(e){}
     return; }
-  try{ const d=await api('/datos'); REQS=d.reqs; ALTAS=d.altas||[]; PROVS=d.provs; render(); revisarAlertas(d.alertas); }catch(e){}
+  try{ const d=await api('/datos'); REQS=sinCanc(d.reqs); ALTAS=d.altas||[]; PROVS=d.provs; render(); revisarAlertas(d.alertas); }catch(e){}
 }
 setInterval(refrescar, 30000);
 document.addEventListener('visibilitychange', refrescar);
@@ -245,7 +247,7 @@ document.addEventListener('visibilitychange', refrescar);
 async function accion(body, okMsg){
   try{
     const d = await api('/accion', body);
-    REQS = d.reqs; ALTAS = d.altas||ALTAS; PROVS = d.provs;
+    REQS = sinCanc(d.reqs); ALTAS = d.altas||ALTAS; PROVS = d.provs;
     if(d.cat){ Object.entries(d.cat).forEach(([k,o])=>{ if(BYK[k]) Object.assign(BYK[k],{p:o.p,s:o.s||BYK[k].s,f:o.f}); else { const n={k,d:o.d,p:o.p,s:o.s,f:o.f,c:'Nuevo'}; CAT.push(n); BYK[k]=n; } }); }
     render(); toast(okMsg || d.msg || 'Listo'); revisarAlertas(d.alertas); return d;
   }catch(e){ render(); toast(e.message); return null; }
@@ -268,7 +270,7 @@ function render(){
   tabs.innerHTML = tabsDe(YO.id).map(t=>`<button type="button" role="tab" data-tab="${t}" aria-selected="${t===TAB}">${TABN[t]}${tb[t]?`<span class="bd">${tb[t]}</span>`:''}</button>`).join('');
   v.innerHTML = ({pedir:vPedir,mias:vMias,recibir:vRecibir,pend:vPend,facturas:vFacturas,autorizar:vAutorizar,rfqs:vMisRfq,todas:vTodas})[TAB]();
 }
-const allLines = () => REQS.flatMap(r=>r.lines.map((l,i)=>({r,l,i})));
+const allLines = () => REQS.flatMap(r=>r.lines.map((l,i)=>({r,l,i:l._i??i})));
 function cuentas(){
   const L=allLines();
   return {
@@ -371,10 +373,10 @@ function reqCard(r){
   const puedeBorrar = YO && (YO.id==='paty'||YO.id==='moises');
   return `<div class="card"><div class="row" style="justify-content:space-between"><h2>${r.folio}</h2><span class="num">${fmt(tot)}</span></div>
   <div class="sub">${fFecha(r.fecha)} · ${NOMBRES[r.quien]||r.quien} · ${esc(r.para)}${puedeBorrar?` · <button class="lk bad" type="button" data-borrar="${r.id}">Borrar requisición</button>`:''}</div>
-  ${r.lines.map((l,i)=>`<div class="ln"><div class="a"><b>${etq(l)}</b><span>${nfmt(l.qty)} ${esc(l.u||'pz')} · ${l.prov?esc(l.prov):'proveedor por definir'} · ${l.precio!=null?fmt(l.precio)+' c/u':'sin precio'}</span>
+  ${r.lines.map((l,i0)=>{const i=l._i??i0; return `<div class="ln"><div class="a"><b>${etq(l)}</b><span>${nfmt(l.qty)} ${esc(l.u||'pz')} · ${l.prov?esc(l.prov):'proveedor por definir'} · ${l.precio!=null?fmt(l.precio)+' c/u':'sin precio'}</span>
     ${flow(l)}${(mia||YO.id==='paty')&&['cotizar','autorizar','pedir'].includes(l.est)?`<button class="lk" type="button" data-cancel="${r.id}:${i}" style="background:none;border:0;color:var(--tx3);font-size:12px;padding:4px 0">Cancelar este concepto</button>`:''}${puedeBorrar&&r.lines.length>1?`<button class="lk bad" type="button" data-borrarl="${r.id}:${i}" style="margin-left:10px">Borrar concepto</button>`:''}</div>
     <div class="z"><span class="chip ${EST[l.est][1]}">${l.est==='cotizar'&&(l.rfqI||l.poId)?'RFQ enviado':EST[l.est][0]}${l.est==='parcial'?` ${l.rec}/${l.qty}`:''}</span>${l.po?`<div style="font-size:11px;color:var(--tx2);margin-top:4px">${esc(l.po)} Katana</div>`:l.oc?`<div style="font-size:11px;color:var(--tx2);margin-top:4px">${esc(l.oc)}</div>`:l.rfqPo?`<div style="font-size:11px;color:var(--tx2);margin-top:4px">RFQ-${esc(l.rfqPo)}</div>`:l.rfqI?`<div style="font-size:11px;color:var(--tx2);margin-top:4px">${esc(l.rfqI)}</div>`:''}${l.katErr?`<div class="chip c-bad" style="margin-top:4px">Falta recibir en Katana</div>`:''}
-    ${l.est==='autorizar'?`<div style="font-size:11px;color:var(--tx3);margin-top:4px">autoriza ${NOMBRES[autorizador(l)]}</div>`:''}</div></div>`).join('')}
+    ${l.est==='autorizar'?`<div style="font-size:11px;color:var(--tx3);margin-top:4px">autoriza ${NOMBRES[autorizador(l)]}</div>`:''}</div></div>`}).join('')}
   </div>`;
 }
 function flow(l){
@@ -663,7 +665,7 @@ function vFacturas(){
 
 /* ---------------- eventos ---------------- */
 const app=document.getElementById('app');
-const ref = s => { const [rid,i,j]=s.split(':'); const r=REQS.find(x=>x.id==rid); return {r,l:r&&r.lines[+i],rid:+rid,i:+i,j:j!=null?+j:null}; };
+const ref = s => { const [rid,i,j]=s.split(':'); const r=REQS.find(x=>x.id==rid); return {r,l:r&&(r.lines.find(z=>z._i===+i)||(r.lines.every(z=>z._i==null)?r.lines[+i]:undefined)),rid:+rid,i:+i,j:j!=null?+j:null}; };
 app.addEventListener('submit',async e=>{ if(e.target.id==='falta'){ e.preventDefault();
     const r=await accion({tipo:'alta',d:document.getElementById('al-d').value,u:document.getElementById('al-u').value,prov:document.getElementById('al-p').value,nota:document.getElementById('al-n').value});
     if(r){ altaForm=null; render(); } return; }
