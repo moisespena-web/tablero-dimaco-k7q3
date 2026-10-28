@@ -39,8 +39,8 @@ var={v['id']:v for v in L('var_*.json')}
 # 14-oct-2026 (Moisés): columnas agrupadas en bloques, en este orden y cada bloque con su color:
 # HABILITADO (Corte, Doblez) · LÁSER Y ROUTER · MAQUINADOS (CNC) · ARMADO Y SOLDADURA · R&R (Reparación de racks, 16-oct-2026: refurbish y reparaciones, equipo aparte de Armado) · PINTURA Y VESTIDO. Diseño, cuando aparece, va antes.
 BLOQUES=[('DISEÑO',['Diseño'],'#C9D3DE'),('HABILITADO',['Corte','Doblez'],'#5AB0FF'),('LÁSER Y ROUTER',['Laser','Router'],'#FF9F43'),
-         ('MAQUINADOS',['CNC'],'#B79CFF'),('ARMADO Y SOLDADURA',['Armado'],'#FF7EB6'),('R&R · REPARACIÓN',['RR'],'#E8B04A'),('PINTURA Y VESTIDO',['Pintura','Vestido'],'#3FD9D9')]
-COLS=[('Diseño','DISEÑO'),('Corte','CORTE'),('Doblez','DOBLEZ'),('Laser','LÁSER'),('Router','ROUTER'),('CNC','MAQUINADOS'),('Armado','ARMADO'),('RR','R&R'),('Pintura','PINTURA'),('Vestido','VESTIDO')]
+         ('MAQUINADOS',['CNC','Barrenado'],'#B79CFF'),('ARMADO Y SOLDADURA',['Armado'],'#FF7EB6'),('R&R · REPARACIÓN',['RR'],'#E8B04A'),('PINTURA Y VESTIDO',['Pintura','Vestido'],'#3FD9D9')]
+COLS=[('Diseño','DISEÑO'),('Corte','CORTE'),('Doblez','DOBLEZ'),('Laser','LÁSER'),('Router','ROUTER'),('CNC','MAQUINADOS'),('Barrenado','BARRENADO'),('Armado','ARMADO'),('RR','R&R'),('Pintura','PINTURA'),('Vestido','VESTIDO')]
 def col(name):
     n=(name or '').strip().lower()
     if 'laser' in n or 'láser' in n: return 'Laser'
@@ -52,6 +52,7 @@ def col(name):
     if n.startswith('pintura'): return 'Pintura'
     if n.startswith('vestido') or n.startswith('rotulado'): return 'Vestido'
     if n.startswith('cnc') or n.startswith('maquin'): return 'CNC'
+    if n.startswith('barren') or n.startswith('taladr'): return 'Barrenado'   # 27-oct-2026: Pine Valley (tubo con barrenos), va en el bloque MAQUINADOS
     if n.startswith('diseñ') or n.startswith('disen'): return 'Diseño'
     return (name or '?').strip()
 # ---- SO por variante (las MOs no vienen ligadas a su SO: se cruza por variant_id) ----
