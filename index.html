@@ -746,7 +746,7 @@ function renderCal(C,hDisp){
   var sacu=I.filter(function(r){return String(r.fecha||"").slice(0,4)===String(d.a);}).reduce(function(a,r){return a+(r.tipo==="scrap"?(+r.monto||0):0);},0);
   var MES=["ENERO","FEBRERO","MARZO","ABRIL","MAYO","JUNIO","JULIO","AGOSTO","SEPTIEMBRE","OCTUBRE","NOVIEMBRE","DICIEMBRE"][d.mes];
   var st=String((C&&C.stamp)||"");
-  var h='<div class="ch"><h2>CALIDAD MAFESA · '+MES+' '+d.a+'</h2><span>Del Tablero de Calidad'+(st?' · datos al '+fmtF(st.slice(0,10))+' '+st.slice(11,16):'')+' · scrap en $ = solo material</span></div>';
+  var h='<div class="ch"><h2>CALIDAD MAFESA · '+MES+' '+d.a+'</h2><span>'+(C&&C.fuente==="estacion"?'De la Estación de Calidad (en vivo)':'Del Tablero de Calidad')+(st?' · datos al '+fmtF(st.slice(0,10))+' '+st.slice(11,16):'')+' · scrap en $ = solo material</span></div>';
   h+='<div class="ck"><div class="'+(M.length?'':'verde')+'"><b>'+nf(M.length)+'</b><span>INCIDENCIAS DEL MES</span></div>'+
      '<div class="'+(ab.length?'rojo':'verde')+'"><b>'+nf(ab.length)+'</b><span>ABIERTAS · SIN CERRAR</span></div>'+
      '<div><b>'+nf(pz)+'</b><span>PZ CON SCRAP O RETRABAJO</span></div>'+
@@ -1033,8 +1033,12 @@ render(window.__DATOS__);
   }
   cargarAviso();setInterval(cargarAviso,15000);              // el aviso, cada 15 s
   /* 14-oct-2026: calidad.json (Tablero de Calidad MAFESA) se relee cada minuto */
-  function cargarCal(){pedir(["calidad.json",RAWG+"calidad.json"],function(c){if(c&&c.incidencias){CAL=c;if(datos)render(datos);}});}
-  cargarCal();setInterval(cargarCal,60000);
+  /* 28-oct-2026: la Estación de Calidad MAFESA (Cloudflare dimaco-calidad, la captura Cynthia) es la fuente en vivo;
+     calidad.json queda de respaldo si la estación no responde. En la página /racks no aplica. */
+  var CAL_VIVO=false,CAL_EST=/\/racks\//.test(location.pathname)?"":"https://dimaco-calidad.moises-pena.workers.dev/api/tv";
+  function cargarCal(){if(CAL_VIVO)return;pedir(["calidad.json",RAWG+"calidad.json"],function(c){if(c&&c.incidencias&&!CAL_VIVO){CAL=c;if(datos)render(datos);}});}
+  function cargarCalEst(){if(!CAL_EST)return cargarCal();pedir([CAL_EST],function(c){if(c&&c.incidencias){CAL_VIVO=true;CAL=c;if(datos)render(datos);}});setTimeout(function(){if(!CAL_VIVO)cargarCal();},20000);}
+  cargarCalEst();setInterval(cargarCalEst,60000);
   cargar();setInterval(cargar,60000);                        // los datos, cada minuto
   var t0carga=Date.now();                                    // recarga completa diaria a las 6:00 (toma cambios de diseño)
   setInterval(function(){var d=mx();if(d.h===6&&d.m<5&&Date.now()-t0carga>3600000)location.reload();},60000);
