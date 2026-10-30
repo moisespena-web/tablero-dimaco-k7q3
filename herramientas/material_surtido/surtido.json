@@ -2,7 +2,6 @@
  "regla": "MSURT7OCT: cada MO pide su material una sola vez; quitar una MO de aqui la hace volver a salir en Material a utilizar",
  "mos": {
   "MO-383": "2026-10-07T00:00",
-  "MO-388": "2026-10-07T00:00",
   "MO-426": "2026-10-14T19:33",
   "MO-444": "2026-10-15T22:36",
   "MO-449": "2026-10-17T02:04",
