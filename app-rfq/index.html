@@ -134,8 +134,8 @@ input[type=number]{font-variant-numeric:tabular-nums}
 
 <meta http-equiv="Cache-Control" content="no-cache">
 <script>
-const APPVER='v38';
-const APPFECHA='31-oct-2026 00:30';
+const APPVER='v39';
+const APPFECHA='31-oct-2026 00:15';
 // Lo cancelado ya no se muestra en ninguna vista (sigue guardado en el servidor)
 function sinCanc(rs){ return (rs||[]).map(r=>({...r,lines:(r.lines||[]).map((l,i)=>({...l,_i:i})).filter(l=>l.est!=='cancelado')})).filter(r=>r.lines.length); }
 document.addEventListener('DOMContentLoaded',()=>{ const b=document.getElementById('ver'); if(b){ b.textContent='Versión '+APPVER+' · revisada '+APPFECHA+' · toca para actualizar'; b.onclick=()=>location.replace(location.pathname+'?v='+Date.now()); } });
@@ -180,6 +180,8 @@ const skuDe = l => { if(/^INS-/.test(l.k||'')) return l.k; const p=String(l.d||'
 const nomDe = l => { const p=String(l.d||'').split(' · '); return (/^INS-/.test(l.k||'')||p.length<2) ? String(l.d||'') : p.slice(0,-1).join(' · '); };
 const etq = l => { const s=skuDe(l); return (s?`<span class="sku">${esc(s)}</span> · `:'')+esc(nomDe(l)); };
 const esKatK = k => /^K\d+$/.test(k||'');
+// 31-oct-2026 (Moisés): Paty ya no hace RFQ, solo compra directa; el RFQ queda solo para Moisés
+const soloCompra = () => !!(YO && YO.id==='paty');
 // 30-oct-2026: los insumos también viven en Katana; se distinguen por su categoría
 const CAT_INS = new Set(['Tornillería y fijación','Herramienta de corte','Abrasivos','Soldadura y consumibles','Gases','Equipo de protección','Pintura y recubrimiento','Lubricantes y químicos','Limpieza','Empaque y dunnage','Componentes para racks','Eléctrico','Herramienta manual y equipo','Oficina y papelería','Otros (revisar)']);
 const esIns = k => !esKatK(k) || CAT_INS.has((BYK[k]||{}).cat);
@@ -294,7 +296,7 @@ function vPedir(){
   let tot=0, hayCot=false;
   const comprador = YO && (YO.id==='paty'||YO.id==='moises');
   const lines = carrito.map((l,i)=>{ const c=l.k?BYK[l.k]:null; const vig=vigente(c);
-    const modo = comprador ? (l.modo || (vig?'compra':'rfq')) : 'rfq';
+    const modo = soloCompra() ? 'compra' : comprador ? (l.modo || (vig?'compra':'rfq')) : 'rfq';
     const dir = modo==='compra';
     const p = dir ? (l.precio>0 ? +l.precio : (vig?c.p:null)) : null; if(p) tot+=p*l.qty; else hayCot=true;
     const pv = l.prov || (vig?c.s:'') || '';
@@ -330,7 +332,7 @@ function vPedir(){
   ${YO.altas&&ALTAS.length?`<div class="card"><h2>Mis artículos propuestos</h2>${ALTAS.slice().reverse().slice(0,15).map(a=>`<div class="ln"><div class="a"><b>${esc(a.d)}</b><span>${fFecha(a.f)}${a.u?' · '+esc(a.u):''}${a.motivo?' · '+esc(a.motivo):''}</span></div><div class="z"><span class="chip ${a.est==='aprobada'?'c-ok':a.est==='rechazada'?'c-bad':'c-aut'}">${a.est==='aprobada'?'Aprobado':a.est==='rechazada'?'Rechazado':'Por aprobar'}</span></div></div>`).join('')}</div>`:''}
   <div class="card">
     <h2>Lo que vas a pedir</h2>
-    ${YO&&(YO.id==='paty'||YO.id==='moises')?`<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:-2px 0 8px"><b style="font-size:14px">¿RFQ o compra?</b><div class="modo" role="group" aria-label="RFQ o compra" style="margin-top:0"><button type="button" data-cmall="rfq" aria-pressed="${modoReq==='rfq'}">RFQ</button><button type="button" data-cmall="compra" aria-pressed="${modoReq==='compra'}">Compra</button></div><span class="sub" style="margin:0">${modoReq==='rfq'?'Todo se manda a cotizar.':modoReq==='compra'?'Todo es compra directa: pon proveedor y precio.':'Elige uno; o cámbialo por artículo.'}</span></div>`:''}
+    ${YO&&YO.id==='moises'?`<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:-2px 0 8px"><b style="font-size:14px">¿RFQ o compra?</b><div class="modo" role="group" aria-label="RFQ o compra" style="margin-top:0"><button type="button" data-cmall="rfq" aria-pressed="${modoReq==='rfq'}">RFQ</button><button type="button" data-cmall="compra" aria-pressed="${modoReq==='compra'}">Compra</button></div><span class="sub" style="margin:0">${modoReq==='rfq'?'Todo se manda a cotizar.':modoReq==='compra'?'Todo es compra directa: pon proveedor y precio.':'Elige uno; o cámbialo por artículo.'}</span></div>`:''}
     ${carrito.length?lines:'<div class="empty">Aún no agregas insumos.</div>'}
     ${carrito.length&&comprador?`<div class="tot"><span>Total conocido${hayCot?' (sin lo que se cotiza)':''}</span><span class="num">${fmt(tot)}</span></div>`:''}
     <div style="font-size:13px;font-weight:700;color:var(--tx2);margin:10px 0 4px">¿Para qué es?</div>
@@ -351,7 +353,7 @@ function vPedir(){
       return `<div class="card" style="margin:12px 0 0;padding:12px;background:var(--panel)"><b style="font-size:14px">O pídelo tú directo al proveedor</b>
       <div class="sub" style="margin:2px 0 8px">${listo?'Se registra, queda autorizado y sale el PDF de la orden de compra para mandarlo.':'Para pedir tú: marca todo como <b>Compra</b> con proveedor y precio.'}</div>
       <div class="row"><button class="btn s ok" type="button" id="yo-est" ${listo&&paraOk()?'':'disabled'}>Pedir yo (estación) + PDF</button>${kat?`<button class="btn s gh" type="button" id="yo-kat" ${listo&&paraOk()?'':'disabled'}>Pedir yo con PO en Katana + PDF</button>`:''}</div>
-      ${(()=>{ const ins=carrito.every(l=>!/^K\d+$/.test(l.k||'')), mezcla=!kat&&!ins;
+      ${soloCompra()?'':(()=>{ const ins=carrito.every(l=>!/^K\d+$/.test(l.k||'')), mezcla=!kat&&!ins;
         return `<div style="border-top:1px solid var(--line);margin-top:12px;padding-top:10px"><b style="font-size:14px">O haz tú el RFQ (solicitud de cotización)</b>
         <div class="sub" style="margin:2px 0 6px">${mezcla?'Materiales e insumos van en RFQ separados: deja solo unos u otros.':`Se registra la requisición y sale el PDF del RFQ${kat?' con el folio RFQ-PO de Katana':' con folio RFQI'}.`}</div>
         <label class="f" for="yo-rfqprov">Proveedor</label><select id="yo-rfqprov"><option value="">Escoge el proveedor…</option>${PROVS.map(p=>`<option>${esc(p)}</option>`).join('')}</select>
@@ -497,6 +499,7 @@ function vRfqEnviados(){
   </div>`;
 }
 function vArmar(){
+  if(soloCompra()) armDoc='compra';
   const M=armLineas('mat'), I=armLineas('ins'), todos=new Set([...M,...I].map(x=>x.r.id+':'+x.i));
   [...armSel].forEach(k=>{ if(!todos.has(k)) armSel.delete(k); });
   const selM=M.filter(x=>armSel.has(x.r.id+':'+x.i)), selI=I.filter(x=>armSel.has(x.r.id+':'+x.i));
@@ -505,9 +508,9 @@ function vArmar(){
   const opts = `<option value="">Escoge el proveedor…</option>`+(prov&&!PROVS.includes(prov)?`<option selected>${esc(prov)}</option>`:'')+PROVS.map(p=>`<option ${p===prov?'selected':''}>${esc(p)}</option>`).join('')+`<option value="__otro">Otro (escribir)…</option>`;
   const puede = sel && !mezcla && prov && (armDoc==='rfq' || !faltaP);
   const seccion=(t,xs)=>`<div class="mogrp">${t} · ${xs.length}</div>${xs.length?xs.map(armFila).join(''):`<div class="empty" style="padding:10px">Nada pendiente.</div>`}`;
-  return `<div class="card"><h2>Paso 1 · Armar RFQ o compra</h2>
-    <div class="row2" style="margin-top:4px"><button type="button" class="btn s ${armDoc==='rfq'?'':'gh'}" style="width:100%;min-height:48px" data-armdoc="rfq" aria-pressed="${armDoc==='rfq'}">RFQ</button>
-      <button type="button" class="btn s ${armDoc==='compra'?'':'gh'}" style="width:100%;min-height:48px" data-armdoc="compra" aria-pressed="${armDoc==='compra'}">Compra</button></div>
+  return `<div class="card"><h2>Paso 1 · ${soloCompra()?'Armar compra':'Armar RFQ o compra'}</h2>
+    ${soloCompra()?'':`<div class="row2" style="margin-top:4px"><button type="button" class="btn s ${armDoc==='rfq'?'':'gh'}" style="width:100%;min-height:48px" data-armdoc="rfq" aria-pressed="${armDoc==='rfq'}">RFQ</button>
+      <button type="button" class="btn s ${armDoc==='compra'?'':'gh'}" style="width:100%;min-height:48px" data-armdoc="compra" aria-pressed="${armDoc==='compra'}">Compra</button></div>`}
     <button class="btn ${armVer?'gh':''}" type="button" data-armver="1" style="margin-top:10px">${armVer?'Ocultar lo pedido':'Ver lo pedido por las estaciones'} · ${todos.size}</button>
     ${armVer?`<div class="molist" style="max-height:520px;margin-top:8px">${seccion('Materiales',M)}${seccion('Insumos',I)}</div>
       ${mezcla?`<div class="chip c-bad" style="margin-top:8px;white-space:normal">Lo que todavía no está en Katana va en un documento aparte: no lo mezcles con artículos de Katana.</div>`:''}
