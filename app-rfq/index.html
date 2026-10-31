@@ -134,8 +134,8 @@ input[type=number]{font-variant-numeric:tabular-nums}
 
 <meta http-equiv="Cache-Control" content="no-cache">
 <script>
-const APPVER='v37';
-const APPFECHA='27-oct-2026 19:00';
+const APPVER='v38';
+const APPFECHA='31-oct-2026 00:30';
 // Lo cancelado ya no se muestra en ninguna vista (sigue guardado en el servidor)
 function sinCanc(rs){ return (rs||[]).map(r=>({...r,lines:(r.lines||[]).map((l,i)=>({...l,_i:i})).filter(l=>l.est!=='cancelado')})).filter(r=>r.lines.length); }
 document.addEventListener('DOMContentLoaded',()=>{ const b=document.getElementById('ver'); if(b){ b.textContent='Versión '+APPVER+' · revisada '+APPFECHA+' · toca para actualizar'; b.onclick=()=>location.replace(location.pathname+'?v='+Date.now()); } });
@@ -180,6 +180,9 @@ const skuDe = l => { if(/^INS-/.test(l.k||'')) return l.k; const p=String(l.d||'
 const nomDe = l => { const p=String(l.d||'').split(' · '); return (/^INS-/.test(l.k||'')||p.length<2) ? String(l.d||'') : p.slice(0,-1).join(' · '); };
 const etq = l => { const s=skuDe(l); return (s?`<span class="sku">${esc(s)}</span> · `:'')+esc(nomDe(l)); };
 const esKatK = k => /^K\d+$/.test(k||'');
+// 30-oct-2026: los insumos también viven en Katana; se distinguen por su categoría
+const CAT_INS = new Set(['Tornillería y fijación','Herramienta de corte','Abrasivos','Soldadura y consumibles','Gases','Equipo de protección','Pintura y recubrimiento','Lubricantes y químicos','Limpieza','Empaque y dunnage','Componentes para racks','Eléctrico','Herramienta manual y equipo','Oficina y papelería','Otros (revisar)']);
+const esIns = k => !esKatK(k) || CAT_INS.has((BYK[k]||{}).cat);
 /* alerta de sonido: requisiciones de Uriel o Gerardo suenan para Paty, Lupita, Ely y Moisés */
 const ALERTA_PARA = ['paty','lupita','ely','moises'];
 let AUDIO = null, VISTAS = null;
@@ -282,7 +285,7 @@ function cuentas(){
 }
 const vigente = c => c && c.p!=null && venc(c.f||'2026-10-19') >= hoyISO();
 const provOptsG = sel => `<option value="">Proveedor…</option>`+(sel&&!PROVS.includes(sel)?`<option selected>${esc(sel)}</option>`:'')+PROVS.map(p=>`<option ${p===sel?'selected':''}>${esc(p)}</option>`).join('')+`<option value="__otro">Otro (escribir)…</option>`;
-const hayMat = () => carrito.some(l=>esKatK(l.k));   // los materiales de Katana siempre van a una MO, nunca uso planta
+const hayMat = () => carrito.some(l=>!esIns(l.k));   // los materiales de Katana siempre van a una MO, nunca uso planta
 const paraOk = () => (paraTipo==='planta' && !hayMat()) || (paraTipo==='mo' && mos.length>0);
 
 function vPedir(){
@@ -335,7 +338,7 @@ function vPedir(){
       <button type="button" class="btn s ${paraTipo==='mo'?'':'gh'}" style="width:100%" data-para="mo" aria-pressed="${paraTipo==='mo'}">Para MO(s)</button>
       <button type="button" class="btn s ${paraTipo==='planta'?'':'gh'}" style="width:100%" data-para="planta" aria-pressed="${paraTipo==='planta'}" ${hayMat()?'disabled':''}>Uso planta</button>
     </div>
-    ${hayMat()?`<div class="sub" style="margin:6px 0 0;color:var(--warn)">Llevas materiales de Katana: se piden para una MO, no para uso planta.</div>`:''}
+    ${hayMat()?`<div class="sub" style="margin:6px 0 0;color:var(--warn)">Llevas materiales (no insumos): se piden para una MO, no para uso planta.</div>`:''}
     ${carrito.length&&!paraOk()?`<div class="sub" style="margin:6px 0 0;color:var(--bad)">${paraTipo==='mo'?'Marca al menos una MO para poder enviar.':'Elige para qué es: MO o uso planta.'}</div>`:''}
     ${paraTipo==='mo'?(MOS?`<label class="f" for="mofil">MOs abiertas en Katana · marca una o varias</label>
       ${mos.length?`<div class="chips" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px">${mos.map(n=>`<button type="button" class="chip c-ped" data-unmo="${esc(n)}" style="border:0;font-size:13px;padding:4px 8px">${esc(n)} ×</button>`).join('')}</div>`:''}
@@ -446,7 +449,7 @@ function vPend(){
 function armLineas(tipo){
   const esM = tipo==='mat';
   return allLines().filter(({l})=>{
-    if(esKatK(l.k)!==esM) return false;
+    if(esIns(l.k)===esM) return false;
     // RFQ: solo lo que todavía no se ha cotizado. Compra: todo lo pendiente, también lo cotizado (lleva su folio de RFQ)
     if(armDoc==='rfq' && (l.rfqI||l.poId)) return false;
     // Compra: solo lo que nadie ha trabajado todavía (sin RFQ enviado). Lo ya comprado pasa a Por autorizar / Por pedir y no se repite aquí
@@ -497,7 +500,7 @@ function vArmar(){
   const M=armLineas('mat'), I=armLineas('ins'), todos=new Set([...M,...I].map(x=>x.r.id+':'+x.i));
   [...armSel].forEach(k=>{ if(!todos.has(k)) armSel.delete(k); });
   const selM=M.filter(x=>armSel.has(x.r.id+':'+x.i)), selI=I.filter(x=>armSel.has(x.r.id+':'+x.i));
-  const mezcla = selM.length && selI.length, sel=selM.length+selI.length, prov=armProvs.uno||'';
+  const selT=[...selM,...selI], mezcla = selT.some(x=>esKatK(x.l.k)) && selT.some(x=>!esKatK(x.l.k)), sel=selM.length+selI.length, prov=armProvs.uno||'';
   let tot=0, faltaP=0; if(armDoc==='compra') [...selM,...selI].forEach(x=>{ const key=x.r.id+':'+x.i; const pr=armPrecio[key]!=null?armPrecio[key]:(x.l.precio!=null?x.l.precio:((BYK[x.l.k]||{}).p??null)); if(pr>0) tot+=pr*x.l.qty; else faltaP++; });
   const opts = `<option value="">Escoge el proveedor…</option>`+(prov&&!PROVS.includes(prov)?`<option selected>${esc(prov)}</option>`:'')+PROVS.map(p=>`<option ${p===prov?'selected':''}>${esc(p)}</option>`).join('')+`<option value="__otro">Otro (escribir)…</option>`;
   const puede = sel && !mezcla && prov && (armDoc==='rfq' || !faltaP);
@@ -506,8 +509,8 @@ function vArmar(){
     <div class="row2" style="margin-top:4px"><button type="button" class="btn s ${armDoc==='rfq'?'':'gh'}" style="width:100%;min-height:48px" data-armdoc="rfq" aria-pressed="${armDoc==='rfq'}">RFQ</button>
       <button type="button" class="btn s ${armDoc==='compra'?'':'gh'}" style="width:100%;min-height:48px" data-armdoc="compra" aria-pressed="${armDoc==='compra'}">Compra</button></div>
     <button class="btn ${armVer?'gh':''}" type="button" data-armver="1" style="margin-top:10px">${armVer?'Ocultar lo pedido':'Ver lo pedido por las estaciones'} · ${todos.size}</button>
-    ${armVer?`<div class="molist" style="max-height:520px;margin-top:8px">${seccion('Materiales · Katana',M)}${seccion('Insumos',I)}</div>
-      ${mezcla?`<div class="chip c-bad" style="margin-top:8px;white-space:normal">Materiales e insumos van en documentos separados: selecciona solo de un grupo.</div>`:''}
+    ${armVer?`<div class="molist" style="max-height:520px;margin-top:8px">${seccion('Materiales',M)}${seccion('Insumos',I)}</div>
+      ${mezcla?`<div class="chip c-bad" style="margin-top:8px;white-space:normal">Lo que todavía no está en Katana va en un documento aparte: no lo mezcles con artículos de Katana.</div>`:''}
       <label class="f" for="arm-prov">Proveedor</label><select id="arm-prov" data-armprov="uno">${opts}</select>
       ${armDoc==='compra'&&sel?`<div class="tot"><span>Total (sin IVA)${faltaP?` · falta precio en ${faltaP}`:''}</span><span class="num">${fmt(tot)}</span></div>`:''}
       <button class="btn" type="button" data-armgo="1" style="margin-top:10px" ${puede?'':'disabled'}>${armDoc==='rfq'?'Crear RFQ':'Crear compra'} + PDF · ${sel} seleccionado(s)</button>`:''}
@@ -696,8 +699,9 @@ app.addEventListener('click',async e=>{
   if(d.armver){ armVer=!armVer; render(); return; }
     if(d.armgo){
     const armProv=armProvs.uno||''; const M=armLineas('mat').filter(x=>armSel.has(x.r.id+':'+x.i)), I=armLineas('ins').filter(x=>armSel.has(x.r.id+':'+x.i));
-    if(!(M.length||I.length) || (M.length&&I.length)) return;
-    const xs0=M.length?M:I, mat=M.length>0, keys=[], precios={};
+    const xs0=[...M,...I]; if(!xs0.length) return;
+    const kk0=xs0.map(x=>esKatK(x.l.k)); if(kk0.some(Boolean)&&kk0.some(v=>!v)) return;
+    const mat=kk0[0], keys=[], precios={};
     let xs=xs0; const g={};
     if(armDoc==='rfq'){ xs0.filter(x=>x.l.rfqI||x.l.poId).forEach(x=>{ const f=x.l.rfqI||('RFQ-'+(x.l.rfqPo||'PO')); (g[f]=g[f]||[]).push(x.r.id+':'+x.i); }); xs=xs0.filter(x=>!(x.l.rfqI||x.l.poId)); }
     if(xs.length && mat && !confirmar2(b, armDoc==='rfq'?'Confirmar: crear RFQ en Katana':'Confirmar: crear PO en Katana')) return;
