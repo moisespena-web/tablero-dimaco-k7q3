@@ -134,8 +134,8 @@ input[type=number]{font-variant-numeric:tabular-nums}
 
 <meta http-equiv="Cache-Control" content="no-cache">
 <script>
-const APPVER='v41';
-const APPFECHA='03-nov-2026 12:00';
+const APPVER='v42';
+const APPFECHA='03-nov-2026 11:55';
 // Lo cancelado ya no se muestra en ninguna vista (sigue guardado en el servidor)
 function sinCanc(rs){ return (rs||[]).map(r=>({...r,lines:(r.lines||[]).map((l,i)=>({...l,_i:i})).filter(l=>l.est!=='cancelado')})).filter(r=>r.lines.length); }
 document.addEventListener('DOMContentLoaded',()=>{ const b=document.getElementById('ver'); if(b){ b.textContent='Versión '+APPVER+' · revisada '+APPFECHA+' · toca para actualizar'; b.onclick=()=>location.replace(location.pathname+'?v='+Date.now()); } });
@@ -468,7 +468,7 @@ function armFila(x){
   const {r,l,i}=x, key=r.id+':'+i, on=armSel.has(key);
   const pr = armDoc==='compra' ? (armPrecio[key]!=null ? armPrecio[key] : (l.precio!=null ? l.precio : ((BYK[l.k]||{}).p ?? null))) : null;
   return `<label class="mochk" style="align-items:center"><input type="checkbox" data-armk="${key}" ${on?'checked':''} aria-label="Seleccionar ${esc(nomDe(l))}">
-    <span style="flex:1;min-width:0"><b style="font-size:15px">${nfmt(l.qty)}</b> ${esc(l.u||'pz')} · ${esc(nomDe(l))}<small>${esc(skuDe(l)||'')} · pidió ${NOMBRES[r.quien]||r.quien} · ${r.folio}${l.rfqI||l.rfqPo?` · RFQ enviado ${esc(l.rfqI||('RFQ-'+l.rfqPo))}`:''}</small></span>
+    <span style="flex:1;min-width:0"><b style="font-size:15px">${nfmt(l.qty)}</b> ${esc(l.u||'pz')} · ${esc(nomDe(l))}<small>${esc(skuDe(l)||'')} · pidió ${NOMBRES[r.quien]||r.quien} · ${r.folio}${l.rfqI||l.rfqPo?` · RFQ enviado ${esc(l.rfqI||('RFQ-'+l.rfqPo))}`:''}</small>${YO&&YO.compras?`<button class="lk" type="button" data-cancel="${key}" style="background:none;border:0;color:var(--bad);font-size:12px;padding:2px 0">Cancelar este concepto</button>`:''}</span>
     <span style="flex:none;max-width:38%;border:1px solid var(--line);border-radius:8px;padding:6px 8px;font-size:12px;font-weight:700;text-align:center;background:var(--panel)">${esc(r.para||'—')}</span>
     ${armDoc==='compra'?`<input type="number" step="0.01" inputmode="decimal" data-armp="${key}" value="${pr??''}" placeholder="$ c/u" aria-label="Precio unitario" style="flex:none;width:92px;padding:8px">`:''}</label>`;
 }
@@ -791,7 +791,7 @@ app.addEventListener('click',async e=>{
   }
   if(d.aut){ const x=ref(d.aut); accion({tipo:'autorizar',rid:x.rid,i:x.i}); return; }
   if(d.rech){ const x=ref(d.rech); accion({tipo:'rechazar',rid:x.rid,i:x.i}); return; }
-  if(d.cancel){ const x=ref(d.cancel); accion({tipo:'cancelar',rid:x.rid,i:x.i}); return; }
+  if(d.cancel){ if(!confirmar2(b,'¿Seguro? Toca otra vez para cancelar')) return; const x=ref(d.cancel); accion({tipo:'cancelar',rid:x.rid,i:x.i}); return; }
   if(d.win){ const x=ref(d.win); const key=x.rid+':'+x.i; const cs=cot1(key,x.l);
     const ok = await accion({tipo:'cotizacion',rid:x.rid,i:x.i,cot:cs},'Guardado');
     if(ok){ delete borradorCot[key]; accion({tipo:'ganador',rid:x.rid,i:x.i,j:0}); } return; }
