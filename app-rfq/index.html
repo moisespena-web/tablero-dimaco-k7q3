@@ -134,8 +134,8 @@ input[type=number]{font-variant-numeric:tabular-nums}
 
 <meta http-equiv="Cache-Control" content="no-cache">
 <script>
-const APPVER='v43';
-const APPFECHA='03-nov-2026 12:20';
+const APPVER='v44';
+const APPFECHA='03-nov-2026 15:30';
 // Lo cancelado ya no se muestra en ninguna vista (sigue guardado en el servidor)
 function sinCanc(rs){ return (rs||[]).map(r=>({...r,lines:(r.lines||[]).map((l,i)=>({...l,_i:i})).filter(l=>l.est!=='cancelado')})).filter(r=>r.lines.length); }
 document.addEventListener('DOMContentLoaded',()=>{ const b=document.getElementById('ver'); if(b){ b.textContent='Versión '+APPVER+' · revisada '+APPFECHA+' · toca para actualizar'; b.onclick=()=>location.replace(location.pathname+'?v='+Date.now()); } });
@@ -201,7 +201,7 @@ function revisarAlertas(al){
 }
 function confirmar2(b, txt){ if(b.dataset.ok==='1') return true; b.dataset.ok='1'; const t=b.textContent; b.textContent=txt; setTimeout(()=>{ if(b.isConnected){ b.dataset.ok=''; b.textContent=t; } },5000); return false; }
 let tipoPed = '', rfqExcl = new Set(), rfqProvK = '', rfqProvI = '';
-let asigPrecio = {}, asigProv = {};
+let asigPrecio = {}, asigProv = {}, corrPO = null, corrCant = {};
 let armDoc = 'rfq', armVer = false, armProvs = {mat:'', ins:''}, armSel = new Set(), armPrecio = {};
 
 let PIN = ''; try{ PIN = localStorage.getItem('rfq-pin')||''; }catch(e){}
@@ -676,6 +676,21 @@ function vRecibir(){
   return `<div class="card"><h2>Recibir material</h2><div class="sub">Anota cuántas piezas llegaron de cada renglón. Fecha y hora se ponen solas. Si falta algo, queda abierto y Paty recibe aviso.</div>
   ${L.length?Object.entries(g).map(([p,xs])=>`<div class="grp"><span>${esc(p)}</span></div>${xs.map(({r,l,i})=>{const falta=l.qty-l.rec;return `<div class="ln"><div class="a"><b>${etq(l)}</b><span>${r.folio}${l.po?' · '+esc(l.po):''} · pedido el ${fFecha(l.pedidoF)} · pidió ${nfmt(l.qty)}${l.rec?` · ya llegaron ${nfmt(l.rec)}`:''}</span><span><b style="display:inline;color:var(--warn)">Faltan ${nfmt(falta)}</b></span></div>
     <div class="z"><input class="qty" type="number" min="0" max="${falta}" inputmode="numeric" id="rc-${r.id}-${i}" value="${falta}" aria-label="Piezas que llegaron"><div style="margin-top:6px"><button class="btn s ok" type="button" data-rec="${r.id}:${i}">Llegó</button></div></div></div>`}).join('')}`).join(''):'<div class="empty">No hay material en camino.</div>'}
+  </div>${vCorregir()}`;
+}
+// 3-nov-2026 (Moisés): si Ely se equivoca al capturar lo que llegó, ella misma lo corrige (estación y Katana)
+function vCorregir(){
+  const hace15=new Date(Date.now()-15*864e5).toISOString().slice(0,10);
+  const L=allLines().filter(x=>x.l.poId && x.l.rec>0 && ['parcial','recibido'].includes(x.l.est) && ((x.l.recs||[]).slice(-1)[0]||{f:''}).f.slice(0,10)>=hace15);
+  if(!L.length) return '';
+  const g={}; L.forEach(x=>{ (g[x.l.poId]=g[x.l.poId]||[]).push(x); });
+  return `<div class="card"><h2>Ya recibido · corregir</h2><div class="sub">Si capturaste mal lo que llegó (últimos 15 días), corrígelo aquí. Se arregla también en Katana.</div>
+  ${Object.entries(g).map(([po,xs0])=>{ const xs=allLines().filter(x=>String(x.l.poId)===po && !['cancelado','rechazado'].includes(x.l.est)); const l0=xs[0].l; const abierto=String(corrPO)===po;
+    const fact=xs.some(x=>x.l.est==='facturado');
+    return `<div class="grp" style="align-items:center"><span>${esc(l0.po||'PO')} · ${esc(l0.prov||'')}</span>${abierto?'':`<button class="btn s gh" type="button" data-corrpo="${po}" ${fact?'disabled':''}>Corregir recepción</button>`}</div>
+    ${fact?'<div class="sub" style="margin:0 0 6px">Ya está facturado en Bind: la corrección la hace Paty.</div>':''}
+    ${xs.map(({r,l,i})=>{ const k=r.id+':'+i, v=corrCant[k]!=null?corrCant[k]:l.rec; return `<div class="ln" style="align-items:center"><div class="a"><b>${etq(l)}</b><span>${r.folio} · pidió ${nfmt(l.qty)} ${esc(l.u||'pz')} · capturado ${nfmt(l.rec)}</span></div>${abierto?`<div class="z"><input class="qty" type="number" min="0" max="${l.qty}" inputmode="numeric" data-corr="${k}" value="${v}" aria-label="Cantidad correcta que llegó"><div style="font-size:11px;color:var(--tx2);text-align:center">correcto</div></div>`:`<div class="z num">${nfmt(l.rec)} / ${nfmt(l.qty)}</div>`}</div>`; }).join('')}
+    ${abierto?`<div class="row" style="margin-top:8px"><button class="btn s ok" type="button" data-corrgo="${po}">Guardar corrección</button><button class="btn s gh" type="button" data-corrx="1">Cancelar</button></div>`:''}`; }).join('')}
   </div>`;
 }
 function vFacturas(){
@@ -819,6 +834,14 @@ app.addEventListener('click',async e=>{
   if(d.pdfg){ const xs=PDFG[d.pdfg]; if(xs) prepararPDF('oc', xs[0].l.po||xs[0].l.oc||('OC-'+xs[0].r.folio), xs.map(x=>x.r.id+':'+x.i)); return; }
   if(d.kpo){ if(b.dataset.ok!=='1'){ b.dataset.ok='1'; b.textContent='Confirmar: crear PO en Katana'; b.classList.add('ok'); setTimeout(()=>{ if(b.isConnected){ b.dataset.ok=''; b.textContent='Crear PO en Katana'; b.classList.remove('ok'); } },5000); return; }
     b.disabled=true; b.textContent='Creando en Katana…'; const d2=await accion({tipo:'katanaPO',prov:d.kpo}); if(d2&&d2.po) prepararPDF('oc', d2.po.no, d2.po.keys); return; }
+  if(d.corrpo){ corrPO=d.corrpo; corrCant={}; render(); return; }
+  if(d.corrx){ corrPO=null; corrCant={}; render(); return; }
+  if(d.corrgo){ const po=+d.corrgo; const xs=allLines().filter(x=>x.l.poId===po && !['cancelado','rechazado'].includes(x.l.est)); const cant={};
+    xs.forEach(x=>{ const k=x.r.id+':'+x.i; cant[k]=corrCant[k]!=null?corrCant[k]:x.l.rec; });
+    if(xs.every(x=>cant[x.r.id+':'+x.i]===x.l.rec)){ toast('No cambiaste ninguna cantidad'); return; }
+    if(!confirmar2(b,'Confirmar: corregir en estación y Katana')) return;
+    b.disabled=true; b.textContent='Corrigiendo en Katana…';
+    const r=await accion({tipo:'corregirRec', poId:po, cant}); if(r){ corrPO=null; corrCant={}; render(); } else { b.disabled=false; b.textContent='Guardar corrección'; } return; }
   if(d.rec){ const x=ref(d.rec); const n=+document.getElementById(`rc-${x.rid}-${x.i}`).value||0; accion({tipo:'recibir',rid:x.rid,i:x.i,n}); return; }
   if(d.bind){ const gi=d.gi; accion({tipo:'bind',prov:d.bind,subtotal:+document.getElementById('fs-'+gi).value,factura:document.getElementById('ff-'+gi).value}); return; }
 });
@@ -842,6 +865,7 @@ app.addEventListener('change',async e=>{
   if(d.armk){ if(t.checked) armSel.add(d.armk); else armSel.delete(d.armk); const y=window.scrollY; render(); window.scrollTo(0,y); return; }
   if(d.rfqprov2){ if(t.value) accion({tipo:'rfqProv', keys:d.rfqprov2.split(','), prov:t.value}); return; }
   if(d.armprov){ let v=t.value; if(v==='__otro'){ v=((window.prompt&&window.prompt('Nombre del proveedor'))||'').trim(); } armProvs[d.armprov]=v; const y=window.scrollY; render(); window.scrollTo(0,y); return; }
+  if(d.corr){ corrCant[d.corr]=t.value===''?0:Math.max(0,Math.floor(+t.value)); return; }
   if(d.asp){ asigPrecio[d.asp]=t.value===''?null:+t.value; const y=window.scrollY; render(); window.scrollTo(0,y); return; }
   if(d.asprov){ asigProv[d.asprov]=t.value; const y=window.scrollY; render(); window.scrollTo(0,y); return; }
   if(d.armp){ armPrecio[d.armp]=t.value===''?null:+t.value; const y=window.scrollY; render(); window.scrollTo(0,y); return; }
