@@ -134,8 +134,8 @@ input[type=number]{font-variant-numeric:tabular-nums}
 
 <meta http-equiv="Cache-Control" content="no-cache">
 <script>
-const APPVER='v42';
-const APPFECHA='03-nov-2026 11:55';
+const APPVER='v43';
+const APPFECHA='03-nov-2026 12:20';
 // Lo cancelado ya no se muestra en ninguna vista (sigue guardado en el servidor)
 function sinCanc(rs){ return (rs||[]).map(r=>({...r,lines:(r.lines||[]).map((l,i)=>({...l,_i:i})).filter(l=>l.est!=='cancelado')})).filter(r=>r.lines.length); }
 document.addEventListener('DOMContentLoaded',()=>{ const b=document.getElementById('ver'); if(b){ b.textContent='Versión '+APPVER+' · revisada '+APPFECHA+' · toca para actualizar'; b.onclick=()=>location.replace(location.pathname+'?v='+Date.now()); } });
@@ -658,9 +658,14 @@ document.addEventListener('click', async e=>{
     // En la Mac el menú de compartir no trae WhatsApp: ahí se descarga el PDF y se abre WhatsApp para adjuntarlo. En el celular sí sale en el menú
     const movil=/iPhone|iPad|Android/i.test(navigator.userAgent);
     if(movil||b.id==='env-mail'){ try{ if(navigator.canShare && navigator.canShare({files:[PDF_LISTO]})){ await navigator.share({files:[PDF_LISTO], title:folio, text:msg}); return; } }catch(err){ if(err&&err.name==='AbortError') return; } }
-    const a=document.createElement('a'); a.href=URL.createObjectURL(PDF_LISTO); a.download=PDF_LISTO.name; document.body.appendChild(a); a.click(); a.remove();
-    window.open(b.id==='env-wa' ? 'https://wa.me/?text='+encodeURIComponent(msg) : 'mailto:?subject='+encodeURIComponent('DIMACO · '+folio)+'&body='+encodeURIComponent(msg+'\n\n(Adjuntar el PDF descargado)'), '_blank');
-    toast('PDF descargado: adjúntalo en el mensaje'); return; }
+    // 3-nov-2026: en la computadora WhatsApp no puede llevar archivos; el PDF se sube al servidor y el mensaje lleva el enlace para descargarlo
+    const vent = b.id==='env-wa' ? window.open('', '_blank') : null; let liga='';
+    try{ const t0=b.textContent; b.textContent='Preparando…'; const r=await fetch(API+'/pdf?n='+encodeURIComponent(PDF_LISTO.name),{method:'POST',headers:{'X-Pin':PIN,'Content-Type':'application/pdf'},body:PDF_LISTO}); const d=await r.json(); b.textContent=t0; if(d&&d.ok) liga=d.url; }catch(err){}
+    const texto = liga ? `DIMACO METALMECANICA · ${folio}. Puede ver y descargar el documento en PDF aquí: ${liga}` : msg;
+    const dest = b.id==='env-wa' ? 'https://wa.me/?text='+encodeURIComponent(texto) : 'mailto:?subject='+encodeURIComponent('DIMACO · '+folio)+'&body='+encodeURIComponent(texto+(liga?'':'\n\n(Adjuntar el PDF descargado)'));
+    if(!liga){ const a=document.createElement('a'); a.href=URL.createObjectURL(PDF_LISTO); a.download=PDF_LISTO.name; document.body.appendChild(a); a.click(); a.remove(); }
+    if(vent) vent.location.href=dest; else if(b.id==='env-mail') location.href=dest; else window.open(dest,'_blank');
+    toast(liga?'El mensaje lleva el enlace al PDF':'PDF descargado: adjúntalo en el mensaje'); return; }
   if(b.id==='env-share'){ try{ if(navigator.canShare && navigator.canShare({files:[PDF_LISTO]})){ await navigator.share({files:[PDF_LISTO], title:PDF_LISTO.name}); return; } }catch(err){ if(err&&err.name==='AbortError') return; } }
   const a=document.createElement('a'); a.href=URL.createObjectURL(PDF_LISTO); a.download=PDF_LISTO.name; document.body.appendChild(a); a.click(); a.remove(); toast('PDF descargado');
 });
