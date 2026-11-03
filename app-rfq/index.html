@@ -134,8 +134,8 @@ input[type=number]{font-variant-numeric:tabular-nums}
 
 <meta http-equiv="Cache-Control" content="no-cache">
 <script>
-const APPVER='v40';
-const APPFECHA='03-nov-2026 11:15';
+const APPVER='v41';
+const APPFECHA='03-nov-2026 12:00';
 // Lo cancelado ya no se muestra en ninguna vista (sigue guardado en el servidor)
 function sinCanc(rs){ return (rs||[]).map(r=>({...r,lines:(r.lines||[]).map((l,i)=>({...l,_i:i})).filter(l=>l.est!=='cancelado')})).filter(r=>r.lines.length); }
 document.addEventListener('DOMContentLoaded',()=>{ const b=document.getElementById('ver'); if(b){ b.textContent='Versión '+APPVER+' · revisada '+APPFECHA+' · toca para actualizar'; b.onclick=()=>location.replace(location.pathname+'?v='+Date.now()); } });
@@ -170,7 +170,7 @@ const autorizador = l => imp(l) > LIMITE ? 'moises' : 'paty';
 const NOMBRES = {ely:'Ely',uriel:'Uriel',gerardo:'Gerardo',lupita:'Lupita',paty:'Paty',moises:'Moisés'};
 const TABN = {pedir:'Pedir',mias:'Mis req.',recibir:'Recibir',pend:'Pendientes',facturas:'Facturas',autorizar:'Autorizar',rfqs:'Mis RFQ',todas:'Todas'};
 const EST = {
-  cotizar:['A cotizar','c-cot'], autorizar:['Por autorizar','c-aut'], pedir:['Autorizado · por pedir','c-ped'],
+  cotizar:['Por cotizar','c-cot'], autorizar:['Por autorizar','c-aut'], pedir:['Autorizado · por pedir','c-ped'],
   pedido:['Pedido','c-ped'], parcial:['Llegó parcial','c-aut'], recibido:['Recibido','c-ok'],
   facturado:['Registrado en Bind','c-ok'], rechazado:['Rechazado','c-bad'], cancelado:['Cancelado','c-gr']
 };
@@ -181,7 +181,7 @@ const nomDe = l => { const p=String(l.d||'').split(' · '); return (/^INS-/.test
 const etq = l => { const s=skuDe(l); return (s?`<span class="sku">${esc(s)}</span> · `:'')+esc(nomDe(l)); };
 const esKatK = k => /^K\d+$/.test(k||'');
 // 31-oct-2026 (Moisés): Paty ya no hace RFQ, solo compra directa; el RFQ queda solo para Moisés
-const soloCompra = () => !!(YO && YO.id==='paty');
+const soloCompra = () => false;   // 3-nov-2026: Paty vuelve a tener RFQ (camino 1: RFQ → cotización → Asignar PO)
 // 30-oct-2026: los insumos también viven en Katana; se distinguen por su categoría
 const CAT_INS = new Set(['Tornillería y fijación','Herramienta de corte','Abrasivos','Soldadura y consumibles','Gases','Equipo de protección','Pintura y recubrimiento','Lubricantes y químicos','Limpieza','Empaque y dunnage','Componentes para racks','Eléctrico','Herramienta manual y equipo','Oficina y papelería','Otros (revisar)']);
 const esIns = k => !esKatK(k) || CAT_INS.has((BYK[k]||{}).cat);
@@ -201,6 +201,7 @@ function revisarAlertas(al){
 }
 function confirmar2(b, txt){ if(b.dataset.ok==='1') return true; b.dataset.ok='1'; const t=b.textContent; b.textContent=txt; setTimeout(()=>{ if(b.isConnected){ b.dataset.ok=''; b.textContent=t; } },5000); return false; }
 let tipoPed = '', rfqExcl = new Set(), rfqProvK = '', rfqProvI = '';
+let asigPrecio = {}, asigProv = {};
 let armDoc = 'rfq', armVer = false, armProvs = {mat:'', ins:''}, armSel = new Set(), armPrecio = {};
 
 let PIN = ''; try{ PIN = localStorage.getItem('rfq-pin')||''; }catch(e){}
@@ -487,8 +488,23 @@ function vMisRfq(){
       const err=(xs.find(x=>x.l.katErr)||{l:{}}).l.katErr;
       return `<div class="grp" style="margin-top:16px;align-items:center"><span>${esc(f)} · ${esc(l0.rfqProv||l0.prov||'sin proveedor')}${fechaRfq(l0)?' · '+fechaRfq(l0):''} <span class="chip ${cls}">${esc(txt)}</span>${err?` <span class="chip c-bad">${esc(err)}</span>`:''}</span><button class="btn s gh" type="button" data-reenv="${xs[0].r.id}:${xs[0].i}">PDF</button></div>
       ${l0.rfqProv?'':`<label class="f" for="rp-${esc(f)}">¿A qué proveedor se mandó?</label><select id="rp-${esc(f)}" data-rfqprov2="${xs.map(x=>x.r.id+':'+x.i).join(',')}"><option value="">Escoge el proveedor…</option>${PROVS.map(p=>`<option>${esc(p)}</option>`).join('')}</select>`}
-      ${xs.map(({r,l})=>`<div class="ln"><div class="a"><b>${nfmt(l.qty)} ${esc(l.u||'pz')} · ${esc(nomDe(l))}</b><span>${esc(skuDe(l)||'')} · ${r.folio} · ${NOMBRES[r.quien]||r.quien} · ${esc(r.para)}</span></div><div class="z"><span class="chip ${EST[l.est][1]}">${l.est==='cotizar'?'RFQ enviado':EST[l.est][0]}</span></div></div>`).join('')}`; }).join('')}
+      ${xs.map(({r,l})=>`<div class="ln"><div class="a"><b>${nfmt(l.qty)} ${esc(l.u||'pz')} · ${esc(nomDe(l))}</b><span>${esc(skuDe(l)||'')} · ${r.folio} · ${NOMBRES[r.quien]||r.quien} · ${esc(r.para)}</span></div><div class="z"><span class="chip ${EST[l.est][1]}">${l.est==='cotizar'?'RFQ enviado':EST[l.est][0]}</span></div></div>`).join('')}
+      ${asignarPOForm(f, xs)}`; }).join('')}
   </div>`;
+}
+// 3-nov-2026 (Moisés, camino 1): llega la cotización → Paty captura precios y "Asignar PO": el mismo borrador de Katana pasa a PO con su mismo número
+function asignarPOForm(f, xs){
+  if(!YO||!YO.compras) return '';
+  const abiertos=xs.filter(x=>x.l.est==='cotizar'&&x.l.poId); if(!abiertos.length) return '';
+  const poId=abiertos[0].l.poId, prov=asigProv[poId]!=null?asigProv[poId]:(abiertos[0].l.rfqProv||'');
+  let tot=0, falta=0; abiertos.forEach(x=>{ const k=x.r.id+':'+x.i, pr=asigPrecio[k]; if(pr>0) tot+=pr*x.l.qty; else falta++; });
+  const ok = prov && !falta;
+  return `<div style="border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin:8px 0 4px;background:var(--panel)"><b style="font-size:14px">¿Ya llegó la cotización? Asignar PO</b>
+    <div class="sub" style="margin:2px 0 6px">Pon el precio unitario de la cotización. Se confirma en Katana como ${esc(f.replace(/^RFQ-/,''))}, con el mismo número.</div>
+    <label class="f" for="ap-${poId}">Proveedor</label><select id="ap-${poId}" data-asprov="${poId}"><option value="">Escoge el proveedor…</option>${(prov&&!PROVS.includes(prov)?`<option selected>${esc(prov)}</option>`:'')+PROVS.map(p=>`<option ${p===prov?'selected':''}>${esc(p)}</option>`).join('')}</select>
+    ${abiertos.map(x=>{ const k=x.r.id+':'+x.i; return `<div class="ln" style="align-items:center"><div class="a"><b>${nfmt(x.l.qty)} ${esc(x.l.u||'pz')} · ${esc(nomDe(x.l))}</b><span>${esc(skuDe(x.l)||'')}</span></div><input type="number" step="0.01" min="0" inputmode="decimal" data-asp="${k}" value="${asigPrecio[k]??''}" placeholder="$ c/u" aria-label="Precio unitario" style="width:110px;padding:8px"></div>`; }).join('')}
+    <div class="tot"><span>Total (sin IVA)${falta?` · falta precio en ${falta}`:''}</span><span class="num">${fmt(tot)}</span></div>
+    <button class="btn" type="button" data-asignarpo="${poId}" ${ok?'':'disabled'}>Asignar PO + PDF</button></div>`;
 }
 function vRfqEnviados(){
   const g={}; allLines().filter(x=>x.l.est==='cotizar'&&(x.l.rfqI||x.l.poId)).forEach(x=>{ const f=x.l.rfqI||('RFQ-'+(x.l.rfqPo||'PO')); (g[f]=g[f]||[]).push(x); });
@@ -720,6 +736,12 @@ app.addEventListener('click',async e=>{
     const r=await accion(body);
     if(r){ armSel.clear(); armPrecio={}; const pos=r.pos||(r.po?[r.po]:[]); for(const po of pos) await prepararPDF(po.tipo||'oc', po.no, po.keys, po.prov); }
     return; }
+  if(d.asignarpo){ const poId=+d.asignarpo; const xs=allLines().filter(x=>x.l.est==='cotizar'&&x.l.poId===poId); const prov=asigProv[poId]!=null?asigProv[poId]:(xs[0]&&xs[0].l.rfqProv||'');
+    const precios={}; xs.forEach(x=>{ const k=x.r.id+':'+x.i; precios[k]=asigPrecio[k]; });
+    if(!confirmar2(b,'Confirmar: asignar PO a '+prov)) return;
+    b.disabled=true; b.textContent='Asignando en Katana…';
+    const r=await accion({tipo:'asignarPO', poId, prov, precios});
+    if(r){ xs.forEach(x=>delete asigPrecio[x.r.id+':'+x.i]); delete asigProv[poId]; if(r.po) await prepararPDF('oc', r.po.no, r.po.keys, prov); } return; }
   if(d.reenv){ const x=ref(d.reenv); const l=x.l; let keys, folio;
     if(l.rfqI){ folio=l.rfqI; keys=allLines().filter(y=>y.l.rfqI===l.rfqI).map(y=>y.r.id+':'+y.i); }
     else { folio='RFQ-'+(l.rfqPo||'PO'); keys=allLines().filter(y=>y.l.poId&&y.l.poId===l.poId).map(y=>y.r.id+':'+y.i); }
@@ -815,6 +837,8 @@ app.addEventListener('change',async e=>{
   if(d.armk){ if(t.checked) armSel.add(d.armk); else armSel.delete(d.armk); const y=window.scrollY; render(); window.scrollTo(0,y); return; }
   if(d.rfqprov2){ if(t.value) accion({tipo:'rfqProv', keys:d.rfqprov2.split(','), prov:t.value}); return; }
   if(d.armprov){ let v=t.value; if(v==='__otro'){ v=((window.prompt&&window.prompt('Nombre del proveedor'))||'').trim(); } armProvs[d.armprov]=v; const y=window.scrollY; render(); window.scrollTo(0,y); return; }
+  if(d.asp){ asigPrecio[d.asp]=t.value===''?null:+t.value; const y=window.scrollY; render(); window.scrollTo(0,y); return; }
+  if(d.asprov){ asigProv[d.asprov]=t.value; const y=window.scrollY; render(); window.scrollTo(0,y); return; }
   if(d.armp){ armPrecio[d.armp]=t.value===''?null:+t.value; const y=window.scrollY; render(); window.scrollTo(0,y); return; }
   if(d.rfqsel){ if(t.checked) rfqExcl.delete(d.rfqsel); else rfqExcl.add(d.rfqsel); const y=window.scrollY; render(); window.scrollTo(0,y); return; }
   if(d.rfqprov){ let v=t.value; if(v==='__otro'){ v=((window.prompt&&window.prompt('Nombre del proveedor'))||'').trim(); } if(d.rfqprov==='k') rfqProvK=v; else rfqProvI=v; const y=window.scrollY; render(); window.scrollTo(0,y); return; }
