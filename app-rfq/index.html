@@ -134,8 +134,8 @@ input[type=number]{font-variant-numeric:tabular-nums}
 
 <meta http-equiv="Cache-Control" content="no-cache">
 <script>
-const APPVER='v39';
-const APPFECHA='31-oct-2026 00:15';
+const APPVER='v40';
+const APPFECHA='03-nov-2026 11:15';
 // Lo cancelado ya no se muestra en ninguna vista (sigue guardado en el servidor)
 function sinCanc(rs){ return (rs||[]).map(r=>({...r,lines:(r.lines||[]).map((l,i)=>({...l,_i:i})).filter(l=>l.est!=='cancelado')})).filter(r=>r.lines.length); }
 document.addEventListener('DOMContentLoaded',()=>{ const b=document.getElementById('ver'); if(b){ b.textContent='Versión '+APPVER+' · revisada '+APPFECHA+' · toca para actualizar'; b.onclick=()=>location.replace(location.pathname+'?v='+Date.now()); } });
@@ -309,7 +309,9 @@ function vPedir(){
   const moVis = m => fw.every(w=>(m.n+' '+m.p+' '+m.sku).toUpperCase().includes(w));
   const moOpt = m=>`<label class="mochk"><input type="checkbox" data-mo="${esc(m.n)}" ${mos.includes(m.n)?'checked':''}><span><b>${esc(m.n)}</b> · ${esc(m.p)}${m.sku?' ('+esc(m.sku)+')':''}<small>${m.sb?'STAND BY':esc(m.st)} · faltan ${nfmt(m.q)}</small></span></label>`;
   const grupo = (t,xs) => xs.length?`<div class="mogrp">${t}</div>${xs.map(moOpt).join('')}`:'';
-  const moOpts = MOS ? grupo('MAFESA',MOS.mos.filter(m=>m.maf&&moVis(m))) + grupo('Racks y otros',MOS.mos.filter(m=>!m.maf&&moVis(m))) : '';
+  // 3-nov-2026 (Moisés): "MO Stock" = material que se compra para tener en stock o adelantarse a alzas; no se carga a ninguna MO
+  const moStock = (!fw.length || fw.every(w=>'MO STOCK INVENTARIO ALMACEN'.includes(w))) ? `<div class="mogrp">Stock</div><label class="mochk"><input type="checkbox" data-mo="MO Stock" ${mos.includes('MO Stock')?'checked':''}><span><b>MO Stock</b> · Para tener en stock de materiales<small>No se carga a ninguna MO · se va al almacén</small></span></label>` : '';
+  const moOpts = moStock + (MOS ? grupo('MAFESA',MOS.mos.filter(m=>m.maf&&moVis(m))) + grupo('Racks y otros',MOS.mos.filter(m=>!m.maf&&moVis(m))) : '');
   return `<div class="card">
     <h2>Nueva requisición</h2>
     <div class="sub">${YO&&(YO.id==='paty'||YO.id==='moises')?'Primero elige qué vas a pedir. Si tiene precio de menos de 6 meses se pide directo; si no, se cotiza.':'Busca lo que necesitas, pon la cantidad y para qué es. Paty decide si se cotiza o se compra.'}</div>
