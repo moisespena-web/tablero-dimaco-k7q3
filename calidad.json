@@ -1,5 +1,5 @@
 {
- "stamp": "2026-10-19T18:53",
+ "stamp": "2026-11-04T12:52",
  "incidencias": [
   {
    "fecha": "2026-10-19",
@@ -88,6 +88,24 @@
    "estado": "abierta",
    "accion": "Retrabajar la pieza",
    "accionDetalle": "Miguel revosara el doblez, y pedira apoyo a calidad para la validacion"
+  },
+  {
+   "fecha": "2026-10-02",
+   "tipo": "scrap",
+   "origen": "cor",
+   "operador": "Alfredo",
+   "deteccion": "cor",
+   "causa": "Solera equivocada (aleación, espesor o ancho)",
+   "mo": "MO-448",
+   "so": "SO-26",
+   "sku": "37A14322-0002",
+   "producto": "TERM. CU 1/4 x 2 x 35.750",
+   "material": "Cobre",
+   "piezas": 4,
+   "estado": "abierta",
+   "accion": "Fabricar de nuevo (reposición)",
+   "accionDetalle": "Alfredo corto la pieza que debe ser de acuerdo a especificaciones",
+   "monto": 3854.0
   },
   {
    "fecha": "2026-10-01",
