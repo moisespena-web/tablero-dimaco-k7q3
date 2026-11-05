@@ -94,7 +94,7 @@ function rkFila(r){
   var ch=r.ops.map(function(o){var k=o[0],st=o[1],c=CEST[k]||"#8A93A6",lb=esc(NOMEST[k]||k),q=avN(r.av&&r.av[k]);
     if(st==="COMPLETED")return '<span class="rkc ok">'+lb+' ✓</span>';
     if(st==="IN_PROGRESS")return '<span class="rkc ip" style="background:'+c+'">'+lb+(q?' '+q[0]+'/'+q[1]:'')+'</span>';
-    if(st==="PAUSED")return '<span class="rkc ps">'+lb+' ❚❚</span>';
+    if(st==="PAUSED")return '<span class="rkc ps">'+lb+(q?' '+q[0]+'/'+q[1]:'')+' ❚❚</span>';   /* 5-nov-2026: la pausa también muestra el avance parcial de las notas (Corte 100/440) */
     return k===e?'<span class="rkc cur" style="border-color:'+c+';color:'+c+'">'+lb+'</span>':'<span class="rkc">'+lb+'</span>';}).join("");
   var b="";
   if(r.prio)b+='<span class="bdg">URGE</span>';
