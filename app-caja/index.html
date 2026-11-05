@@ -94,6 +94,7 @@ var KEY='dimaco_caja_paty_v1';
 var CATS=[['NÓMINA','Sueldos en efectivo, diferencias, becarios'],['DESTAJO','Pagos por pieza, por horas o por obra'],['PRÉSTAMO','Préstamos al personal'],['VIÁTICOS','Comidas, cenas y casetas en viaje'],['COMPRAS','Refacciones, herramienta y material de planta'],['VEHÍCULOS','Talacha, gasolina, reparaciones, multas, lavado'],['SERVICIOS','Agua, basura, báscula, paquetería, impresiones, comida de perros'],['PERSONAL','Médico y medicamento, pasteles, recargas, regalos al personal'],['DIRECCIÓN','Gastos que pide dirección'],['OTROS','Solo si no cabe en ninguno']];
 var SUBS={'NÓMINA':['Sueldo en efectivo','Diferencia de nómina','Becario','Otro'],'DESTAJO':['Destajo por pieza','Pago por horas','Obra y mantenimiento','Otro'],'PRÉSTAMO':['Préstamo a trabajador','Otro'],'VIÁTICOS':['Comida en viaje','Cena en viaje','Caseta','Otro'],'COMPRAS':['Tornillería','Mangueras','Refacciones y piezas','Herramienta','Material eléctrico','Otro'],'VEHÍCULOS':['Talacha y llantas','Gasolina','Reparación','Multa o verificación','Lavado','Otro'],'SERVICIOS':['Agua oficinas','Basura','Paquetería','Comida de perros','Impresiones','Báscula','Limpieza y terreno','Otro'],'PERSONAL':['Médico y medicamento','Pastel de cumpleaños','Recarga de celular','Regalo','Otro'],'DIRECCIÓN':['Bebidas','Comida','Otro'],'OTROS':['Otro']};
 var TIPOS=[['DIRECCIÓN','Efectivo que me entregó el Ing. Moisés','Quién me lo dio o con quién lo mandó'],['CHEQUE','Cambié un cheque en el banco','Banco y número de cheque'],['CLIENTE','Un cliente pagó en efectivo','Nombre del cliente'],['REPOSICIÓN','Un colaborador regresó dinero (fuera de nómina)','Nombre del colaborador']];
+var PH={'Caseta':'Ej. Caseta León–Silao, entrega en GM','Comida en viaje':'Ej. Comida de José, entrega en GM Silao','Cena en viaje':'Ej. Cena de José, entrega en GM Silao','Gasolina':'Ej. Gasolina camioneta Nissan para entrega','Agua oficinas':'Ej. 8 garrafones de agua','Talacha y llantas':'Ej. Talacha llanta camioneta Nissan','Sueldo en efectivo':'Ej. Sueldo semanal','Préstamo a trabajador':'Ej. Préstamo, se descuenta en 4 semanas'};
 var COMPS=['Ticket','Nota','Factura','Recibo firmado','Sin comprobante'];
 var MES=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
 var DOW=['dom','lun','mar','mié','jue','vie','sáb'];
@@ -180,7 +181,7 @@ function vSalida(){var m=S.edit||{};var cd=CATS.filter(function(c){return c[0]==
  (S.cat?'<label>Detalle</label>'+chips(SUBS[S.cat],S.sub,'sub'):'')+
  (S.cat==='DESTAJO'?'<label for="fMO">MO</label><input id="fMO" list="dlMO" autocomplete="off" value="'+esc(m.mo||'')+'" placeholder="Escribe o elige la MO (ej. MO-518)"><datalist id="dlMO">'+(MOS||[]).map(function(x){return '<option value="'+esc(moTxt(x))+'"></option>';}).join('')+'<option value="Sin MO (obra o mantenimiento)"></option></datalist>'+
   '<label for="fPz">Piezas (opcional)</label><input id="fPz" inputmode="numeric" maxlength="7" value="'+esc(m.pz||'')+'" placeholder="Ej. 40">':'')+
- '<label for="fDesc">'+(S.cat==='DESTAJO'?'Descripción (opcional)':'Qué se compró o pagó, y para qué')+'</label><input id="fDesc" maxlength="140" value="'+esc(m.desc0!=null?m.desc0:(m.desc||''))+'" placeholder="'+(S.cat==='DESTAJO'?'Ej. Soldadura de racks, cuenta 3':S.cat==='PRÉSTAMO'?'Ej. Préstamo, se descuenta en 4 semanas':'Ej. 2 garrafones para la planta')+'">'+
+ '<label for="fDesc">'+(S.cat==='DESTAJO'?'Descripción (opcional)':'Qué se compró o pagó, y para qué')+'</label><input id="fDesc" maxlength="140" value="'+esc(m.desc0!=null?m.desc0:(m.desc||''))+'" placeholder="'+(S.cat==='DESTAJO'?'Ej. Soldadura de racks, cuenta 3':PH[S.sub]||(S.cat==='PRÉSTAMO'?'Ej. Préstamo, se descuenta en 4 semanas':'Escribe qué se compró o pagó y para qué'))+'">'+
  campoPer('Quién recibe el dinero','Persona, negocio o proveedor',m.persona)+
  '<label for="fComp">Comprobante</label><select id="fComp">'+COMPS.map(function(c){return '<option'+((m.comp||'Ticket')===c?' selected':'')+'>'+c+'</option>';}).join('')+'</select>'+
  '<label for="fNota">Nota (opcional)</label><textarea id="fNota" maxlength="300">'+esc(m.nota||'')+'</textarea>'+
@@ -270,6 +271,7 @@ document.addEventListener('submit',function(ev){ev.preventDefault();var id=ev.ta
  else if(!(monto>0))err='Escribe el monto.';
  var rec;
  if(id==='fs'){var desc=v('fDesc'),comp=v('fComp');
+  if(S.cat!=='DESTAJO'&&desc.length<8&&nota.length>=8){desc=(desc?desc+' · ':'')+nota;nota='';}
   var desc0=desc,mo='',pz='';
   if(S.cat==='DESTAJO'){mo=v('fMO');pz=v('fPz').replace(/[^\d]/g,'');desc=(mo?'MO: '+mo.split(' · ').slice(0,2).join(' '):'')+(pz?' · '+pz+' pz pagadas':'')+(desc0?' · '+desc0:'');}
   if(!err&&!S.cat)err='Elige el concepto.';
@@ -281,7 +283,7 @@ document.addEventListener('submit',function(ev){ev.preventDefault();var id=ev.ta
  else{if(!err&&!S.tipo)err='Elige cómo llegó el dinero.';
   else if(!err&&per.length<3)err=hayLista?'Elige de quién vino el dinero (o Otro y escribe el nombre).':'Escribe de quién o de dónde vino el dinero.';
   rec={k:'E',fecha:fecha,monto:monto,tipo:S.tipo,persona:per,nota:nota};}
- if(err){S.err=err;S.edit=Object.assign({},S.edit||{},rec);render();return;}
+ if(err){S.err=err;S.edit=Object.assign({},S.edit||{},rec);render();var fx=/qué se compró/i.test(err)?'fDesc':/MO/.test(err)?'fMO':/quién|de dónde/i.test(err)?(document.getElementById('fPerSel')?'fPerSel':'fPer'):/monto/i.test(err)?'fMonto':null;var fe=fx&&document.getElementById(fx);if(fe){fe.style.borderColor='var(--bad)';fe.scrollIntoView({block:'center'});try{fe.focus();}catch(e){}}return;}
  if(S.edit&&S.edit.f){var old=D.movs.filter(function(x){return x.f===S.edit.f;})[0];if(old&&!old.env){Object.assign(old,rec);old.corr=(old.corr||0)+1;}}
  else{rec.f=folio();rec.ts=Date.now();rec.env=null;rec.cx=null;D.movs.push(rec);}
  save();toast((rec.k==='S'?'Salida':'Entrada')+' guardada · '+fm(rec.monto));
