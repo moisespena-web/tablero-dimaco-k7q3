@@ -52,7 +52,7 @@ li.cx .li-c b,li.cx .li-m{text-decoration:line-through;color:var(--tx3)}
 .chip.env{background:var(--ac-s);color:var(--ac)}
 .chip.ok{background:var(--ok-s);color:var(--ok)}
 .chip.cx{background:var(--bad-s);color:var(--bad)}
-.lk{background:none;border:0;color:var(--ac);font-size:12px;font-weight:700;padding:4px 0}
+.lk{background:none;border:0;color:var(--ac);font-size:12px;font-weight:700;padding:4px 0;text-decoration:none}
 form label{display:block;font-size:13px;font-weight:700;color:var(--tx2);margin:12px 0 4px}
 form input,form select,form textarea{width:100%;font-size:17px;padding:12px;border:1px solid var(--line);border-radius:10px;background:#fff}
 form textarea{min-height:64px;resize:vertical}
@@ -159,10 +159,10 @@ function vInicio(){var n=porEnviar().length;
  '<div class="big"><button class="out" data-a="nuevaS">− Salida</button><button class="in" data-a="nuevaE">+ Entrada</button></div>'+
  '<button class="send" data-a="enviar"'+(n?'':' disabled')+'>📤 Enviar a Ing. Moisés'+(n?' ('+n+')':' · todo enviado')+'</button>'+
  vLista()+
- '<div class="foot">Los movimientos viven en este teléfono hasta que los envías. No borres el historial del navegador.<br><button class="lk" data-a="reenviar">Reenviar los últimos 7 días</button></div>';}
+ '<div class="foot">Los movimientos viven en este teléfono hasta que los envías. No borres el historial del navegador.<br><button class="lk" data-a="reenviar">Reenviar los últimos 7 días</button> · <a class="lk" href="manual.pdf" target="_blank" rel="noopener">📘 Manual</a></div>';}
 function chips(list,sel,act){return '<div class="chips">'+list.map(function(x){var v=Array.isArray(x)?x[0]:x;return '<button type="button" data-a="'+act+'" data-v="'+esc(v)+'" aria-pressed="'+(v===sel)+'">'+esc(v)+'</button>';}).join('')+'</div>';}
 function vSalida(){var m=S.edit||{};var cd=CATS.filter(function(c){return c[0]===S.cat;})[0];
- return vHeader()+'<div class="card"><h2>'+(S.edit?'Corregir salida':'Nueva salida')+'</h2><div class="sub">Todo efectivo que sale de la caja.</div><form id="fs" novalidate>'+
+ return vHeader()+'<div class="card"><h2>'+(S.edit&&S.edit.f?'Corregir salida':'Nueva salida')+'</h2><div class="sub">Todo efectivo que sale de la caja.</div><form id="fs" novalidate>'+
  '<div class="row2"><div><label for="fFecha">Fecha</label><input type="date" id="fFecha" value="'+esc(m.fecha||hoy())+'" max="'+hoy()+'"></div><div><label for="fMonto">Monto</label><input id="fMonto" inputmode="decimal" placeholder="$0.00" value="'+(m.monto?fm(m.monto):'')+'" autocomplete="off"></div></div>'+
  '<label>Concepto</label>'+chips(CATS,S.cat,'cat')+(cd?'<div class="hint">'+esc(cd[1])+'</div>':'')+
  (S.cat?'<label>Detalle</label>'+chips(SUBS[S.cat],S.sub,'sub'):'')+
@@ -174,7 +174,7 @@ function vSalida(){var m=S.edit||{};var cd=CATS.filter(function(c){return c[0]==
  '<div class="fbtn"><button type="button" data-a="inicio">Regresar</button><button type="submit" class="go">Guardar salida</button></div>'+
  '<div class="lock">🔒<span>Todo gasto dice qué, a quién y para qué. Lo enviado ya no se corrige: se cancela con motivo.</span></div></form></div>';}
 function vEntrada(){var m=S.edit||{};var td=TIPOS.filter(function(t){return t[0]===S.tipo;})[0];
- return vHeader()+'<div class="card"><h2>'+(S.edit?'Corregir entrada':'Nueva entrada')+'</h2><div class="sub">Dinero que entra a la caja.</div><form id="fe" novalidate>'+
+ return vHeader()+'<div class="card"><h2>'+(S.edit&&S.edit.f?'Corregir entrada':'Nueva entrada')+'</h2><div class="sub">Dinero que entra a la caja.</div><form id="fe" novalidate>'+
  '<label>Cómo llegó el dinero</label>'+chips(TIPOS,S.tipo,'tipo')+(td?'<div class="hint">'+esc(td[1])+'</div>':'')+
  '<div class="row2"><div><label for="fFecha">Fecha</label><input type="date" id="fFecha" value="'+esc(m.fecha||hoy())+'" max="'+hoy()+'"></div><div><label for="fMonto">Monto</label><input id="fMonto" inputmode="decimal" placeholder="$0.00" value="'+(m.monto?fm(m.monto):'')+'" autocomplete="off"></div></div>'+
  '<label for="fPer">'+esc(td?td[2]:'De quién')+'</label><input id="fPer" maxlength="80" value="'+esc(m.persona||'')+'">'+
