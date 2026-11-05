@@ -27,6 +27,9 @@ for x in ing:
     libro.append(dict(f=x['fecha'], k='E', c=x.get('tipo') or 'DIRECCIÓN', d='', q=x.get('concepto') or '', p=x.get('persona') or '',
                       m=round(x.get('monto') or 0, 2), x=0 if act(x) else 1))
 libro.sort(key=lambda r: (r['f'], r['k']), reverse=True)
-json.dump(dict(saldo=saldo, al=ahora, folios=folios, cancelados=cancel), open(os.path.join(app, 'saldo.json'), 'w'), ensure_ascii=False)
+prev = json.load(open(os.path.join(app, 'saldo.json'))) if os.path.exists(os.path.join(app, 'saldo.json')) else {}
+out = dict(saldo=saldo, al=ahora, folios=folios, cancelados=cancel)
+if prev.get('limpiar'): out['limpiar'] = prev['limpiar']  # borra pruebas locales capturadas antes de esa hora
+json.dump(out, open(os.path.join(app, 'saldo.json'), 'w'), ensure_ascii=False)
 json.dump(dict(al=ahora, movs=libro), open(os.path.join(app, 'libro.json'), 'w'), ensure_ascii=False, separators=(',', ':'))
 print('saldo', saldo, 'movs', len(libro), 'folios', len(folios))

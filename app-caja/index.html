@@ -91,8 +91,8 @@ input.q{width:100%;font-size:16px;padding:11px;border:1px solid var(--line);bord
 'use strict';
 var DEST='moises.pena@dimaco-mx.com';
 var KEY='dimaco_caja_paty_v1';
-var CATS=[['NÓMINA','Sobre semanal (escribe el número de nómina), sueldos, diferencias, becarios'],['DESTAJO','Pagos por pieza, por horas o por obra'],['PRÉSTAMO','Préstamos al personal'],['VIÁTICOS','Comidas, cenas y casetas en viaje'],['COMPRAS','Refacciones, herramienta y material de planta'],['VEHÍCULOS','Talacha, gasolina, reparaciones, multas, lavado'],['SERVICIOS','Agua, basura, báscula, paquetería, impresiones, comida de perros'],['PERSONAL','Médico y medicamento, pasteles, recargas, regalos al personal'],['DIRECCIÓN','Gastos que pide dirección'],['OTROS','Solo si no cabe en ninguno']];
-var SUBS={'NÓMINA':['Nómina semanal','Sueldo en efectivo','Diferencia de nómina','Becario','PTU','Otro'],'DESTAJO':['Destajo por pieza','Pago por horas','Obra y mantenimiento','Otro'],'PRÉSTAMO':['Préstamo a trabajador','Otro'],'VIÁTICOS':['Comida en viaje','Cena en viaje','Caseta','Otro'],'COMPRAS':['Tornillería','Mangueras','Refacciones y piezas','Herramienta','Material eléctrico','Otro'],'VEHÍCULOS':['Talacha y llantas','Gasolina','Reparación','Multa o verificación','Lavado','Otro'],'SERVICIOS':['Agua oficinas','Basura','Paquetería','Comida de perros','Impresiones','Báscula','Limpieza y terreno','Otro'],'PERSONAL':['Médico y medicamento','Pastel de cumpleaños','Recarga de celular','Regalo','Otro'],'DIRECCIÓN':['Bebidas','Comida','Otro'],'OTROS':['Otro']};
+var CATS=[['NÓMINA','Sueldos en efectivo, diferencias, becarios'],['DESTAJO','Pagos por pieza, por horas o por obra'],['PRÉSTAMO','Préstamos al personal'],['VIÁTICOS','Comidas, cenas y casetas en viaje'],['COMPRAS','Refacciones, herramienta y material de planta'],['VEHÍCULOS','Talacha, gasolina, reparaciones, multas, lavado'],['SERVICIOS','Agua, basura, báscula, paquetería, impresiones, comida de perros'],['PERSONAL','Médico y medicamento, pasteles, recargas, regalos al personal'],['DIRECCIÓN','Gastos que pide dirección'],['OTROS','Solo si no cabe en ninguno']];
+var SUBS={'NÓMINA':['Sueldo en efectivo','Diferencia de nómina','Becario','Otro'],'DESTAJO':['Destajo por pieza','Pago por horas','Obra y mantenimiento','Otro'],'PRÉSTAMO':['Préstamo a trabajador','Otro'],'VIÁTICOS':['Comida en viaje','Cena en viaje','Caseta','Otro'],'COMPRAS':['Tornillería','Mangueras','Refacciones y piezas','Herramienta','Material eléctrico','Otro'],'VEHÍCULOS':['Talacha y llantas','Gasolina','Reparación','Multa o verificación','Lavado','Otro'],'SERVICIOS':['Agua oficinas','Basura','Paquetería','Comida de perros','Impresiones','Báscula','Limpieza y terreno','Otro'],'PERSONAL':['Médico y medicamento','Pastel de cumpleaños','Recarga de celular','Regalo','Otro'],'DIRECCIÓN':['Bebidas','Comida','Otro'],'OTROS':['Otro']};
 var TIPOS=[['DIRECCIÓN','Efectivo que me entregó el Ing. Moisés','Quién me lo dio o con quién lo mandó'],['CHEQUE','Cambié un cheque en el banco','Banco y número de cheque'],['CLIENTE','Un cliente pagó en efectivo','Nombre del cliente'],['REPOSICIÓN','Un colaborador regresó dinero (fuera de nómina)','Nombre del colaborador']];
 var COMPS=['Ticket','Nota','Factura','Recibo firmado','Sin comprobante'];
 var MES=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
@@ -114,7 +114,18 @@ var D={movs:[],base:null};
 function load(){try{var j=JSON.parse(localStorage.getItem(KEY)||'null');if(j&&j.movs)D=j;}catch(e){}}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(D));}catch(e){toast('No se pudo guardar en el teléfono. No borres el historial del navegador.');}}
 load();
-var LB=null;var S={vista:'cap',mes:hoy().slice(0,7),q:'',pant:'inicio',cat:null,sub:null,tipo:null,edit:null,err:'',modal:null,todos:false};
+var LB=null;var COL=null,MOS=null;
+function cargarListas(){fetch('colaboradores.json?t='+Date.now(),{cache:'no-store'}).then(function(r){return r.ok?r.json():null;}).then(function(j){if(j&&j.nombres){COL=j.nombres;if(S.pant!=='inicio')render();}}).catch(function(){});
+ fetch('mos.json?t='+Date.now(),{cache:'no-store'}).then(function(r){return r.ok?r.json():null;}).then(function(j){if(j&&j.mos){MOS=j.mos;if(S.pant==='salida')render();}}).catch(function(){});}
+function moTxt(x){return x.mo+(x.sku?' · '+x.sku:'')+' · '+x.pz+' pz'+(x.ab?'':' · terminada');}
+function listaPer(){if(S.pant==='salida'){if(S.cat==='PRÉSTAMO')return COL;if(S.cat==='DESTAJO')return ['Arturo','Miguel'];return null;}
+ if(S.pant==='entrada'){if(S.tipo==='REPOSICIÓN')return COL;if(S.tipo==='DIRECCIÓN')return ['Moisés'];}return null;}
+function campoPer(lab,ph,val){var L=listaPer();val=val||'';
+ if(!L)return '<label for="fPer">'+esc(lab)+'</label><input id="fPer" maxlength="80" value="'+esc(val)+'" placeholder="'+esc(ph)+'">';
+ var en=L.indexOf(val)>=0,otro=!!val&&!en;
+ return '<label for="fPerSel">'+esc(lab)+'</label><select id="fPerSel"><option value="">Elige…</option>'+L.map(function(n){return '<option'+(n===val?' selected':'')+'>'+esc(n)+'</option>';}).join('')+'<option value="__otro"'+(otro?' selected':'')+'>Otro (escribir nombre)</option></select>'+
+ '<input id="fPer" maxlength="80" value="'+esc(otro?val:'')+'" placeholder="Escribe el nombre" style="margin-top:8px'+(otro?'':';display:none')+'">';}
+function leerPer(){var s=document.getElementById('fPerSel'),i=document.getElementById('fPer');if(!s)return i?i.value.trim():undefined;if(s.value==='__otro')return i.value.trim();return s.value;}var S={vista:'cap',mes:hoy().slice(0,7),q:'',pant:'inicio',cat:null,sub:null,tipo:null,edit:null,err:'',modal:null,todos:false};
 
 function enTablero(m){return !!(D.base&&D.base.folios&&D.base.folios.indexOf(m.f)>=0);}
 function cxEnTablero(m){return !!(D.base&&D.base.cancelados&&D.base.cancelados.indexOf(m.f)>=0);}
@@ -129,7 +140,7 @@ function porEnviar(){return D.movs.filter(function(m){return !m.env||(m.cx&&!m.c
 
 function refrescarSaldo(){
  fetch('saldo.json?t='+Date.now(),{cache:'no-store'}).then(function(r){return r.ok?r.json():null;}).then(function(j){
-  if(j&&typeof j.saldo==='number'){D.base=j;save();render();}}).catch(function(){});}
+  if(j&&typeof j.saldo==='number'){D.base=j;if(j.limpiar&&D.limpio!==j.limpiar){var t=Date.parse(j.limpiar);D.movs=D.movs.filter(function(m){return m.ts>=t||enTablero(m);});D.limpio=j.limpiar;}save();render();}}).catch(function(){});}
 
 /* ----- vistas ----- */
 function vHeader(){return '<div class="hdr"><div class="logos"><img src="logo-dimaco.png" alt="DIMACO"><img src="logo-mg.png" alt="Marca Guanajuato Internacional"></div><div><h1>Caja chica</h1><p>Estación de Paty · DIMACO METALMECANICA</p></div></div>';}
@@ -167,8 +178,10 @@ function vSalida(){var m=S.edit||{};var cd=CATS.filter(function(c){return c[0]==
  '<div class="row2"><div><label for="fFecha">Fecha</label><input type="date" id="fFecha" value="'+esc(m.fecha||hoy())+'" max="'+hoy()+'"></div><div><label for="fMonto">Monto</label><input id="fMonto" inputmode="decimal" placeholder="$0.00" value="'+(m.monto?fm(m.monto):'')+'" autocomplete="off"></div></div>'+
  '<label>Concepto</label>'+chips(CATS,S.cat,'cat')+(cd?'<div class="hint">'+esc(cd[1])+'</div>':'')+
  (S.cat?'<label>Detalle</label>'+chips(SUBS[S.cat],S.sub,'sub'):'')+
- '<label for="fDesc">Qué se compró o pagó, y para qué</label><input id="fDesc" maxlength="140" value="'+esc(m.desc||'')+'" placeholder="'+(S.sub==='Nómina semanal'?'Ej. Sobre nómina 43':'Ej. 2 garrafones para la planta')+'">'+
- '<label for="fPer">Quién recibe el dinero</label><input id="fPer" maxlength="80" value="'+esc(m.persona||'')+'" placeholder="Persona, negocio o proveedor">'+
+ (S.cat==='DESTAJO'?'<label for="fMO">MO</label><input id="fMO" list="dlMO" autocomplete="off" value="'+esc(m.mo||'')+'" placeholder="Escribe o elige la MO (ej. MO-518)"><datalist id="dlMO">'+(MOS||[]).map(function(x){return '<option value="'+esc(moTxt(x))+'"></option>';}).join('')+'<option value="Sin MO (obra o mantenimiento)"></option></datalist>'+
+  '<label for="fPz">Piezas (opcional)</label><input id="fPz" inputmode="numeric" maxlength="7" value="'+esc(m.pz||'')+'" placeholder="Ej. 40">':'')+
+ '<label for="fDesc">'+(S.cat==='DESTAJO'?'Descripción (opcional)':'Qué se compró o pagó, y para qué')+'</label><input id="fDesc" maxlength="140" value="'+esc(m.desc0!=null?m.desc0:(m.desc||''))+'" placeholder="'+(S.cat==='DESTAJO'?'Ej. Soldadura de racks, cuenta 3':S.cat==='PRÉSTAMO'?'Ej. Préstamo, se descuenta en 4 semanas':'Ej. 2 garrafones para la planta')+'">'+
+ campoPer('Quién recibe el dinero','Persona, negocio o proveedor',m.persona)+
  '<label for="fComp">Comprobante</label><select id="fComp">'+COMPS.map(function(c){return '<option'+((m.comp||'Ticket')===c?' selected':'')+'>'+c+'</option>';}).join('')+'</select>'+
  '<label for="fNota">Nota (opcional)</label><textarea id="fNota" maxlength="300">'+esc(m.nota||'')+'</textarea>'+
  '<div class="err">'+esc(S.err)+'</div>'+
@@ -178,7 +191,7 @@ function vEntrada(){var m=S.edit||{};var td=TIPOS.filter(function(t){return t[0]
  return vHeader()+'<div class="card"><h2>'+(S.edit&&S.edit.f?'Corregir entrada':'Nueva entrada')+'</h2><div class="sub">Dinero que entra a la caja.</div><form id="fe" novalidate>'+
  '<label>Cómo llegó el dinero</label>'+chips(TIPOS,S.tipo,'tipo')+(td?'<div class="hint">'+esc(td[1])+'</div>':'')+
  '<div class="row2"><div><label for="fFecha">Fecha</label><input type="date" id="fFecha" value="'+esc(m.fecha||hoy())+'" max="'+hoy()+'"></div><div><label for="fMonto">Monto</label><input id="fMonto" inputmode="decimal" placeholder="$0.00" value="'+(m.monto?fm(m.monto):'')+'" autocomplete="off"></div></div>'+
- '<label for="fPer">'+esc(td?td[2]:'De quién')+'</label><input id="fPer" maxlength="80" value="'+esc(m.persona||'')+'">'+
+ campoPer(td?td[2]:'De quién','',m.persona)+
  '<label for="fNota">Nota (opcional)</label><input id="fNota" maxlength="140" value="'+esc(m.nota||'')+'">'+
  '<div class="err">'+esc(S.err)+'</div>'+
  '<div class="fbtn"><button type="button" data-a="inicio">Regresar</button><button type="submit" class="go">Guardar entrada</button></div>'+
@@ -204,6 +217,7 @@ function render(){var app=document.getElementById('app');var y=window.scrollY;
  app.innerHTML=S.vista==='con'?vConsulta():(S.pant==='salida'?vSalida():S.pant==='entrada'?vEntrada():vInicio())+vModal();
  var qi=document.getElementById('q');if(qi){qi.addEventListener('input',function(){S.q=qi.value;var pos=qi.selectionStart;render();var n=document.getElementById('q');n.focus();try{n.setSelectionRange(pos,pos);}catch(e){}});}
  if(S._p!==S.vista+S.pant){window.scrollTo(0,0);S._p=S.vista+S.pant;}else window.scrollTo(0,y);
+ var ps=document.getElementById('fPerSel');if(ps)ps.addEventListener('change',function(){var i=document.getElementById('fPer');i.style.display=ps.value==='__otro'?'':'none';if(ps.value==='__otro')i.focus();});
  var mo=document.getElementById('fMonto');if(mo)mo.addEventListener('blur',function(){var n=parseMoney(mo.value);if(n>0)mo.value=fm(n);});}
 
 /* ----- correo ----- */
@@ -241,7 +255,7 @@ A.enviar=function(){mandar(porEnviar());};
 A.reenviar=function(){var lim=Date.now()-7*864e5;mandar(D.movs.filter(function(m){return m.ts>=lim||(m.cx&&m.cx.ts>=lim);}));};
 /* conserva lo tecleado al cambiar de concepto */
 function keep(){var g=function(i){var e=document.getElementById(i);return e?e.value:undefined;};
- var e=S.edit||{};var f=g('fFecha'),mo=g('fMonto'),de=g('fDesc'),pe=g('fPer'),co=g('fComp'),no=g('fNota');
+ var e=S.edit||{};var f=g('fFecha'),mo=g('fMonto'),de=g('fDesc'),pe=leerPer(),co=g('fComp'),no=g('fNota'),mx=g('fMO'),pz=g('fPz');if(mx!==undefined)e.mo=mx;if(pz!==undefined)e.pz=pz;if(de!==undefined)e.desc0=de;
  if(f!==undefined)e.fecha=f;if(mo!==undefined)e.monto=parseMoney(mo)||0;if(de!==undefined)e.desc=de;if(pe!==undefined)e.persona=pe;if(co!==undefined)e.comp=co;if(no!==undefined)e.nota=no;
  S.edit=e.f?e:Object.assign({_nuevo:true},e);}
 
@@ -250,20 +264,22 @@ document.addEventListener('submit',function(ev){ev.preventDefault();var id=ev.ta
  if(id==='fc'){var mot=v('cMot');if(mot.length<5){S.err='Escribe el motivo de la cancelación.';render();return;}
   var m=D.movs.filter(function(x){return x.f===S.modal;})[0];if(m){m.cx={motivo:mot,ts:Date.now(),env:null};save();toast('Movimiento cancelado. Envíalo a dirección.');}
   S.modal=null;S.err='';render();return;}
- var fecha=v('fFecha'),monto=parseMoney(v('fMonto')),per=v('fPer'),nota=v('fNota');
+ var fecha=v('fFecha'),monto=parseMoney(v('fMonto')),per=leerPer()||'',nota=v('fNota');var hayLista=!!document.getElementById('fPerSel');
  var err='';
  if(!fecha)err='Pon la fecha.';else if(fecha>hoy())err='La fecha no puede ser de mañana.';
  else if(!(monto>0))err='Escribe el monto.';
  var rec;
  if(id==='fs'){var desc=v('fDesc'),comp=v('fComp');
+  var desc0=desc,mo='',pz='';
+  if(S.cat==='DESTAJO'){mo=v('fMO');pz=v('fPz').replace(/[^\d]/g,'');desc=(mo?'MO: '+mo.split(' · ').slice(0,2).join(' '):'')+(pz?' · '+pz+' pz pagadas':'')+(desc0?' · '+desc0:'');}
   if(!err&&!S.cat)err='Elige el concepto.';
   else if(!err&&!S.sub)err='Elige el detalle.';
+  else if(!err&&S.cat==='DESTAJO'&&mo.length<3)err='Elige la MO del destajo (o "Sin MO" si es obra o mantenimiento).';
   else if(!err&&desc.length<8)err='Escribe qué se compró o pagó y para qué. Todo gasto dice hacia dónde fue el dinero.';
-  else if(!err&&S.sub==='Nómina semanal'&&!/\d/.test(desc))err='Escribe el número de nómina (ej. Sobre nómina 43).';
-  else if(!err&&per.length<3)err='Escribe quién recibió el dinero.';
-  rec={k:'S',fecha:fecha,monto:monto,cat:S.cat,sub:S.sub,desc:desc,persona:per,comp:comp,nota:nota};}
+  else if(!err&&per.length<3)err=hayLista?'Elige quién recibió el dinero (o Otro y escribe el nombre).':'Escribe quién recibió el dinero.';
+  rec={k:'S',fecha:fecha,monto:monto,cat:S.cat,sub:S.sub,desc:desc,persona:per,comp:comp,nota:nota};if(S.cat==='DESTAJO'){rec.mo=mo;rec.pz=pz;rec.desc0=desc0;}}
  else{if(!err&&!S.tipo)err='Elige cómo llegó el dinero.';
-  else if(!err&&per.length<3)err='Escribe de quién o de dónde vino el dinero.';
+  else if(!err&&per.length<3)err=hayLista?'Elige de quién vino el dinero (o Otro y escribe el nombre).':'Escribe de quién o de dónde vino el dinero.';
   rec={k:'E',fecha:fecha,monto:monto,tipo:S.tipo,persona:per,nota:nota};}
  if(err){S.err=err;S.edit=Object.assign({},S.edit||{},rec);render();return;}
  if(S.edit&&S.edit.f){var old=D.movs.filter(function(x){return x.f===S.edit.f;})[0];if(old&&!old.env){Object.assign(old,rec);old.corr=(old.corr||0)+1;}}
@@ -272,7 +288,7 @@ document.addEventListener('submit',function(ev){ev.preventDefault();var id=ev.ta
  S.pant='inicio';S.edit=null;S.err='';render();});
 var toastT;function toast(t){var e=document.getElementById('toast');if(!e){e=document.createElement('div');e.id='toast';e.className='toast';document.body.appendChild(e);}e.textContent=t;e.hidden=false;clearTimeout(toastT);toastT=setTimeout(function(){e.hidden=true;},2800);}
 
-render();refrescarSaldo();
+render();refrescarSaldo();cargarListas();
 document.addEventListener('visibilitychange',function(){if(!document.hidden){refrescarSaldo();if(S.vista==='con')cargarLibro();}});
 })();
 </script>
