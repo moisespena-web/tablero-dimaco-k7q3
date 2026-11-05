@@ -140,5 +140,26 @@ rep('if(D.proyecto==="racks")paginarCli(items);', 'if(D.proyecto==="racks")rkPag
 rep('''if(b[2]==="mes"){''', '''if(b[2]==="rk"){var hr="";try{hr=rkPagina(b,D);}catch(e){}return '<div class="page prk'+(i===pagina?" on":"")+'">'+hr+'</div>';}
     if(b[2]==="mes"){''')
 rep('<span class="build">r2026-10-14b</span>', '<span class="build">r2026-10-15</span>')
+
+# 5-nov-2026 (foto de la TV de Mario): su navegador no entiende el selector CSS :has(), así que no se ocultaban los
+# recuadros de arriba y las estaciones salían amontonadas. Respaldo: el JS pone clases en #stage (rkon / calon) y en
+# #ests (flon), y cada regla :has() se duplica con esas clases (en reglas aparte: un :has() no soportado anula la regla entera).
+import re as _re
+_m = {'#stage:has(.prk.on)': '#stage.rkon', '#stage:has(.pcal.on)': '#stage.calon', '.ests:has(.fl)': '.ests.flon'}
+_extra = []
+for _blk in _re.findall(r'<style[^>]*>(.*?)</style>', s, _re.S):
+    for _rule in _re.findall(r'[^{}]+\{[^{}]*\}', _blk):
+        if ':has(' in _rule:
+            _r = _rule
+            for a, b in _m.items(): _r = _r.replace(a, b)
+            if ':has(' not in _r: _extra.append(_r.strip())
+s = s.replace('</style>', '\n/* respaldo sin :has() (5-nov-2026) */\n' + '\n'.join(_extra) + '\n</style>', 1)
+s = s.replace('</body>', """<script>/* 5-nov-2026: clases de respaldo para navegadores sin :has() */
+(function(){function q(x){return document.querySelector(x);}
+function marca(){var st=q('#stage');if(!st)return;st.classList.toggle('rkon',!!q('.prk.on'));st.classList.toggle('calon',!!q('.pcal.on'));
+var e=q('#ests');if(e)e.classList.toggle('flon',!!q('#ests .fl'));}
+marca();setInterval(marca,400);})();</script>
+</body>""", 1)
+s = s.replace('<span class="build">r2026-10-15</span>', '<span class="build">r2026-11-05</span>')
 open(p, 'w').write(s)
 print('diseno ok', len(s))
