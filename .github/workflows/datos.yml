@@ -95,7 +95,18 @@ jobs:
 
               rm -rf d d.zip aviso.new
 
+              # --- calidad.json (8-nov-2026): copia de la Estación de Calidad, la única fuente.
+              # Solo se publica si cambiaron las incidencias (el stamp solo no cuenta). La tarea
+              # de Claude copia este archivo al tablero de Claude (tv/calidad).
+              if curl -sS --max-time 20 "https://dimaco-calidad.moises-pena.workers.dev/api/tv" -o cal.new 2>/dev/null \
+                 && python3 -c "import json,sys,os; a=json.load(open(sys.argv[1])); assert isinstance(a['incidencias'],list) and a.get('fuente')=='estacion'; b=json.load(open(sys.argv[2])).get('incidencias') if os.path.exists(sys.argv[2]) else None; sys.exit(0 if a['incidencias']!=b else 1)" cal.new calidad.json 2>/dev/null; then
+                mv cal.new calidad.json
+                CAMBIO=1
+              fi
+              rm -f cal.new
+
               if [ "$CAMBIO" = "1" ]; then
+                [ -f calidad.json ] && git add calidad.json
                 [ -f datos.json ] && git add datos.json
                 [ -f aviso.json ] && git add aviso.json
                 [ -f racks/aviso.json ] && git add racks/aviso.json
