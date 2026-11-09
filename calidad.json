@@ -14,7 +14,7 @@
    "producto": "TERM. CU 1/4 x 2 x 35.750",
    "material": "Cobre",
    "piezas": 4,
-   "estado": "abierta",
+   "estado": "cerrada",
    "accion": "Fabricar de nuevo (reposición)",
    "accionDetalle": "Revisar dibujos antes de procesar las piezas",
    "monto": 3854.0
@@ -32,7 +32,7 @@
    "producto": "TERM AL. 1/4 x 1 x 2.812\"",
    "material": "Aluminio",
    "piezas": 330,
-   "estado": "abierta",
+   "estado": "cerrada",
    "accion": "Retrabajar la pieza",
    "accionDetalle": "Alfredo tuvo que cortar nuevamente con la medida correcta",
    "monto": 1643.4
@@ -50,7 +50,7 @@
    "producto": "TERM AL. 1/4 x 1-1/2 7.75",
    "material": "Aluminio",
    "piezas": 50,
-   "estado": "abierta",
+   "estado": "cerrada",
    "accion": "Reforzar la inspección o agregar punto de revisión",
    "accionDetalle": "Miguel fabricara piezas nuevas",
    "monto": 1106.0
@@ -68,7 +68,7 @@
    "producto": "TERM CU 1/4 x 1 x 3.938",
    "material": "Cobre",
    "piezas": 39,
-   "estado": "abierta",
+   "estado": "cerrada",
    "accion": "Retrabajar la pieza",
    "accionDetalle": "Emiliano volvió a cortar las soleras con el material correcto"
   },
@@ -85,7 +85,7 @@
    "producto": "TERM AL. 1/4 x 1 x 23.75",
    "material": "Aluminio",
    "piezas": 4,
-   "estado": "abierta",
+   "estado": "cerrada",
    "accion": "Retrabajar la pieza",
    "accionDetalle": "Miguel revosara el doblez, y pedira apoyo a calidad para la validacion"
   },
@@ -102,7 +102,7 @@
    "producto": "TERM. CU 1/4 x 2 x 35.750",
    "material": "Cobre",
    "piezas": 4,
-   "estado": "abierta",
+   "estado": "cerrada",
    "accion": "Fabricar de nuevo (reposición)",
    "accionDetalle": "Alfredo corto la pieza que debe ser de acuerdo a especificaciones",
    "monto": 3854.0
@@ -120,7 +120,7 @@
    "producto": "TERM AL. 1/4 x 1 x 23.75",
    "material": "Aluminio",
    "piezas": 22,
-   "estado": "abierta",
+   "estado": "cerrada",
    "accion": "Fabricar de nuevo (reposición)",
    "accionDetalle": "Miguel fabricara las 22 pz nuevas para el 8 de octubre",
    "monto": 924.66
