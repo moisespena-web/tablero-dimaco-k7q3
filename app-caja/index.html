@@ -19,6 +19,7 @@ button,input,select,textarea{font:inherit;color:inherit}
 button{cursor:pointer;touch-action:manipulation}
 @media (display-mode:standalone) and (hover:hover) and (pointer:fine){#app{padding-top:40px!important}}
 #app{max-width:560px;margin:0 auto;padding:calc(10px + var(--safe-t)) 16px calc(24px + var(--safe-b))}
+.salir{flex:none;display:flex;flex-direction:column;align-items:center;gap:2px;border:1px solid var(--line,#d9e0e5);background:var(--card,#fff);color:var(--ink,#15212a);border-radius:12px;padding:6px 10px;font-size:20px;font-weight:700;line-height:1;cursor:pointer}.salir span{font-size:11px;font-weight:600}
 .hdr{display:flex;align-items:center;gap:12px;margin-bottom:12px}
 .logos{display:flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:6px 10px}
 .logos img{height:34px;width:auto;display:block}
@@ -115,7 +116,7 @@ var D={movs:[],base:null};
 function load(){try{var j=JSON.parse(localStorage.getItem(KEY)||'null');if(j&&j.movs)D=j;}catch(e){}}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(D));}catch(e){toast('No se pudo guardar en el teléfono. No borres el historial del navegador.');}}
 load();
-var LB=null;var VER='3 · 9-nov-2026';
+var LB=null;var VER='4 · 9-nov-2026';
 function checarVersion(){fetch('version.json?t='+Date.now(),{cache:'no-store'}).then(function(r){return r.ok?r.json():null;}).then(function(j){if(!j||!j.v||j.v===VER)return;var k='caja_reload_'+j.v;try{if(sessionStorage.getItem(k))return;sessionStorage.setItem(k,'1');}catch(e){}location.reload();}).catch(function(){});}var COL=null,MOS=null;
 function cargarListas(){fetch('colaboradores.json?t='+Date.now(),{cache:'no-store'}).then(function(r){return r.ok?r.json():null;}).then(function(j){if(j&&j.nombres){COL=j.nombres;if(S.pant!=='inicio')render();}}).catch(function(){});
  fetch('mos.json?t='+Date.now(),{cache:'no-store'}).then(function(r){return r.ok?r.json():null;}).then(function(j){if(j&&j.mos){MOS=j.mos;if(S.pant==='salida')render();}}).catch(function(){});}
@@ -145,7 +146,7 @@ function refrescarSaldo(){
   if(j&&typeof j.saldo==='number'){D.base=j;if(j.limpiar&&D.limpio!==j.limpiar){var t=Date.parse(j.limpiar);D.movs=D.movs.filter(function(m){return m.ts>=t||enTablero(m);});D.limpio=j.limpiar;}save();render();}}).catch(function(){});}
 
 /* ----- vistas ----- */
-function vHeader(){return '<div class="hdr"><div class="logos"><img src="logo-dimaco.png" alt="DIMACO"><img src="logo-mg.png" alt="Marca Guanajuato Internacional"></div><div><h1>Caja chica</h1><p>Estación de Paty · DIMACO METALMECANICA</p></div></div>';}
+function vHeader(){return '<div class="hdr"><div class="logos"><img src="logo-dimaco.png" alt="DIMACO"><img src="logo-mg.png" alt="Marca Guanajuato Internacional"></div><div style="flex:1"><h1>Caja chica</h1><p>Estación de Paty · DIMACO METALMECANICA</p></div>'+((S.pant!=='inicio'||S.vista==='con')?'<button type="button" class="salir" data-a="salir" aria-label="Salir">✕<span>Salir</span></button>':'')+'</div>';}
 function vSaldo(){var s=saldo();
  var al=D.base&&D.base.al?new Date(D.base.al):null;
  var txt=al?'Saldo del tablero al '+al.getDate()+' '+MES[al.getMonth()]+' '+pad(al.getHours())+':'+pad(al.getMinutes())+', más lo que has capturado después.':'Aún no llega el saldo del tablero. Revisa tu conexión.';
@@ -247,6 +248,7 @@ A.cat=function(v){keep();S.cat=v;S.sub=SUBS[v].length===1?SUBS[v][0]:null;};
 A.sub=function(v){keep();S.sub=v;};
 A.tipo=function(v){keep();S.tipo=v;};
 A.todos=function(){S.todos=!S.todos;};
+A.salir=function(){if(S.pant!=='inicio'){var t=['fMonto','fDesc','fPer','fNota','fMO'].some(function(i){var e=document.getElementById(i);return e&&e.value.trim();});if(t&&!confirm('¿Salir sin guardar? Lo que escribiste se pierde.'))return;S.pant='inicio';S.edit=null;S.err='';render();window.scrollTo(0,0);return;}A.vista('cap');window.scrollTo(0,0);};
 A.vista=function(v){S.vista=v;S.pant='inicio';S.edit=null;S.err='';if(v==='con')cargarLibro();};
 A.mes=function(v){var p=S.mes.split('-'),y=+p[0],m=+p[1]-1+(+v);if(m<0){m=11;y--;}if(m>11){m=0;y++;}S.mes=y+'-'+pad(m+1);};
 A.editar=function(v){var m=D.movs.filter(function(x){return x.f===v;})[0];if(!m||m.env)return;S.edit=Object.assign({},m);S.err='';
