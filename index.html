@@ -455,7 +455,7 @@ padding:20px 34px;box-shadow:0 0 70px rgba(229,72,77,.95);animation:alimpP 1s st
   <div class="msg"></div>
   <span class="pctl"><button id="btnPrev" title="Página anterior">◀</button><button id="btnPausa" title="Pausar">⏸</button><button id="btnNext" title="Página siguiente">▶</button></span>
   <span id="sndIco">🔇</span>
-  <div id="stamp"></div><span class="build">v2026-11-08cero</span><div class="bar"><i id="pb"></i></div>
+  <div id="stamp"></div><span class="build">v2026-11-09insp</span><div class="bar"><i id="pb"></i></div>
  </footer>
  <div id="alimp" hidden></div>
  <div id="toasts"></div>
@@ -796,7 +796,7 @@ function render0(D){
   var sem=pct<=40?"rojo":(pct<=70?"ambar":"verde");
   $("kpis").innerHTML=
    '<div class="kpi"><div class="kl">PIEZAS ABIERTAS</div><div class="kv">'+pz.toLocaleString("en-US")+'</div><div class="ks"></div></div>'+
-   '<div class="kpi"><div class="kl">MOs ABIERTAS</div><div class="kv">'+rows.length+'</div><div class="ks">'+(D.faltaPz!=null?'<span class="falta">Faltan <b>'+nf(D.faltaPz)+'</b> pz</span>':'')+'</div></div>'+
+   '<div class="kpi"><div class="kl">MOs ABIERTAS</div><div class="kv">'+rows.length+(function(){var ni=rows.filter(function(r){return r.grp==="limp";}).length;return ni?'<span style="font-size:17px;font-weight:600;color:#C9D6E6;margin-left:12px;letter-spacing:.5px;vertical-align:middle">'+ni+' MO en inspección</span>':'';})()+'</div><div class="ks">'+(D.faltaPz!=null?'<span class="falta">Faltan <b>'+nf(D.faltaPz)+'</b> pz</span>':'')+'</div></div>'+
    (D.avProc?'':'<div class="kpi '+sem+'"><div class="kl">AVANCE OPERACIONES</div><div class="kv">'+pct+'%</div><div class="ks">'+hech+' de '+tot+'</div><div class="kbar"><i style="width:'+pct+'%"></i></div></div>')+
    '<div class="kpi'+(venc?" alarm":"")+'"><div class="kl">VENCIDAS</div><div class="kv">'+venc+'</div><div class="ks">revisar con supervisión</div></div>';
   $("kpis").style.gridTemplateColumns=D.avProc?"1fr 1fr .8fr":"";
