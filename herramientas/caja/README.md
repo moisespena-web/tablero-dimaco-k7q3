@@ -18,3 +18,10 @@ Liga: https://moisespena-web.github.io/tablero-dimaco-k7q3/app-caja/ (Paty no us
 4. Vuelve a exportar y corre `python3 -I herramientas/caja/publicar.py <export> app-caja herramientas/caja/aplicado.json <ahora ISO>`.
 5. commit "Caja chica <stamp> (auto)" de app-caja/saldo.json, app-caja/libro.json y herramientas/caja/aplicado.json; push.
 El folio es la llave: repetir correos no duplica. Nunca se borra nada.
+
+## Respaldo en Excel (a pedido: "respaldo de caja chica")
+Ya no va en la tarea nocturna (corre en la nube, sin Mac). Se genera cuando Moisés lo pide, con alguna Mac encendida:
+1. Export del tablero (fondos, entradas, salidas, cuadre_nomina) con ArtifactData list + out_dir.
+2. Scripts en la Mac: Dimaco/Caja chica/scripts/ (respaldo_xlsx.py, subs.py, maximizar.py, logos). `python3 respaldo_xlsx.py <export> logo_dimaco.png logo_marca_gto.png "Caja chica 2026.xlsx"` → recalc.py del skill xlsx (0 errores) → `python3 maximizar.py "Caja chica 2026.xlsx"` (abre maximizado; recalc lo quita, por eso va después).
+3. El Libro de caja abre filtrado a la semana corriente (lunes–domingo); lo demás queda oculto por el filtro de Fecha.
+4. Subirlo con SendUserFile y device_commit_files usando el **fileUuid** (no stagedPath: con stagedPath se ha subido una copia vieja del mismo nombre). Verificar en la Mac que diga "generado <hoy>".
