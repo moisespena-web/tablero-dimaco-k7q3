@@ -160,6 +160,6 @@ function marca(){var st=q('#stage');if(!st)return;st.classList.toggle('rkon',!!q
 var e=q('#ests');if(e)e.classList.toggle('flon',!!q('#ests .fl'));}
 marca();setInterval(marca,400);})();</script>
 </body>""", 1)
-s = s.replace('<span class="build">r2026-10-15</span>', '<span class="build">r2026-11-05</span>')
+s = s.replace('<span class="build">r2026-10-15</span>', '<span class="build">r2026-11-09</span>')
 open(p, 'w').write(s)
 print('diseno ok', len(s))

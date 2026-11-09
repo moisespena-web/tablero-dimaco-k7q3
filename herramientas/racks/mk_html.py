@@ -51,7 +51,13 @@ rep('''<div class="stripe" style="background:'+(ea?CEST[ea]:'#25C083')+'"></div>
 rep('''function renderMat(D){var m=$('mat');''','''function renderMat(D){var m=$('mat');if(D&&D.proyecto==='racks'){m.hidden=true;return;}''')
 # datos: racks/datos.json (sin buzón de MAFESA)
 # avisos (9-oct-2026, Moisés): Racks tiene SUS PROPIOS avisos en racks/aviso.json; ya NO lee el aviso de MAFESA
-rep('''pedir([BUZON+"/tablero","datos.json",RAWG+"datos.json"],function(j){''','''pedir(["datos.json",RAWG+"racks/datos.json"],function(j){''')
+# 9-nov-2026: MAFESA ahora pide buzón y datos.json en paralelo (pedirNuevo, gana el stamp más nuevo).
+# En racks NO se consulta el buzón de MAFESA: la rama del buzón se da por terminada y solo se lee racks/datos.json.
+if 'function pedirNuevo(' in src:
+    rep('''pedir([BUZON+"/tablero"],function(j){res.push(j);if(!x++)fin();});setTimeout(function(){if(!x++)fin();},16000);''','''x++;fin();''')
+    rep('''pedir(["datos.json",RAWG+"datos.json"],function(j){res.push(j);''','''pedir(["datos.json",RAWG+"racks/datos.json"],function(j){res.push(j);''')
+else:
+    rep('''pedir([BUZON+"/tablero","datos.json",RAWG+"datos.json"],function(j){''','''pedir(["datos.json",RAWG+"racks/datos.json"],function(j){''')
 rep('''pedir([BUZON+"/tablero/aviso","aviso.json",RAWG+"aviso.json"],''','''pedir([BUZON+"/tablero/racks/aviso","aviso.json",RAWG+"racks/aviso.json"],''')   # 16-oct-2026: buzón de Cloudflare primero (igual que MAFESA)
 rep('<title>','<title>',1)
 src=re.sub(r'<title>[^<]*</title>','<title>MO en proceso · Racks</title>',src,1)
