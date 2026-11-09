@@ -21,7 +21,8 @@ CATS = {'NÓMINA': ['Nómina semanal', 'Sueldo en efectivo', 'Diferencia de nóm
         'VEHÍCULOS': ['Talacha y llantas', 'Gasolina', 'Reparación', 'Multa o verificación', 'Lavado', 'Otro'],
         'SERVICIOS': ['Agua oficinas', 'Basura', 'Paquetería', 'Comida de perros', 'Impresiones', 'Báscula', 'Limpieza y terreno', 'Otro'],
         'PERSONAL': ['Médico y medicamento', 'Pastel de cumpleaños', 'Recarga de celular', 'Regalo', 'Otro'],
-        'DIRECCIÓN': ['Bebidas', 'Comida', 'Otro'], 'OTROS': ['Otro']}
+        'DIRECCIÓN': ['Bebidas', 'Comida', 'Otro'],
+        'CONVIVENCIA': ['Comida', 'Bebidas', 'Pastel', 'Decoración y desechables', 'Otro'], 'OTROS': ['Otro']}
 TIPOS = ['DIRECCIÓN', 'CHEQUE', 'CLIENTE', 'REPOSICIÓN']
 COMPS = {'Ticket': 'Ticket', 'Nota': 'Nota', 'Factura': 'Factura', 'Recibo firmado': 'Recibo firmado', 'Sin comprobante': 'Sin factura'}
 
