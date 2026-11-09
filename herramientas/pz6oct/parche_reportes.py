@@ -180,3 +180,7 @@ sys.argv=_bk
 _bk=sys.argv[:]; sys.argv=[_bk[0],D]
 _rp.run_path(os.path.join(os.path.dirname(os.path.abspath(__file__)),'parche_leyenda.py'),run_name='__main__')
 sys.argv=_bk
+# ===== 9a parte (9-nov-2026 · M659NOV): M65 en build_entregas (ops) y columna M65 en el PDF =====
+_bk=sys.argv[:]; sys.argv=[_bk[0],D]
+_rp.run_path(os.path.join(os.path.dirname(os.path.abspath(__file__)),'parche_m65.py'),run_name='__main__')
+sys.argv=_bk
