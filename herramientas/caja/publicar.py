@@ -14,8 +14,15 @@ act = lambda x: x.get('estado', 'activa') != 'cancelada'
 ing = [x for x in F + E]
 saldo = round(sum(x.get('monto') or 0 for x in ing if act(x)) - sum(x.get('monto') or 0 for x in S if act(x)), 2)
 aplicado = json.load(open(apl)) if os.path.exists(apl) else {}
-folios = sorted(aplicado.get('folios', {}).keys())
-cancel = sorted(aplicado.get('cancelados', []))
+# Folios de la estación: del ledger Y de los documentos del tablero (por si el ledger no se guardó)
+import re
+fol = set(aplicado.get('folios', {}).keys()); can = set(aplicado.get('cancelados', []))
+for x in F + E + S:
+    f = x.get('folio') or (x['_id'] if re.fullmatch(r'P\d{6}-[A-Z0-9]{4}', x['_id']) else None)
+    if f:
+        fol.add(f)
+        if not act(x): can.add(f)
+folios = sorted(fol); cancel = sorted(can)
 year = ahora[:4]
 libro = []
 for x in S:
