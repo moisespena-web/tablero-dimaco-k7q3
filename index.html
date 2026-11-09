@@ -455,7 +455,7 @@ padding:20px 34px;box-shadow:0 0 70px rgba(229,72,77,.95);animation:alimpP 1s st
   <div class="msg"></div>
   <span class="pctl"><button id="btnPrev" title="Página anterior">◀</button><button id="btnPausa" title="Pausar">⏸</button><button id="btnNext" title="Página siguiente">▶</button></span>
   <span id="sndIco">🔇</span>
-  <div id="stamp"></div><span class="build">v2026-10-16m65</span><div class="bar"><i id="pb"></i></div>
+  <div id="stamp"></div><span class="build">v2026-11-08cero</span><div class="bar"><i id="pb"></i></div>
  </footer>
  <div id="alimp" hidden></div>
  <div id="toasts"></div>
@@ -1012,8 +1012,13 @@ render(window.__DATOS__);
   function pedir(urls,ok){var i=0;(function sig(){if(i>=urls.length)return;var u=urls[i++],x=new XMLHttpRequest();
     x.open("GET",u+(u.indexOf("?")<0?"?":"&")+"t="+Date.now(),true);x.timeout=15000;x.onerror=x.ontimeout=sig;
     x.onload=function(){if(x.status!==200)return sig();var j;try{j=JSON.parse(x.responseText);}catch(e){return sig();}ok(j);};x.send();})();}
+  /* 8-nov-2026: el buzón ignora un programa sin MOs (tablero en cero) y sirve el último con MOs; se piden los dos
+     (buzón y datos.json de GitHub) y gana el de stamp más nuevo. */
+  function pedirNuevo(ok){var res=[],n=0;function fin(){if(++n<2)return;var b=null;res.forEach(function(j){var s=j&&j.datos&&j.datos.stamp||"";if(j&&j.datos&&j.datos.rows&&(!b||s>(b.datos.stamp||"")))b=j;});if(b)ok(b);}
+    var x=0;pedir([BUZON+"/tablero"],function(j){res.push(j);if(!x++)fin();});setTimeout(function(){if(!x++)fin();},16000);
+    var y=0;pedir(["datos.json",RAWG+"datos.json"],function(j){res.push(j);if(!y++)fin();});setTimeout(function(){if(!y++)fin();},31000);}
   function cargar(){
-    pedir([BUZON+"/tablero","datos.json",RAWG+"datos.json"],function(j){
+    pedirNuevo(function(j){
       var D=j&&j.datos;
       if(D&&D.rows&&(!ultStamp||!D.stamp||D.stamp>=ultStamp)){
         if(D.stamp)ultStamp=D.stamp;
