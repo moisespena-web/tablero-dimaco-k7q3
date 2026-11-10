@@ -134,8 +134,8 @@ input[type=number]{font-variant-numeric:tabular-nums}
 
 <meta http-equiv="Cache-Control" content="no-cache">
 <script>
-const APPVER='v46';
-const APPFECHA='10-nov-2026 10:50';
+const APPVER='v47';
+const APPFECHA='10-nov-2026 12:30';
 // Lo cancelado ya no se muestra en ninguna vista (sigue guardado en el servidor)
 function sinCanc(rs){ return (rs||[]).map(r=>({...r,lines:(r.lines||[]).map((l,i)=>({...l,_i:i})).filter(l=>l.est!=='cancelado')})).filter(r=>r.lines.length); }
 document.addEventListener('DOMContentLoaded',()=>{ const b=document.getElementById('ver'); if(b){ b.textContent='Versión '+APPVER+' · revisada '+APPFECHA+' · toca para actualizar'; b.onclick=()=>location.replace(location.pathname+'?v='+Date.now()); } });
@@ -378,11 +378,13 @@ function buscar(q){
 function reqCard(r){
   const tot=r.lines.reduce((a,l)=>a+(['rechazado','cancelado'].includes(l.est)?0:imp(l)),0);
   const mia = YO && r.quien===YO.id;
-  const puedeBorrar = YO && (YO.id==='paty'||YO.id==='moises');
+  const admin = YO && (YO.id==='paty'||YO.id==='moises');
+  const pend = l => ['cotizar','autorizar','pedir'].includes(l.est)&&!l.po&&!l.poId&&!l.oc;   // 10-nov-2026: quien pidió borra lo suyo mientras no se pida al proveedor
+  const puedeBorrar = admin || (mia && r.lines.every(l=>pend(l)||['cancelado','rechazado'].includes(l.est)));
   return `<div class="card"><div class="row" style="justify-content:space-between"><h2>${r.folio}</h2><span class="num">${fmt(tot)}</span></div>
   <div class="sub">${fFecha(r.fecha)} · ${NOMBRES[r.quien]||r.quien} · ${esc(r.para)}${puedeBorrar?` · <button class="lk bad" type="button" data-borrar="${r.id}">Borrar requisición</button>`:''}</div>
   ${r.lines.map((l,i0)=>{const i=l._i??i0; return `<div class="ln"><div class="a"><b>${etq(l)}</b><span>${nfmt(l.qty)} ${esc(l.u||'pz')} · ${l.prov?esc(l.prov):'proveedor por definir'} · ${l.precio!=null?fmt(l.precio)+' c/u':'sin precio'}</span>
-    ${flow(l)}${(mia||YO.id==='paty')&&['cotizar','autorizar','pedir'].includes(l.est)?`<button class="lk" type="button" data-cancel="${r.id}:${i}" style="background:none;border:0;color:var(--tx3);font-size:12px;padding:4px 0">Cancelar este concepto</button>`:''}${puedeBorrar&&r.lines.length>1?`<button class="lk bad" type="button" data-borrarl="${r.id}:${i}" style="margin-left:10px">Borrar concepto</button>`:''}</div>
+    ${flow(l)}${(mia||YO.id==='paty')&&['cotizar','autorizar','pedir'].includes(l.est)?`<button class="lk" type="button" data-cancel="${r.id}:${i}" style="background:none;border:0;color:var(--tx3);font-size:12px;padding:4px 0">Cancelar este concepto</button>`:''}${r.lines.length>1&&(admin||(mia&&pend(l)))?`<button class="lk bad" type="button" data-borrarl="${r.id}:${i}" style="margin-left:10px">Borrar concepto</button>`:''}</div>
     <div class="z"><span class="chip ${EST[l.est][1]}">${l.est==='cotizar'&&(l.rfqI||l.poId)?'RFQ enviado':EST[l.est][0]}${l.est==='parcial'?` ${l.rec}/${l.qty}`:''}</span>${l.po?`<div style="font-size:11px;color:var(--tx2);margin-top:4px">${esc(l.po)} Katana</div>`:l.oc?`<div style="font-size:11px;color:var(--tx2);margin-top:4px">${esc(l.oc)}</div>`:l.rfqPo?`<div style="font-size:11px;color:var(--tx2);margin-top:4px">RFQ-${esc(l.rfqPo)}</div>`:l.rfqI?`<div style="font-size:11px;color:var(--tx2);margin-top:4px">${esc(l.rfqI)}</div>`:''}${l.katErr?`<div class="chip c-bad" style="margin-top:4px">Falta recibir en Katana</div>`:''}
     ${l.est==='autorizar'?`<div style="font-size:11px;color:var(--tx3);margin-top:4px">autoriza ${NOMBRES[autorizador(l)]}</div>`:''}</div></div>`}).join('')}
   </div>`;
