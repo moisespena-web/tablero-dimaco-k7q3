@@ -134,8 +134,8 @@ input[type=number]{font-variant-numeric:tabular-nums}
 
 <meta http-equiv="Cache-Control" content="no-cache">
 <script>
-const APPVER='v45';
-const APPFECHA='10-nov-2026 02:00';
+const APPVER='v46';
+const APPFECHA='10-nov-2026 10:50';
 // Lo cancelado ya no se muestra en ninguna vista (sigue guardado en el servidor)
 function sinCanc(rs){ return (rs||[]).map(r=>({...r,lines:(r.lines||[]).map((l,i)=>({...l,_i:i})).filter(l=>l.est!=='cancelado')})).filter(r=>r.lines.length); }
 document.addEventListener('DOMContentLoaded',()=>{ const b=document.getElementById('ver'); if(b){ b.textContent='Versión '+APPVER+' · revisada '+APPFECHA+' · toca para actualizar'; b.onclick=()=>location.replace(location.pathname+'?v='+Date.now()); } });
@@ -314,7 +314,7 @@ function vPedir(){
   const moStock = (!fw.length || fw.every(w=>'MO STOCK INVENTARIO ALMACEN'.includes(w))) ? `<div class="mogrp">Stock</div><label class="mochk"><input type="checkbox" data-mo="MO Stock" ${mos.includes('MO Stock')?'checked':''}><span><b>MO Stock</b> · Para tener en stock de materiales<small>No se carga a ninguna MO · se va al almacén</small></span></label>` : '';
   const moOpts = moStock + (MOS ? grupo('MAFESA',MOS.mos.filter(m=>m.maf&&moVis(m))) + grupo('Racks y otros',MOS.mos.filter(m=>!m.maf&&moVis(m))) : '');
   return `<div class="card">
-    <h2>Nueva requisición</h2>
+    <h2 style="display:flex;align-items:center;justify-content:space-between;gap:8px">Nueva requisición${YO&&(YO.compras||YO.director)?'<button class="btn s gh" type="button" data-refkat="1" style="font-size:13px">Actualizar de Katana</button>':''}</h2>
     <div class="sub">${YO&&(YO.id==='paty'||YO.id==='moises')?'Primero elige qué vas a pedir. Si tiene precio de menos de 6 meses se pide directo; si no, se cotiza.':'Busca lo que necesitas, pon la cantidad y para qué es. Paty decide si se cotiza o se compra.'}</div>
     <div style="font-size:13px;font-weight:700;color:var(--tx2);margin:6px 0 4px">¿Qué vas a pedir?</div>
     <div class="row2">
@@ -774,6 +774,7 @@ app.addEventListener('click',async e=>{
   if(d.add){ const c=BYK[d.add]; if(!carrito.find(x=>x.k===c.k)) carrito.push(modoReq?{k:c.k,d:c.d,qty:1,modo:modoReq}:{k:c.k,d:c.d,qty:1}); busq=''; guardarCarrito(); render(); toast('Agregado'); return; }
   if(d.nuevo){ altaForm={d:busq.trim().toUpperCase()}; busq=''; render(); const x=document.getElementById('al-u'); if(x) x.focus(); return; }
   if(b.id==='al-x'){ altaForm=null; render(); return; }
+  if(d.refkat){ b.disabled=true; b.textContent='Actualizando…'; try{ const c=await api('/catalogo?fresco=1'); CAT=c.catalogo; BYK=Object.fromEntries(CAT.map(x=>[x.k,x])); toast('Catálogo actualizado con lo último de Katana'); }catch(err){ toast('No se pudo actualizar: '+(err.message||err)); } render(); return; }
   if(d.apalta){ accion({tipo:'aprobarAlta',id:+d.apalta}).then(r=>{ if(r) api('/catalogo').then(c=>{ CAT=c.catalogo; BYK=Object.fromEntries(CAT.map(x=>[x.k,x])); }); }); return; }
   if(d.rechalta){ accion({tipo:'rechazarAlta',id:+d.rechalta}); return; }
   if(d.del){ carrito.splice(+d.del,1); guardarCarrito(); render(); return; }
