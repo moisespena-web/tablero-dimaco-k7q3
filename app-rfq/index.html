@@ -134,8 +134,8 @@ input[type=number]{font-variant-numeric:tabular-nums}
 
 <meta http-equiv="Cache-Control" content="no-cache">
 <script>
-const APPVER='v44';
-const APPFECHA='03-nov-2026 15:30';
+const APPVER='v45';
+const APPFECHA='10-nov-2026 02:00';
 // Lo cancelado ya no se muestra en ninguna vista (sigue guardado en el servidor)
 function sinCanc(rs){ return (rs||[]).map(r=>({...r,lines:(r.lines||[]).map((l,i)=>({...l,_i:i})).filter(l=>l.est!=='cancelado')})).filter(r=>r.lines.length); }
 document.addEventListener('DOMContentLoaded',()=>{ const b=document.getElementById('ver'); if(b){ b.textContent='Versión '+APPVER+' · revisada '+APPFECHA+' · toca para actualizar'; b.onclick=()=>location.replace(location.pathname+'?v='+Date.now()); } });
@@ -170,7 +170,7 @@ const autorizador = l => imp(l) > LIMITE ? 'moises' : 'paty';
 const NOMBRES = {ely:'Ely',uriel:'Uriel',gerardo:'Gerardo',lupita:'Lupita',paty:'Paty',moises:'Moisés'};
 const TABN = {pedir:'Pedir',mias:'Mis req.',recibir:'Recibir',pend:'Pendientes',facturas:'Facturas',autorizar:'Autorizar',rfqs:'Mis RFQ',todas:'Todas'};
 const EST = {
-  cotizar:['Por cotizar','c-cot'], autorizar:['Por autorizar','c-aut'], pedir:['Autorizado · por pedir','c-ped'],
+  cotizar:['Solicitado','c-cot'], autorizar:['Por autorizar','c-aut'], pedir:['Autorizado · por pedir','c-ped'],
   pedido:['Pedido','c-ped'], parcial:['Llegó parcial','c-aut'], recibido:['Recibido','c-ok'],
   facturado:['Registrado en Bind','c-ok'], rechazado:['Rechazado','c-bad'], cancelado:['Cancelado','c-gr']
 };
@@ -181,7 +181,7 @@ const nomDe = l => { const p=String(l.d||'').split(' · '); return (/^INS-/.test
 const etq = l => { const s=skuDe(l); return (s?`<span class="sku">${esc(s)}</span> · `:'')+esc(nomDe(l)); };
 const esKatK = k => /^K\d+$/.test(k||'');
 // 31-oct-2026 (Moisés): Paty ya no hace RFQ, solo compra directa; el RFQ queda solo para Moisés
-const soloCompra = () => false;   // 3-nov-2026: Paty vuelve a tener RFQ (camino 1: RFQ → cotización → Asignar PO)
+const soloCompra = () => !!(YO && !YO.director);   // 10-nov-2026: Paty solo "Pedir al proveedor"; Cotizar (RFQ) solo Moisés   // 3-nov-2026: Paty vuelve a tener RFQ (camino 1: RFQ → cotización → Asignar PO)
 // 30-oct-2026: los insumos también viven en Katana; se distinguen por su categoría
 const CAT_INS = new Set(['Tornillería y fijación','Herramienta de corte','Abrasivos','Soldadura y consumibles','Gases','Equipo de protección','Pintura y recubrimiento','Lubricantes y químicos','Limpieza','Empaque y dunnage','Componentes para racks','Eléctrico','Herramienta manual y equipo','Oficina y papelería','Otros (revisar)']);
 const esIns = k => !esKatK(k) || CAT_INS.has((BYK[k]||{}).cat);
@@ -212,7 +212,7 @@ try{ const d=JSON.parse(localStorage.getItem('rfq-carrito')||'null'); if(d){ car
 const guardarCarrito = () => { try{ localStorage.setItem('rfq-carrito',JSON.stringify({c:carrito,t:paraTipo,m:mos,tp:tipoPed})); }catch(e){} };
 
 function tabsDe(u){
-  if(u==='paty') return ['pend','rfqs','pedir','facturas','mias','todas'];
+  if(u==='paty') return ['pend','pedir','facturas','mias','todas'];
   if(u==='moises') return ['autorizar','pend','rfqs','pedir','facturas','mias','todas'];
   if(u==='ely') return ['pedir','mias','recibir'];
   return ['pedir','mias'];
@@ -470,7 +470,7 @@ function armFila(x){
   return `<label class="mochk" style="align-items:center"><input type="checkbox" data-armk="${key}" ${on?'checked':''} aria-label="Seleccionar ${esc(nomDe(l))}">
     <span style="flex:1;min-width:0"><b style="font-size:15px">${nfmt(l.qty)}</b> ${esc(l.u||'pz')} · ${esc(nomDe(l))}<small>${esc(skuDe(l)||'')} · pidió ${NOMBRES[r.quien]||r.quien} · ${r.folio}${l.rfqI||l.rfqPo?` · RFQ enviado ${esc(l.rfqI||('RFQ-'+l.rfqPo))}`:''}</small>${YO&&YO.compras?`<button class="lk" type="button" data-cancel="${key}" style="background:none;border:0;color:var(--bad);font-size:12px;padding:2px 0">Cancelar este concepto</button>`:''}</span>
     <span style="flex:none;max-width:38%;border:1px solid var(--line);border-radius:8px;padding:6px 8px;font-size:12px;font-weight:700;text-align:center;background:var(--panel)">${esc(r.para||'—')}</span>
-    ${armDoc==='compra'?`<input type="number" step="0.01" inputmode="decimal" data-armp="${key}" value="${pr??''}" placeholder="$ c/u" aria-label="Precio unitario" style="flex:none;width:92px;padding:8px">`:''}</label>`;
+    ${armDoc==='compra'&&!soloCompra()?`<input type="number" step="0.01" inputmode="decimal" data-armp="${key}" value="${pr??''}" placeholder="$ c/u" aria-label="Precio unitario" style="flex:none;width:92px;padding:8px">`:''}${armDoc==='compra'&&soloCompra()?`<span style="flex:none;width:92px;text-align:right;font-size:12px;color:var(--tx2)">${pr>0?'último<br><b class="num">'+fmt(pr)+'</b>':'sin precio<br>previo'}</span>`:''}</label>`;
 }
 // Pestaña "Mis RFQ" (Moisés, 22-oct-2026): historial de todos los RFQ hechos, con su proveedor, fecha, estado de cada artículo y PDF
 function vMisRfq(){
@@ -521,10 +521,10 @@ function vArmar(){
   const M=armLineas('mat'), I=armLineas('ins'), todos=new Set([...M,...I].map(x=>x.r.id+':'+x.i));
   [...armSel].forEach(k=>{ if(!todos.has(k)) armSel.delete(k); });
   const selM=M.filter(x=>armSel.has(x.r.id+':'+x.i)), selI=I.filter(x=>armSel.has(x.r.id+':'+x.i));
-  const selT=[...selM,...selI], mezcla = selT.some(x=>esKatK(x.l.k)) && selT.some(x=>!esKatK(x.l.k)), sel=selM.length+selI.length, prov=armProvs.uno||'';
+  const selT=[...selM,...selI], mezcla = !soloCompra() && selT.some(x=>esKatK(x.l.k)) && selT.some(x=>!esKatK(x.l.k)), sel=selM.length+selI.length, prov=armProvs.uno||'';
   let tot=0, faltaP=0; if(armDoc==='compra') [...selM,...selI].forEach(x=>{ const key=x.r.id+':'+x.i; const pr=armPrecio[key]!=null?armPrecio[key]:(x.l.precio!=null?x.l.precio:((BYK[x.l.k]||{}).p??null)); if(pr>0) tot+=pr*x.l.qty; else faltaP++; });
   const opts = `<option value="">Escoge el proveedor…</option>`+(prov&&!PROVS.includes(prov)?`<option selected>${esc(prov)}</option>`:'')+PROVS.map(p=>`<option ${p===prov?'selected':''}>${esc(p)}</option>`).join('')+`<option value="__otro">Otro (escribir)…</option>`;
-  const puede = sel && !mezcla && prov && (armDoc==='rfq' || !faltaP);
+  const puede = sel && !mezcla && prov && (armDoc==='rfq' || !faltaP || soloCompra());
   const seccion=(t,xs)=>`<div class="mogrp">${t} · ${xs.length}</div>${xs.length?xs.map(armFila).join(''):`<div class="empty" style="padding:10px">Nada pendiente.</div>`}`;
   return `<div class="card"><h2>Paso 1 · ${soloCompra()?'Armar compra':'Armar RFQ o compra'}</h2>
     ${soloCompra()?'':`<div class="row2" style="margin-top:4px"><button type="button" class="btn s ${armDoc==='rfq'?'':'gh'}" style="width:100%;min-height:48px" data-armdoc="rfq" aria-pressed="${armDoc==='rfq'}">RFQ</button>
@@ -533,8 +533,8 @@ function vArmar(){
     ${armVer?`<div class="molist" style="max-height:520px;margin-top:8px">${seccion('Materiales',M)}${seccion('Insumos',I)}</div>
       ${mezcla?`<div class="chip c-bad" style="margin-top:8px;white-space:normal">Lo que todavía no está en Katana va en un documento aparte: no lo mezcles con artículos de Katana.</div>`:''}
       <label class="f" for="arm-prov">Proveedor</label><select id="arm-prov" data-armprov="uno">${opts}</select>
-      ${armDoc==='compra'&&sel?`<div class="tot"><span>Total (sin IVA)${faltaP?` · falta precio en ${faltaP}`:''}</span><span class="num">${fmt(tot)}</span></div>`:''}
-      <button class="btn" type="button" data-armgo="1" style="margin-top:10px" ${puede?'':'disabled'}>${armDoc==='rfq'?'Crear RFQ':'Crear compra'} + PDF · ${sel} seleccionado(s)</button>`:''}
+      ${armDoc==='compra'&&sel?`<div class="tot"><span>${soloCompra()?'Total estimado con último precio (sin IVA)':'Total (sin IVA)'}${faltaP?` · ${faltaP} sin precio previo`:''}</span><span class="num">${fmt(tot)}</span></div>`:''}
+      <button class="btn" type="button" data-armgo="1" style="margin-top:10px" ${puede?'':'disabled'}>${armDoc==='rfq'?'Crear RFQ':(soloCompra()?'Pedir al proveedor':'Crear compra')} + PDF · ${sel} seleccionado(s)</button>`:''}
   </div>`;
 }
 function bloqueRFQ(t, xs, titulo, sub, provSel){
@@ -673,9 +673,9 @@ document.addEventListener('click', async e=>{
 function vRecibir(){
   const L=allLines().filter(x=>x.l.est==='pedido'||x.l.est==='parcial');
   const g={}; L.forEach(x=>{const p=x.l.prov||'—';(g[p]=g[p]||[]).push(x);});
-  return `<div class="card"><h2>Recibir material</h2><div class="sub">Anota cuántas piezas llegaron de cada renglón. Fecha y hora se ponen solas. Si falta algo, queda abierto y Paty recibe aviso.</div>
+  return `<div class="card"><h2>Recibir material</h2><div class="sub">Con la factura en la mano: anota cuántas piezas llegaron y el precio unitario de la factura (viene el último precio; cámbialo solo si es distinto). Fecha y hora se ponen solas. Si falta algo, queda abierto y Paty recibe aviso.</div>
   ${L.length?Object.entries(g).map(([p,xs])=>`<div class="grp"><span>${esc(p)}</span></div>${xs.map(({r,l,i})=>{const falta=l.qty-l.rec;return `<div class="ln"><div class="a"><b>${etq(l)}</b><span>${r.folio}${l.po?' · '+esc(l.po):''} · pedido el ${fFecha(l.pedidoF)} · pidió ${nfmt(l.qty)}${l.rec?` · ya llegaron ${nfmt(l.rec)}`:''}</span><span><b style="display:inline;color:var(--warn)">Faltan ${nfmt(falta)}</b></span></div>
-    <div class="z"><input class="qty" type="number" min="0" max="${falta}" inputmode="numeric" id="rc-${r.id}-${i}" value="${falta}" aria-label="Piezas que llegaron"><div style="margin-top:6px"><button class="btn s ok" type="button" data-rec="${r.id}:${i}">Llegó</button></div></div></div>`}).join('')}`).join(''):'<div class="empty">No hay material en camino.</div>'}
+    <div class="z"><input class="qty" type="number" min="0" max="${falta}" inputmode="numeric" id="rc-${r.id}-${i}" value="${falta}" aria-label="Piezas que llegaron"><div style="font-size:11px;color:var(--tx2);text-align:center;margin:4px 0 2px">$ c/u factura</div><input class="qty" type="number" step="0.01" min="0" inputmode="decimal" id="rp-${r.id}-${i}" value="${l.precio>0?l.precio:''}" placeholder="$ c/u" aria-label="Precio unitario de la factura"><div style="margin-top:6px"><button class="btn s ok" type="button" data-rec="${r.id}:${i}">Llegó</button></div></div></div>`}).join('')}`).join(''):'<div class="empty">No hay material en camino.</div>'}
   </div>${vCorregir()}`;
 }
 // 3-nov-2026 (Moisés): si Ely se equivoca al capturar lo que llegó, ella misma lo corrige (estación y Katana)
@@ -741,6 +741,9 @@ app.addEventListener('click',async e=>{
     if(d.armgo){
     const armProv=armProvs.uno||''; const M=armLineas('mat').filter(x=>armSel.has(x.r.id+':'+x.i)), I=armLineas('ins').filter(x=>armSel.has(x.r.id+':'+x.i));
     const xs0=[...M,...I]; if(!xs0.length) return;
+    if(soloCompra()){ if(!armProv||!confirmar2(b,'Confirmar: pedir a '+armProv)) return; b.disabled=true; b.textContent='Creando la PO en Katana…';
+      const r=await accion({tipo:'pedirProv', keys:xs0.map(x=>x.r.id+':'+x.i), prov:armProv});
+      if(r){ armSel.clear(); armPrecio={}; const pos=r.pos||(r.po?[r.po]:[]); for(const po of pos) await prepararPDF(po.tipo||'oc', po.no, po.keys, po.prov); } return; }
     const kk0=xs0.map(x=>esKatK(x.l.k)); if(kk0.some(Boolean)&&kk0.some(v=>!v)) return;
     const mat=kk0[0], keys=[], precios={};
     let xs=xs0; const g={};
@@ -842,7 +845,7 @@ app.addEventListener('click',async e=>{
     if(!confirmar2(b,'Confirmar: corregir en estación y Katana')) return;
     b.disabled=true; b.textContent='Corrigiendo en Katana…';
     const r=await accion({tipo:'corregirRec', poId:po, cant}); if(r){ corrPO=null; corrCant={}; render(); } else { b.disabled=false; b.textContent='Guardar corrección'; } return; }
-  if(d.rec){ const x=ref(d.rec); const n=+document.getElementById(`rc-${x.rid}-${x.i}`).value||0; accion({tipo:'recibir',rid:x.rid,i:x.i,n}); return; }
+  if(d.rec){ const x=ref(d.rec); const n=+document.getElementById(`rc-${x.rid}-${x.i}`).value||0; const pe=document.getElementById(`rp-${x.rid}-${x.i}`); const precio=pe&&pe.value!==''?+pe.value:null; if(precio===null||!(precio>0)){ toast('Pon el precio de la factura'); if(pe) pe.focus(); return; } accion({tipo:'recibir',rid:x.rid,i:x.i,n,precio}); return; }
   if(d.bind){ const gi=d.gi; accion({tipo:'bind',prov:d.bind,subtotal:+document.getElementById('fs-'+gi).value,factura:document.getElementById('ff-'+gi).value}); return; }
 });
 app.addEventListener('input',e=>{
