@@ -279,7 +279,7 @@ function vLista(){
   (st.status==='none'?'<span class="st" style="background:'+pv[1]+';border:1px solid '+pv[2]+';color:'+pv[3]+'">'+pv[0]+'</span>':'')+'</div></button>';}).join('')+
  '<div style="font-size:12px;color:var(--tx2);margin:6px 0 10px;line-height:1.4">'+(enLinea()?'CONECTADA A KATANA · la cola se actualiza sola.':'PILOTO · MOs de Katana al 9-nov 13:02. Lo capturado se guarda en este teléfono; todavía no escribe en Katana: el Ing. Moisés lo registra con el Resumen del turno.')+'</div>';}
 function bigBtn(bg,fg,on){return 'background:'+bg+';color:'+fg+';opacity:'+(on?1:.25);}
-function vDetalle(){var m=cur(),st=m.st,falt=Math.max(0,m.piezas-hz(m)),tramo=st.tramoStart?trab(st):0,img=PZ[m.sku],pv=previa(m);
+function vDetalle(){var m=cur()||{st:{},piezas:0,entr:0},st=m.st,falt=Math.max(0,m.piezas-hz(m)),tramo=st.tramoStart?trab(st):0,img=PZ[m.sku],pv=previa(m);
  var noStart=!(st.status==='none'||st.status==='pausa'),noPausa=st.status!=='prog',noFin=!(st.status==='prog'||st.status==='pausa');
  var ruta=m.ruta.map(function(r){var est=r[2]?(st.status==='done'?'done':(st.status==='none'?(r[1]||'none'):(st.status==='pausa'?'pausa':'prog'))):r[1];
   var c={done:['#0E3628','#1B7A56','#7FE3BC','✓ '],prog:['#3A2A0C','#8A6413','#FFD37A','● '],pausa:['#2A1418','#7A2A2E','#FFB3B6','Ⅱ '],none:['#0E1723','#22344A','#8FA3BA','']}[est]||['#0E1723','#22344A','#8FA3BA',''];
@@ -315,7 +315,7 @@ function vDetalle(){var m=cur(),st=m.st,falt=Math.max(0,m.piezas-hz(m)),tramo=st
   '<button type="button" class="big" '+act('pausa')+(noPausa?' disabled':'')+' style="'+bigBtn('#F2A93B','#07121B',!noPausa)+'">❚❚<br>PAUSA</button>'+
   '<button type="button" class="big" '+act('fin')+(noFin?' disabled':'')+' style="'+bigBtn('#3E8FD8','#FFFFFF',!noFin)+'">■<br>FIN</button></div>';}
 function teclado(campo){return '<div class="g3">'+['1','2','3','4','5','6','7','8','9','Borrar','0','⌫'].map(function(t){return '<button type="button" class="key" '+act('tecla',campo+'|'+t)+(t==='Borrar'?' style="font-size:16px"':'')+'>'+t+'</button>';}).join('')+'</div>';}
-function vModal(){if(!S.modal)return '';var m=cur(),st=m.st,falt=Math.max(0,m.piezas-hz(m)),h='';
+function vModal(){if(!S.modal)return '';var m=cur()||{st:{},piezas:0,entr:0},st=m.st,falt=Math.max(0,m.piezas-hz(m)),h='';
  if(S.modal==='resumen')return vResumen();
  if(S.modal==='pieza'){var img=PZ[m.sku],imd=PZD[m.sku],z=S.zoom;
   var cuerpo;
