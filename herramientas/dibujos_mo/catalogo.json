@@ -728,5 +728,42 @@
   "imgs": [
    "37A14328-0002-1.png"
   ]
+ },
+ "37A5683-0003": {
+  "desc": "TERMINAL .250 x 1.500 x 3.563",
+  "plano": "2 barrenos (.437 + .228) · 1 doblez F.S. 90°",
+  "ref": "37A5683 · P.3 + vista doblada",
+  "nota": "",
+  "imgs": [
+   "37A5683-0003-1.png",
+   "37A5683-0003-2.png"
+  ]
+ },
+ "37A1515-0002": {
+  "desc": "TERMINAL 3/8 x 2 x 7 1/4",
+  "plano": "2 barrenos (.437 + .562) · 1 doblez F.S. (vista doblada)",
+  "ref": "37A1515 · P.2 + vista doblada",
+  "nota": "",
+  "imgs": [
+   "37A1515-0002-1.png"
+  ]
+ },
+ "37A12254-0007": {
+  "desc": "TERMINAL .500 x 3.000 x 12.750",
+  "plano": "2 barrenos .563 + 1 barreno .228 · 1 doblez (línea NS)",
+  "ref": "37A12254 · hoja 2, P.7",
+  "nota": "",
+  "imgs": [
+   "37A12254-0007-1.png"
+  ]
+ },
+ "36B3480-0022": {
+  "desc": "TAP PAD .250 x 1.000 x 2.812",
+  "plano": "FIG. 2 (A 1.625 · B 1.000 · C .438): barrenos + ranura · 1 doblez",
+  "ref": "36B3480 · FIG. 2, parte 22",
+  "nota": "",
+  "imgs": [
+   "36B3480-0022-1.png"
+  ]
  }
 }
