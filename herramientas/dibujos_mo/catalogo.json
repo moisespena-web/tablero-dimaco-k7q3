@@ -765,5 +765,95 @@
   "imgs": [
    "36B3480-0022-1.png"
   ]
+ },
+ "37A7829-0001": {
+  "desc": "TERM CU 1/4 x 2 x 6.438",
+  "plano": "2 barrenos (.437 + .228) · 1 doblez (N.S.)",
+  "ref": "37A7829 · P.1",
+  "nota": "",
+  "imgs": [
+   "37A7829-0001-1.png"
+  ]
+ },
+ "37A7698-0001": {
+  "desc": "WELD STRIP .125 x .750 x 3.000 (AL)",
+  "plano": "Solera recta sin barrenos ni doblez (renglón 1 de la tabla; sin figura)",
+  "ref": "37A7698 · tabla, parte 1",
+  "nota": "",
+  "imgs": [
+   "37A7698-0001-1.png"
+  ]
+ },
+ "37A7698-0004": {
+  "desc": "BRAZE STRIP .125 x .750 x 4.000 (CU)",
+  "plano": "Solera recta sin barrenos ni doblez (renglón 4 de la tabla; sin figura)",
+  "ref": "37A7698 · tabla, parte 4",
+  "nota": "",
+  "imgs": [
+   "37A7698-0004-1.png"
+  ]
+ },
+ "37A7698-0005": {
+  "desc": "BRAZE STRIP .125 x .750 x 2.500 (CU)",
+  "plano": "Solera recta sin barrenos ni doblez (renglón 5 de la tabla; sin figura)",
+  "ref": "37A7698 · tabla, parte 5",
+  "nota": "",
+  "imgs": [
+   "37A7698-0005-1.png"
+  ]
+ },
+ "37A10786A-0003": {
+  "desc": "LINK .125 x .750 x 16.250",
+  "plano": "Sin barrenos · 2 dobleces (F.S.) en los extremos",
+  "ref": "37A10786A · P.3",
+  "nota": "",
+  "imgs": [
+   "37A10786A-0003-1.png"
+  ]
+ },
+ "37A9755-0003": {
+  "desc": "SHIM AL .500 x 2.000 x 2.000",
+  "plano": "1 barreno .438 · sin doblez",
+  "ref": "37A9755 · parte 3",
+  "nota": "",
+  "imgs": [
+   "37A9755-0003-1.png"
+  ]
+ },
+ "37A13335-0002": {
+  "desc": "NEUTRAL BAR AL .500 x 3.000 x 21.000",
+  "plano": "6 barrenos .563 · sin doblez",
+  "ref": "37A13335 · P.1-3",
+  "nota": "",
+  "imgs": [
+   "37A13335-0002-1.png"
+  ]
+ },
+ "37A13855-0002": {
+  "desc": "X1-X3 TERM CU .250 x 4.000 x 14.125",
+  "plano": "6 barrenos .563 · 2 dobleces (N.S. y F.S.)",
+  "ref": "37A13855 · P.2",
+  "nota": "",
+  "imgs": [
+   "37A13855-0002-1.png"
+  ]
+ },
+ "37A14337-0001": {
+  "desc": "TERMINAL CU .250 x 3.000 x 8.125",
+  "plano": "4 barrenos .563 + 2 barrenos .228 · 1 doblez a 90° (N.S.)",
+  "ref": "37A14337 · P.1",
+  "nota": "",
+  "imgs": [
+   "37A14337-0001-1.png"
+  ]
+ },
+ "37A14339-0002": {
+  "desc": "NEU TERM CU .250 x 4.000 x 13.875",
+  "plano": "5 barrenos .563 + 2 barrenos .228 · 1 doblez a 90° (N.S.)",
+  "ref": "37A14339 · P.2",
+  "nota": "",
+  "imgs": [
+   "37A14339-0002-1.png"
+  ]
  }
 }
