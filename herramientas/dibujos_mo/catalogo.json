@@ -855,5 +855,77 @@
   "imgs": [
    "37A14339-0002-1.png"
   ]
+ },
+ "37A14310-0002": {
+  "desc": "CONN. BAR .250 x 1.500 x 9.625",
+  "plano": "2 barrenos .313 · sin doblez",
+  "ref": "37A14310 · P.2",
+  "nota": "",
+  "imgs": [
+   "37A14310-0002-1.png"
+  ]
+ },
+ "37A14324-0001": {
+  "desc": "DELTA TIE BAR .250 x 2.000 x 46.000",
+  "plano": "6 barrenos 7/16 + 2 barrenos 9/16 · sin doblez",
+  "ref": "37A14324 · P.1",
+  "nota": "",
+  "imgs": [
+   "37A14324-0001-1.png"
+  ]
+ },
+ "37A14326-0001": {
+  "desc": "TERMINAL .250 x 1.000 x 4.563",
+  "plano": "2 barrenos .437 + 1 barreno .228 · 1 doblez a 90° (F.S.)",
+  "ref": "37A14326 · P.1 & 2",
+  "nota": "",
+  "imgs": [
+   "37A14326-0001-1.png"
+  ]
+ },
+ "37A14130-0001": {
+  "desc": "CONN. BAR .250 x 1.000 x 31.000",
+  "plano": "6 barrenos .313 · sin doblez",
+  "ref": "37A14130 · P.1",
+  "nota": "",
+  "imgs": [
+   "37A14130-0001-1.png"
+  ]
+ },
+ "37A12298-0001": {
+  "desc": "NEUTRAL BAR .500 x 4.000 x 32.000",
+  "plano": "barrenos .563 (11 abajo + 2 arriba) · sin doblez",
+  "ref": "37A12298 · P.1",
+  "nota": "",
+  "imgs": [
+   "37A12298-0001-1.png"
+  ]
+ },
+ "37A14254-0003": {
+  "desc": "TERMINAL .375 x 2.000 x 7.875",
+  "plano": "2 barrenos .563 + 2 barrenos .228 · 1 doblez a 90° (N.S.)",
+  "ref": "37A14254 · P.3",
+  "nota": "",
+  "imgs": [
+   "37A14254-0003-1.png"
+  ]
+ },
+ "37A14154-0003": {
+  "desc": "NEU. TERM. .500 x 4.000 x 14.000",
+  "plano": "5 barrenos .563 + 2 barrenos .228 · 1 doblez a 90° (N.S.)",
+  "ref": "37A14154 · P.3",
+  "nota": "",
+  "imgs": [
+   "37A14154-0003-1.png"
+  ]
+ },
+ "36B3480-0011": {
+  "desc": "TAP PAD .250 x 1.500 x 3.625",
+  "plano": "FIG. 2 (A 2.125 · B 1.750 · C .500): barrenos + ranura · 1 doblez",
+  "ref": "36B3480 · FIG. 2, parte 11",
+  "nota": "",
+  "imgs": [
+   "36B3480-0011-1.png"
+  ]
  }
 }
