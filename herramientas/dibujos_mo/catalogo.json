@@ -927,5 +927,50 @@
   "imgs": [
    "36B3480-0011-1.png"
   ]
+ },
+ "36B9157-0002": {
+  "desc": "TAP PAD .500 x 3.000 x 5.875",
+  "plano": "FIG. 2 (A 3.875 · B 2.875 · C .750): 2 barrenos .563 + 1 ranura · 1 doblez",
+  "ref": "36B9157 · FIG. 2, parte 2",
+  "nota": "",
+  "imgs": [
+   "36B9157-0002-1.png"
+  ]
+ },
+ "37B9948-0038": {
+  "desc": "TAP PAD .250 x 2.000 x 4.875",
+  "plano": "FIG. 1 (A 3.125 · B 2.625 · C .500): 1 barreno .563 + 1 ranura · 1 doblez",
+  "ref": "37B9948 · FIG. 1, parte 38",
+  "nota": "",
+  "imgs": [
+   "37B9948-0038-1.png"
+  ]
+ },
+ "37A14130-0003": {
+  "desc": "CONN. BAR .250 x 2.000 x 32.000",
+  "plano": "6 barrenos .313 · sin doblez",
+  "ref": "37A14130 · P.3",
+  "nota": "",
+  "imgs": [
+   "37A14130-0003-1.png"
+  ]
+ },
+ "37A14130-0004": {
+  "desc": "CONN. BAR .250 x 2.000 x 12.375",
+  "plano": "2 barrenos .313 · sin doblez",
+  "ref": "37A14130 · P.4",
+  "nota": "",
+  "imgs": [
+   "37A14130-0004-1.png"
+  ]
+ },
+ "37A14155-0002": {
+  "desc": "CONN. BAR .250 x 2.000 x 14.375",
+  "plano": "2 barrenos .313 · sin doblez",
+  "ref": "37A14155 · P.2",
+  "nota": "",
+  "imgs": [
+   "37A14155-0002-1.png"
+  ]
  }
 }
